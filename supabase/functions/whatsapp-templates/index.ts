@@ -27,7 +27,7 @@ serve(async (req) => {
     if (!companyId) {
       return new Response(
         JSON.stringify({ error: 'company_id é obrigatório' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -45,7 +45,7 @@ serve(async (req) => {
       console.error('Conexão Meta não encontrada:', connError);
       return new Response(
         JSON.stringify({ error: 'Conexão Meta não configurada' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -135,7 +135,7 @@ serve(async (req) => {
       if (!body.name || !body.category || !body.components) {
         return new Response(
           JSON.stringify({ error: 'name, category e components são obrigatórios' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -168,7 +168,7 @@ serve(async (req) => {
             error: metaData.error?.message || 'Erro ao criar template',
             details: metaData.error
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -210,7 +210,7 @@ serve(async (req) => {
       if (!templateName) {
         return new Response(
           JSON.stringify({ error: 'template_name é obrigatório para deletar' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
@@ -249,7 +249,7 @@ serve(async (req) => {
       if (!metaDeleteSuccess) {
         return new Response(
           JSON.stringify({ error: metaError || 'Erro ao deletar template' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
