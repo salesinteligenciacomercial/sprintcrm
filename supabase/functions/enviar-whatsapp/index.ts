@@ -1759,7 +1759,25 @@ serve(async (req) => {
       }
       // Evolution está conectada (DB) - enviar direto sem pre-check
       else {
-        if (!baseUrl || !apiKey) {
+        // 🔥 CORREÇÃO CRÍTICA: Templates DEVEM ser enviados via Meta API (Evolution não suporta templates oficiais)
+        if (hasMetaCredentials && validatedData.template_name) {
+          console.log("📘 [both] Template detectado - enviando via Meta API (obrigatório):", validatedData.template_name);
+          result = await sendMetaTemplateMessage(
+            connection.meta_phone_number_id,
+            connection.meta_access_token,
+            formattedNumber,
+            validatedData.template_name,
+            validatedData.template_language || 'pt_BR',
+            validatedData.template_components,
+            connection.meta_business_account_id
+          );
+          
+          // Fallback para Evolution se Meta falhar
+          if (!result.success && hasEvolutionConfig) {
+            console.log("🔄 Template Meta falhou, tentando Evolution como fallback...");
+            result = await sendEvolutionMessage(baseUrl, connection.instance_name, apiKey, validatedData.numero, false, validatedData);
+          }
+        } else if (!baseUrl || !apiKey) {
           if (hasMetaCredentials) {
             console.log("⚠️ Evolution não configurada, tentando Meta...");
             result = await sendMetaFallback(connection, formattedNumber, validatedData);
