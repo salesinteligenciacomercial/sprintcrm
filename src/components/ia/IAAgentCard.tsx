@@ -122,6 +122,7 @@ export function IAAgentCard({
   const [blockByTags, setBlockByTags] = useState(false);
   const [blockedTags, setBlockedTags] = useState<string[]>([]);
   const [newBlockedTag, setNewBlockedTag] = useState("");
+  const [availableCompanyTags, setAvailableCompanyTags] = useState<string[]>([]);
   
   // Estados para leitura de histórico
   const [readConversationHistory, setReadConversationHistory] = useState(true);
