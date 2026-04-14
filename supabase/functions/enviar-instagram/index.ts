@@ -84,7 +84,7 @@ serve(async (req) => {
         }
       }
 
-      // Também tentar a empresa pai (subconta usando token da mãe)
+      // Também tentar a empresa pai e empresas irmãs
       if (!connection) {
         const { data: parentCompany } = await supabase
           .from('companies')
@@ -93,18 +93,43 @@ serve(async (req) => {
           .maybeSingle();
 
         if (parentCompany?.parent_company_id) {
+          // Tentar na empresa pai
           const { data: parentConnection } = await supabase
             .from('whatsapp_connections')
             .select('instagram_access_token, instagram_account_id, instagram_username, meta_access_token')
             .eq('company_id', parentCompany.parent_company_id)
             .not('instagram_account_id', 'is', null)
-            .not('instagram_access_token', 'is', null)
             .limit(1)
             .maybeSingle();
 
-          if (parentConnection) {
+          if (parentConnection && (parentConnection.instagram_access_token || parentConnection.meta_access_token)) {
             console.log('✅ [INSTAGRAM-SEND] Conexão Instagram encontrada via empresa pai');
             connection = parentConnection;
+          }
+
+          // Se não encontrou no pai, buscar nas empresas irmãs (outras subcontas do mesmo pai)
+          if (!connection) {
+            const { data: siblings } = await supabase
+              .from('companies')
+              .select('id')
+              .eq('parent_company_id', parentCompany.parent_company_id)
+              .neq('id', company_id);
+
+            if (siblings && siblings.length > 0) {
+              const siblingIds = siblings.map(s => s.id);
+              const { data: siblingConnection } = await supabase
+                .from('whatsapp_connections')
+                .select('instagram_access_token, instagram_account_id, instagram_username, meta_access_token')
+                .in('company_id', siblingIds)
+                .not('instagram_account_id', 'is', null)
+                .limit(1)
+                .maybeSingle();
+
+              if (siblingConnection && (siblingConnection.instagram_access_token || siblingConnection.meta_access_token)) {
+                console.log('✅ [INSTAGRAM-SEND] Conexão Instagram encontrada via empresa irmã');
+                connection = siblingConnection;
+              }
+            }
           }
         }
       }
