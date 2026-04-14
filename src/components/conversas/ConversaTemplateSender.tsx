@@ -97,7 +97,32 @@ export function ConversaTemplateSender({
         .single();
       const sentByName = userProfile?.full_name || userProfile?.email || "Equipe";
 
-      // 1. Send via edge function
+      // 1. Insert record FIRST to avoid race condition with webhook status updates
+      const { data: insertedRecord, error: dbError } = await supabase.from("conversas").insert([{
+        numero: contactPhone,
+        telefone_formatado: telefoneNormalizado,
+        mensagem: textContent,
+        origem: "WhatsApp",
+        origem_api: origemApi || "meta",
+        status: "Processando",
+        tipo_mensagem: "template",
+        nome_contato: contactName,
+        company_id: companyId,
+        owner_id: user.id,
+        sent_by: sentByName,
+        fromme: true,
+        delivered: false,
+        read: false,
+        midia_url: templateMediaInfo.mediaUrl,
+        arquivo_nome: templateMediaInfo.fileName,
+      }]).select("id").single();
+
+      if (dbError) {
+        console.error("❌ Erro ao salvar template no banco:", dbError);
+        throw new Error("Erro ao salvar registro da mensagem");
+      }
+
+      // 2. Send via edge function
       const payload: any = {
         numero: telefoneNormalizado,
         company_id: companyId,
@@ -114,53 +139,32 @@ export function ConversaTemplateSender({
 
       const { data: sendResult, error } = await supabase.functions.invoke("enviar-whatsapp", { body: payload });
 
-      if (error) {
-        console.error("❌ Erro ao invocar função:", error);
-        throw new Error(error.message || "Falha ao chamar função de envio");
-      }
-      
-      if (!sendResult?.success) {
-        console.error("❌ Erro ao enviar template:", sendResult);
-        throw new Error(sendResult?.error || "Falha ao enviar template via WhatsApp");
+      if (error || !sendResult?.success) {
+        console.error("❌ Erro ao enviar template:", error || sendResult);
+        // Update record to failed status
+        await supabase.from("conversas").update({ status: "Falhou" }).eq("id", insertedRecord.id);
+        throw new Error(sendResult?.error || error?.message || "Falha ao enviar template via WhatsApp");
       }
 
       const whatsappMessageId = sendResult?.message_id || sendResult?.data?.messages?.[0]?.id || null;
       const providerMessageStatus = sendResult?.data?.messages?.[0]?.message_status || null;
+
       if (!whatsappMessageId) {
+        await supabase.from("conversas").update({ status: "Falhou" }).eq("id", insertedRecord.id);
         throw new Error("Envio sem confirmação do provedor");
       }
 
-      // 2. Save only confirmed sends to DB
-      const { error: dbError } = await supabase.from("conversas").insert([{
-        numero: contactPhone,
-        telefone_formatado: telefoneNormalizado,
-        mensagem: textContent,
-        origem: "WhatsApp",
-        origem_api: sendResult?.provider || origemApi || null,
-        status: "Processando",
-        tipo_mensagem: "template",
-        nome_contato: contactName,
-        company_id: companyId,
-        owner_id: user.id,
-        sent_by: sentByName,
-        fromme: true,
-        delivered: false,
-        read: false,
+      // 3. Update record with wamid from provider
+      await supabase.from("conversas").update({
         whatsapp_message_id: whatsappMessageId,
-        midia_url: templateMediaInfo.mediaUrl,
-        arquivo_nome: templateMediaInfo.fileName,
-      }]);
+        origem_api: sendResult?.provider || origemApi || null,
+      }).eq("id", insertedRecord.id);
 
-      if (dbError) {
-        console.error("❌ Erro ao salvar template no banco:", dbError);
-        toast.warning("Template aceito pela Meta, mas houve erro ao salvar o histórico.");
-      } else {
-        toast.success(
-          providerMessageStatus === "accepted"
-            ? "Template recebido pela Meta. Aguarde a confirmação da entrega."
-            : "Template enviado para processamento. Aguarde a confirmação da Meta."
-        );
-      }
+      toast.success(
+        providerMessageStatus === "accepted"
+          ? "Template recebido pela Meta. Aguarde a confirmação da entrega."
+          : "Template enviado para processamento. Aguarde a confirmação da Meta."
+      );
 
       // Reset & close
       setSelectedTemplate(null);
