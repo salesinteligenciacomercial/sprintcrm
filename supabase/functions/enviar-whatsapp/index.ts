@@ -1805,23 +1805,36 @@ serve(async (req) => {
       const baseUrl = resolvedEvolutionUrl;
       const apiKey = resolvedEvolutionKey;
       
-      if (!baseUrl || !apiKey) {
+      // 🔥 CORREÇÃO: Templates DEVEM ir pela Meta API mesmo quando provider é 'evolution'
+      if (hasMetaCredentials && validatedData.template_name) {
+        console.log("📘 [evolution] Template detectado - redirecionando para Meta API (obrigatório):", validatedData.template_name);
+        result = await sendMetaTemplateMessage(
+          connection.meta_phone_number_id,
+          connection.meta_access_token,
+          formattedNumber,
+          validatedData.template_name,
+          validatedData.template_language || 'pt_BR',
+          validatedData.template_components,
+          connection.meta_business_account_id
+        );
+      } else if (!baseUrl || !apiKey) {
         return new Response(
           JSON.stringify({ error: "Evolution API não configurada", code: "NO_EVOLUTION_CONFIG" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
+      } else {
+        // ⚡ ENVIO DIRETO - sem pre-check. Se falhar, o handler de erro em sendEvolutionMessage
+        // já tenta reconectar automaticamente (1 retry). Isso elimina o delay de 6-10s do pre-check.
+        result = await sendEvolutionMessage(baseUrl, connection.instance_name, apiKey, validatedData.numero, false, validatedData);
       }
-
-      // ⚡ ENVIO DIRETO - sem pre-check. Se falhar, o handler de erro em sendEvolutionMessage
-      // já tenta reconectar automaticamente (1 retry). Isso elimina o delay de 6-10s do pre-check.
-      result = await sendEvolutionMessage(baseUrl, connection.instance_name, apiKey, validatedData.numero, false, validatedData);
       
-      // Se Evolution falhou, tentar Meta como fallback (sem marcar disconnected no banco)
+      // Se falhou, tentar Meta como fallback (sem marcar disconnected no banco)
       if (!result.success) {
-        console.warn("⚠️ Evolution falhou:", result.error);
+        console.warn("⚠️ Falhou:", result.error);
         if (hasMetaCredentials) {
           console.log("🔄 Tentando Meta como fallback...");
           result = await sendMetaFallback(connection, formattedNumber, validatedData);
+        }
         }
       }
     }
