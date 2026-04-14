@@ -129,6 +129,20 @@ function getMessageDeliveryState(message: {
   };
 }
 
+function isInstagramPlaceholderName(value?: string | null): boolean {
+  const name = String(value ?? '').trim();
+  if (!name) return true;
+  if (/^Contato\s+Instagram$/i.test(name)) return true;
+  if (/^Instagram\s+\d+$/i.test(name)) return true;
+  if (/^\d{10,}$/.test(name.replace(/^ig_/, ''))) return true;
+  return false;
+}
+
+function getInstagramFallbackName(value?: string | null): string {
+  const digits = String(value ?? '').replace(/^ig_/, '').replace(/[^0-9]/g, '');
+  return digits ? `Instagram ${digits.slice(-6)}` : 'Instagram';
+}
+
 interface Message {
   id: string;
   content: string;
@@ -1868,8 +1882,20 @@ function Conversas() {
                     novoStatus = 'waiting';
                   }
                 }
+                const nextContactName = (() => {
+                  const incomingName = novaMensagem.nome_contato?.trim();
+                  if (isInstagramMessage && incomingName && !isInstagramPlaceholderName(incomingName)) {
+                    return incomingName;
+                  }
+                  if (isInstagramMessage && isInstagramPlaceholderName(conv.contactName)) {
+                    return getInstagramFallbackName(telefoneKey);
+                  }
+                  return conv.contactName;
+                })();
+
                 return {
                   ...conv,
+                  contactName: nextContactName,
                   messages: novasMensagens,
                   lastMessage: novaMensagem.mensagem || '',
                   status: novoStatus,
@@ -1886,15 +1912,13 @@ function Conversas() {
               contactName: (() => {
                 // Para nova conversa, usar nome_contato apenas se NÃO for um número puro e NÃO for fallback
                 const nome = novaMensagem.nome_contato || '';
-                const nomeDigits = nome.replace(/[^0-9]/g, '');
-                const isFallback = /^Instagram\s+\d+$/i.test(nome);
-                if (nome && !isFallback && !(nomeDigits.length > 8 && nomeDigits === nome)) {
+                const isFallback = isInstagramPlaceholderName(nome);
+                if (nome && !isFallback) {
                   return nome;
                 }
-                // ⚡ CORREÇÃO: Para Instagram, usar fallback amigável ao invés de ID numérico
                 const cleanKey = telefoneKey.replace(/^ig_/, '');
                 if (isInstagramMessage && /^\d{10,}$/.test(cleanKey)) {
-                  return `Contato Instagram`;
+                  return getInstagramFallbackName(cleanKey);
                 }
                 return cleanKey;
               })(),
@@ -2679,7 +2703,7 @@ function Conversas() {
               contactName: (() => {
                 const rawName = leadData.name || msg.nome_contato || 'Desconhecido';
                 const isIg = msg.origem?.toLowerCase() === 'instagram';
-                if (isIg && (/^\d{10,}$/.test(rawName) || /^Instagram\s+\d+$/i.test(rawName))) return `Instagram ${(msg.telefone_formatado || msg.numero || '').slice(-6)}`;
+                if (isIg && isInstagramPlaceholderName(rawName)) return getInstagramFallbackName(msg.telefone_formatado || msg.numero || '');
                 return rawName;
               })(),
               // PRIORIZAR NOME DO LEAD
@@ -3452,7 +3476,7 @@ function Conversas() {
           if (!nome) return false;
           // Ignorar nomes que são apenas números (telefone/ID)
           const nomeDigits = nome.replace(/[^0-9]/g, '');
-          return nome !== key && nome !== keyDigits && !(nomeDigits.length > 8 && nomeDigits === nome);
+            return nome !== key && nome !== keyDigits && !(nomeDigits.length > 8 && nomeDigits === nome) && !isInstagramPlaceholderName(nome);
         })?.nome_contato?.trim();
         if (nomeContato && nomeContato !== key) {
           if (!nomeParaTelefones.has(nomeContato)) {
@@ -3673,7 +3697,7 @@ function Conversas() {
           // PRIORIDADE 1: Nome do Lead (se existir) - APENAS para contatos individuais
           // ⚡ CORREÇÃO: Rejeitar nomes fallback "Instagram XXXXXX" do lead
           const leadNameRaw = leadInfo?.name || '';
-          const isLeadNameFallback = /^Instagram\s+\d+$/i.test(leadNameRaw);
+          const isLeadNameFallback = isInstagramPlaceholderName(leadNameRaw);
           contactName = (leadNameRaw && !isLeadNameFallback) ? leadNameRaw : '';
 
           // PRIORIDADE 2: Nome da mensagem (priorizar mensagens mais recentes com nome real)
@@ -3686,7 +3710,7 @@ function Conversas() {
                 if (!nome) return false;
                 const nomeDigits = nome.replace(/[^0-9]/g, '');
                 // Rejeitar nomes que são apenas números (telefone/ID do Instagram) ou fallbacks "Instagram XXXX"
-                return nome !== telefone && nome !== telefoneDigits && !(nomeDigits.length > 8 && nomeDigits === nome) && !/^Instagram\s+\d+$/i.test(nome);
+                return nome !== telefone && nome !== telefoneDigits && !(nomeDigits.length > 8 && nomeDigits === nome) && !isInstagramPlaceholderName(nome);
               })
               .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
             if (mensagensComNome.length > 0) {
@@ -3698,20 +3722,17 @@ function Conversas() {
           // Detectar se é Instagram baseado nas mensagens (antes da variável isInstagramConv)
           const isInstagramForName = mensagens.some(m => m.origem === 'Instagram');
           
-          if (!contactName || contactName.trim() === '' || contactName === telefone) {
+          if (!contactName || contactName.trim() === '' || contactName === telefone || (isInstagramForName && isInstagramPlaceholderName(contactName))) {
             const cleanTel = telefone.replace(/^ig_/, '');
             const isInstagramNumericId = isInstagramForName && /^\d{10,}$/.test(cleanTel);
             if (isInstagramNumericId) {
-              // ⚡ CORREÇÃO: Usar "Contato Instagram" como placeholder mais limpo
-              // O nome real será resolvido async via resolve-instagram-name
-              contactName = `Contato Instagram`;
+              contactName = getInstagramFallbackName(cleanTel);
             } else {
               contactName = cleanTel;
             }
           } else {
-            // ⚡ CORREÇÃO: Se o nome é um ID numérico longo do Instagram, usar placeholder
-            if (isInstagramForName && /^\d{10,}$/.test(contactName)) {
-              contactName = `Contato Instagram`;
+            if (isInstagramForName && isInstagramPlaceholderName(contactName)) {
+              contactName = getInstagramFallbackName(telefone);
             }
           }
         }
@@ -4069,7 +4090,7 @@ function Conversas() {
       const conversasComNomeFallback = novasConversas.filter(c => {
         if (c.channel !== 'instagram') return false;
         const nome = c.contactName || '';
-        return /^Instagram\s+\d+$/i.test(nome) || /^\d{10,}$/.test(nome);
+        return isInstagramPlaceholderName(nome);
       });
       if (conversasComNomeFallback.length > 0 && companyId) {
         (async () => {
@@ -4087,7 +4108,7 @@ function Conversas() {
                   body: { company_id: companyId, instagram_user_id: igId }
                 });
                 const resolvedName = res.data?.name;
-                if (resolvedName && !/^Instagram\s+\d+$/i.test(resolvedName) && !/^\d{10,}$/.test(resolvedName)) {
+                if (resolvedName && !isInstagramPlaceholderName(resolvedName)) {
                   console.log(`📸 [INSTAGRAM] Nome resolvido: ${igId} → ${resolvedName}`);
                   setConversations(prev => prev.map(c => {
                     const cIgId = (c.phoneNumber || c.id || '').replace(/^ig_/, '').replace(/[^0-9]/g, '');
@@ -4096,6 +4117,11 @@ function Conversas() {
                     }
                     return c;
                   }));
+                  setSelectedConv(prev => {
+                    if (!prev) return prev;
+                    const selectedIgId = (prev.phoneNumber || prev.id || '').replace(/^ig_/, '').replace(/[^0-9]/g, '');
+                    return selectedIgId === igId ? { ...prev, contactName: resolvedName } : prev;
+                  });
                 }
               } catch (e) {
                 console.warn(`⚠️ [INSTAGRAM] Falha ao resolver nome para ${igId}:`, e);
@@ -7542,8 +7568,8 @@ function Conversas() {
     // Normalizar: remover todos os caracteres não numéricos
     const normalized = phone.replace(/[^0-9]/g, '');
 
-    // Validar se é um número brasileiro válido (12 ou 13 dígitos)
-    const isValid = normalized.length >= 12 && normalized.length <= 13;
+    const isInstagramId = /^ig_/.test(phone) || normalized.length >= 15;
+    const isValid = isInstagramId ? normalized.length >= 15 : normalized.length >= 12 && normalized.length <= 13;
     if (!isValid) {
       console.warn('⚠️ [LEAD] Telefone inválido: tamanho incorreto', {
         original: phone,
