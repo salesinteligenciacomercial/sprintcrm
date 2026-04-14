@@ -60,16 +60,23 @@ export function TemplateSelector({
     setError(null);
     
     try {
-      const { data, error: fetchError } = await supabase
-        .from("whatsapp_templates")
-        .select("*")
-        .eq("company_id", companyId)
-        .eq("status", "APPROVED")
-        .order("name");
+      const { data: result, error: syncError } = await supabase.functions.invoke("whatsapp-templates", {
+        method: "POST",
+        body: {
+          company_id: companyId,
+          action: "list",
+          sync: true,
+        },
+      });
 
-      if (fetchError) throw fetchError;
-      
-      setTemplates((data || []) as Template[]);
+      if (syncError) throw syncError;
+      if (result?.error) throw new Error(result.error);
+
+      const approvedTemplates = Array.isArray(result?.templates)
+        ? result.templates.filter((template: Template) => template.status === "APPROVED")
+        : [];
+
+      setTemplates(approvedTemplates as Template[]);
     } catch (err: any) {
       console.error("Erro ao carregar templates:", err);
       setError("Erro ao carregar templates aprovados");
