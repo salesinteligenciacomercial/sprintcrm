@@ -286,6 +286,10 @@ function getTemplateHeaderFileName(mediaLink: string, mediaType: 'image' | 'vide
   return `${templateName}.${fallbackExtension}`;
 }
 
+function normalizeTemplateName(templateName: string): string {
+  return templateName.trim().toLowerCase();
+}
+
 async function uploadTemplateHeaderMediaByLink(
   phoneNumberId: string,
   accessToken: string,
@@ -414,6 +418,81 @@ async function lookupTemplateLanguage(
   }
 }
 
+async function resolveMetaTemplateNameAndLanguage(
+  wabaId: string,
+  accessToken: string,
+  templateName: string,
+  fallbackLanguage: string,
+): Promise<{ exists: boolean; name: string; language: string; error?: string }> {
+  const normalizedTemplateName = normalizeTemplateName(templateName);
+
+  try {
+    const url = `${META_API_BASE_URL}/${META_API_VERSION}/${wabaId}/message_templates?fields=id,name,status,language&name=${encodeURIComponent(normalizedTemplateName)}&limit=50`;
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+    });
+
+    if (!response.ok) {
+      console.warn("⚠️ Não foi possível validar o nome do template na Meta:", response.status);
+      return {
+        exists: true,
+        name: normalizedTemplateName,
+        language: fallbackLanguage,
+      };
+    }
+
+    const data = await response.json();
+    const templates = Array.isArray(data.data) ? data.data : [];
+
+    if (templates.length === 0) {
+      return {
+        exists: false,
+        name: normalizedTemplateName,
+        language: fallbackLanguage,
+        error: `Template '${templateName}' não existe mais na Meta. Atualize a sincronização dos templates e tente novamente.`,
+      };
+    }
+
+    const sameNameTemplates = templates.filter((template: any) => normalizeTemplateName(template.name || '') === normalizedTemplateName);
+    const exactApprovedMatch = sameNameTemplates.find((template: any) => template.language === fallbackLanguage && template.status === 'APPROVED');
+    const approvedMatch = sameNameTemplates.find((template: any) => template.status === 'APPROVED');
+    const fallbackMatch = sameNameTemplates[0] || templates[0];
+    const resolvedTemplate = exactApprovedMatch || approvedMatch || fallbackMatch;
+
+    if (!resolvedTemplate) {
+      return {
+        exists: false,
+        name: normalizedTemplateName,
+        language: fallbackLanguage,
+        error: `Template '${templateName}' não foi localizado na Meta.`,
+      };
+    }
+
+    const resolvedLanguage = resolvedTemplate.language || fallbackLanguage;
+
+    if (resolvedTemplate.name && resolvedTemplate.name !== templateName) {
+      console.log(`🔄 Auto-corrigindo nome do template '${templateName}': ${resolvedTemplate.name}`);
+    }
+
+    if (resolvedLanguage !== fallbackLanguage) {
+      console.log(`🔄 Auto-corrigindo idioma do template '${templateName}': ${fallbackLanguage} → ${resolvedLanguage}`);
+    }
+
+    return {
+      exists: true,
+      name: resolvedTemplate.name || normalizedTemplateName,
+      language: resolvedLanguage,
+    };
+  } catch (error) {
+    console.warn("⚠️ Erro ao validar template na Meta:", error);
+    return {
+      exists: true,
+      name: normalizedTemplateName,
+      language: fallbackLanguage,
+    };
+  }
+}
+
 // Send template message via Meta API
 async function sendMetaTemplateMessage(
   phoneNumberId: string,
@@ -429,8 +508,25 @@ async function sendMetaTemplateMessage(
 
     // Auto-correct language if WABA ID is available
     let resolvedLanguage = language;
+    let resolvedTemplateName = normalizeTemplateName(templateName);
     if (wabaId) {
-      resolvedLanguage = await lookupTemplateLanguage(wabaId, accessToken, templateName, language);
+      const resolvedTemplate = await resolveMetaTemplateNameAndLanguage(
+        wabaId,
+        accessToken,
+        templateName,
+        language,
+      );
+
+      if (!resolvedTemplate.exists) {
+        return {
+          success: false,
+          provider: 'meta',
+          error: resolvedTemplate.error,
+        };
+      }
+
+      resolvedTemplateName = resolvedTemplate.name;
+      resolvedLanguage = resolvedTemplate.language;
     }
     
     // Sanitize components to prevent Meta API errors
@@ -441,7 +537,7 @@ async function sendMetaTemplateMessage(
     const hasButtonComponents = sanitizedComponents?.some((c: any) => c.type === 'button');
     if ((!hasHeaderComponent || !hasButtonComponents) && wabaId) {
       console.log("🔍 Auto-buscando componentes do template na Meta API...");
-      const autoComponents = await fetchTemplateAutoComponents(wabaId, accessToken, templateName);
+      const autoComponents = await fetchTemplateAutoComponents(wabaId, accessToken, resolvedTemplateName);
       
       if (!hasHeaderComponent && autoComponents.header) {
         console.log(`✅ Auto-adicionando header de mídia ao template`);
@@ -456,12 +552,12 @@ async function sendMetaTemplateMessage(
     sanitizedComponents = await ensureTemplateHeaderMediaIds(
       phoneNumberId,
       accessToken,
-      templateName,
+      resolvedTemplateName,
       sanitizedComponents,
     );
     
     const templatePayload: any = {
-      name: templateName,
+      name: resolvedTemplateName,
       language: { code: resolvedLanguage },
     };
     
@@ -477,7 +573,7 @@ async function sendMetaTemplateMessage(
       template: templatePayload
     };
 
-    console.log("📤 Meta API - Enviando template:", templateName);
+    console.log("📤 Meta API - Enviando template:", resolvedTemplateName);
     console.log("📦 Template payload:", JSON.stringify(fullPayload, null, 2));
     
     const response = await fetch(url, {
@@ -493,7 +589,17 @@ async function sendMetaTemplateMessage(
     
     if (!response.ok) {
       console.error('Meta API Template Error:', data);
-      return { success: false, provider: 'meta', error: data.error?.message || 'Erro ao enviar template Meta API' };
+      const metaErrorMessage = data.error?.message || 'Erro ao enviar template Meta API';
+
+      if (data.error?.code === 132001 || /Template name does not exist in the translation/i.test(metaErrorMessage)) {
+        return {
+          success: false,
+          provider: 'meta',
+          error: `Template '${resolvedTemplateName}' não existe na tradução ${resolvedLanguage} da Meta. Recarregue os templates sincronizados antes de enviar.`,
+        };
+      }
+
+      return { success: false, provider: 'meta', error: metaErrorMessage };
     }
 
     console.log("✅ Meta API - Template enviado:", data.messages?.[0]?.id);

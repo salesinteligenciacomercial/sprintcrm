@@ -9,6 +9,10 @@ const corsHeaders = {
 const META_API_VERSION = 'v18.0';
 const META_API_BASE_URL = 'https://graph.facebook.com';
 
+function buildTemplateKey(name: string | null | undefined, language: string | null | undefined) {
+  return `${String(name || '').trim().toLowerCase()}::${String(language || '').trim()}`;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -90,8 +94,11 @@ serve(async (req) => {
 
         const templates = metaData.data || [];
         console.log(`Templates encontrados: ${templates.length}`);
+        const remoteTemplateKeys = new Set<string>();
 
         for (const template of templates) {
+          remoteTemplateKeys.add(buildTemplateKey(template.name, template.language));
+
           await supabase
             .from('whatsapp_templates')
             .upsert({
@@ -109,8 +116,36 @@ serve(async (req) => {
             });
         }
 
+        let removed = 0;
+        const { data: localTemplates, error: localTemplatesError } = await supabase
+          .from('whatsapp_templates')
+          .select('id, name, language')
+          .eq('company_id', companyId);
+
+        if (localTemplatesError) {
+          console.error('Erro ao listar templates locais para limpeza:', localTemplatesError);
+        } else {
+          const staleTemplateIds = (localTemplates || [])
+            .filter((template) => !remoteTemplateKeys.has(buildTemplateKey(template.name, template.language)))
+            .map((template) => template.id);
+
+          if (staleTemplateIds.length > 0) {
+            const { error: deleteError } = await supabase
+              .from('whatsapp_templates')
+              .delete()
+              .in('id', staleTemplateIds);
+
+            if (deleteError) {
+              console.error('Erro ao remover templates órfãos:', deleteError);
+            } else {
+              removed = staleTemplateIds.length;
+              console.log(`Templates órfãos removidos: ${removed}`);
+            }
+          }
+        }
+
         return new Response(
-          JSON.stringify({ success: true, templates, synced: templates.length }),
+          JSON.stringify({ success: true, templates, synced: templates.length, removed }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
