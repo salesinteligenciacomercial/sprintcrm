@@ -34,7 +34,7 @@ export const FloatingDialerButton = () => {
   const [showNotesDialog, setShowNotesDialog] = useState(false);
 
   // Draggable state
-  const [position, setPosition] = useState({ x: 24, y: 90 });
+  const [position, setPosition] = useState({ x: 24, y: 162 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   const hasMoved = useRef(false);

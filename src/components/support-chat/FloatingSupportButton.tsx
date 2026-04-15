@@ -28,7 +28,7 @@ export const FloatingSupportButton = () => {
   const totalUnread = getTotalUnread();
 
   // Draggable
-  const [position, setPosition] = useState({ x: 24, y: 152 });
+  const [position, setPosition] = useState({ x: 24, y: 224 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   const hasMoved = useRef(false);
