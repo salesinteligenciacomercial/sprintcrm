@@ -227,10 +227,10 @@ export function MainLayout() {
       />
       
       {/* Botão flutuante do chat interno */}
-      <FloatingChatButton />
+      {chatVisible && <FloatingChatButton />}
       
       {/* Botão flutuante do discador */}
-      <FloatingDialerButton />
+      {dialerVisible && <FloatingDialerButton />}
     </div>
   );
 }
