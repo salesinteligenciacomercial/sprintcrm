@@ -1,5 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChatDrawer } from './ChatDrawer';
 import { useInternalChat } from '@/hooks/useInternalChat';
@@ -9,11 +8,10 @@ export const FloatingChatButton = () => {
   const { getTotalUnread } = useInternalChat();
   const totalUnread = getTotalUnread();
 
-  const [position, setPosition] = useState({ x: 24, y: 24 }); // from bottom-right
+  const [position, setPosition] = useState({ x: 24, y: 24 });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   const hasMoved = useRef(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
     setIsDragging(true);
@@ -29,17 +27,13 @@ export const FloatingChatButton = () => {
 
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
     if (!isDragging || !dragStartRef.current) return;
-
     const deltaX = dragStartRef.current.x - e.clientX;
     const deltaY = dragStartRef.current.y - e.clientY;
-
     if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
       hasMoved.current = true;
     }
-
-    const newX = Math.max(0, Math.min(window.innerWidth - 56, dragStartRef.current.posX + deltaX));
-    const newY = Math.max(0, Math.min(window.innerHeight - 56, dragStartRef.current.posY + deltaY));
-
+    const newX = Math.max(0, Math.min(window.innerWidth - 60, dragStartRef.current.posX + deltaX));
+    const newY = Math.max(0, Math.min(window.innerHeight - 60, dragStartRef.current.posY + deltaY));
     setPosition({ x: newX, y: newY });
   }, [isDragging]);
 
@@ -57,19 +51,29 @@ export const FloatingChatButton = () => {
   return (
     <>
       <button
-        ref={buttonRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onClick={handleClick}
-        className={`fixed z-50 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200 bg-primary text-primary-foreground flex items-center justify-center touch-none select-none ${isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'}`}
+        className={`fixed z-50 h-[56px] w-[56px] rounded-full flex items-center justify-center touch-none select-none ${isDragging ? 'cursor-grabbing scale-110' : 'cursor-grab'}`}
         style={{
           right: `${position.x}px`,
           bottom: `${position.y}px`,
           transition: isDragging ? 'none' : 'transform 0.2s',
+          background: 'linear-gradient(135deg, #FF6B00 0%, #FF8C33 100%)',
+          boxShadow: '0 4px 14px rgba(255, 107, 0, 0.4)',
         }}
       >
-        <MessageCircle className="h-6 w-6" />
+        {/* Grid de 9 pontos estilo Nvoip */}
+        <div className="grid grid-cols-3 gap-[5px]">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-[5px] w-[5px] rounded-full bg-white/90"
+            />
+          ))}
+        </div>
+
         {totalUnread > 0 && (
           <Badge
             className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs bg-destructive text-destructive-foreground"
