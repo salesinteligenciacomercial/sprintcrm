@@ -113,58 +113,27 @@ export const useConversationsLoader = () => {
       const conversasMap = new Map<string, any[]>();
       validConversas.forEach(conv => {
         const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
+        const normalizedDigits = String(conv.telefone_formatado || conv.numero || '').replace(/[^0-9]/g, '');
+        const isInstagram = conv.origem_api === 'meta' && normalizedDigits.length >= 15;
         
-        // ✅ NORMALIZAÇÃO RIGOROSA: SEMPRE usar o mesmo critério de chave
         let key: string;
         if (isGroup) {
           key = conv.numero; // Grupos mantêm o ID original
+        } else if (isInstagram) {
+          // ⚡ Instagram IDs: usar prefixo ig_ para não confundir com telefone
+          key = `ig_${normalizedDigits}`;
         } else {
-          // ✅ CORREÇÃO DEFINITIVA: Normalizar SEMPRE com detecção de números malformados
-          const normalizePhone = (phone: string): string => {
-            if (!phone) return '';
-            // Remove tudo exceto dígitos
-            let digits = phone.replace(/[^0-9]/g, '');
-            
-            // ⚡ CORREÇÃO CRÍTICA: Detectar números malformados com DDI duplicado
-            // Ex: "5515578500694049" (16 dígitos) -> remover "5515" duplicado
-            if (digits.length > 13) {
-              console.log('⚠️ [AGRUPAMENTO] Número suspeito com mais de 13 dígitos:', {
-                original: digits,
-                tamanho: digits.length
-              });
-              
-              // Tentar extrair os últimos 12 dígitos (55 + DDD + número)
-              // ou últimos 11 (DDD + número)
-              if (digits.length === 16 && digits.startsWith('5515')) {
-                // Caso específico: 5515578500694049 -> pegar últimos 12 dígitos
-                digits = digits.substring(digits.length - 12);
-                console.log('✅ [AGRUPAMENTO] Número corrigido (últimos 12 dígitos):', digits);
-              } else if (digits.length > 13) {
-                // Caso genérico: pegar últimos 12 ou 13 dígitos
-                digits = digits.substring(digits.length - 12);
-                console.log('✅ [AGRUPAMENTO] Número corrigido (últimos 12 dígitos):', digits);
-              }
-            }
-            
-            return digits;
-          };
+          // Telefone WhatsApp: normalizar
+          let digits = normalizedDigits;
           
-          const tel1 = normalizePhone(conv.telefone_formatado || '');
-          const tel2 = normalizePhone(conv.numero || '');
+          // Detectar DDI duplicado (ex: 5515578500694049 -> últimos 12 dígitos)
+          if (digits.length > 13) {
+            digits = digits.substring(digits.length - 12);
+          }
           
-          // SEMPRE priorizar telefone_formatado (mais confiável)
-          key = tel1 || tel2;
-          
-          console.log('🔑 [AGRUPAMENTO] Chave de agrupamento:', {
-            telefone_formatado: conv.telefone_formatado,
-            numero: conv.numero,
-            tel1_normalizado: tel1,
-            tel2_normalizado: tel2,
-            chave_final: key
-          });
+          key = digits;
         }
         
-        // Se não tem telefone válido, usar numero original
         if (!key) {
           key = conv.numero;
         }
@@ -172,8 +141,7 @@ export const useConversationsLoader = () => {
         if (!conversasMap.has(key)) {
           conversasMap.set(key, []);
         }
-        const mensagens = conversasMap.get(key)!;
-        mensagens.push(conv);
+        conversasMap.get(key)!.push(conv);
       });
 
       // ⚡ OTIMIZAÇÃO: Buscar apenas leads necessários com query filtrada
