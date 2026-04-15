@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 export default function ChatInterno() {
+  const { chatVisible, toggleChat } = useFloatingButtonsVisibility();
   const [selectedConversation, setSelectedConversation] = useState<InternalConversation | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newConversationOpen, setNewConversationOpen] = useState(false);
