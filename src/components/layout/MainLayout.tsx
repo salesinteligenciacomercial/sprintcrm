@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SystemUpdatesModal } from "@/components/updates/SystemUpdatesModal";
 import { useSystemUpdates } from "@/hooks/useSystemUpdates";
 import { FloatingChatButton } from "@/components/internal-chat";
+import { FloatingDialerButton } from "@/components/discador/FloatingDialerButton";
 
 export function MainLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -225,6 +226,9 @@ export function MainLayout() {
       
       {/* Botão flutuante do chat interno */}
       <FloatingChatButton />
+      
+      {/* Botão flutuante do discador */}
+      <FloatingDialerButton />
     </div>
   );
 }
