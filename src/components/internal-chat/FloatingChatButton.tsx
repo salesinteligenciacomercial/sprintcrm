@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { MessageCircle, X, ArrowLeft, Plus, Phone, Video, Users, User, Send, Paperclip, Loader2, Mic, Image, FileText, StopCircle, Share2, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
+import { MessageCircle, X, ArrowLeft, Plus, Phone, Video, Users, User, Send, Paperclip, Loader2, Mic, Image, FileText, StopCircle, Share2, Maximize2, Minimize2, ExternalLink, UsersRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,8 @@ import { useInternalMessages, InternalMessage } from '@/hooks/useInternalMessage
 import { NewConversationDialog } from './NewConversationDialog';
 import { InlineSharePanel } from './InlineSharePanel';
 import { ConversaPopup } from '@/components/leads/ConversaPopup';
+import { CreatePublicMeetingDialog } from '@/components/meetings/CreatePublicMeetingDialog';
+import { GroupCallModal } from '@/components/meetings/GroupCallModal';
 import { MessageItem } from './MessageItem';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -31,6 +33,8 @@ export const FloatingChatButton = () => {
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [popupSize, setPopupSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+  const [showCreateGroupCall, setShowCreateGroupCall] = useState(false);
+  const [activeGroupCall, setActiveGroupCall] = useState<{ meetingId: string } | null>(null);
   const navigate = useNavigate();
 
   const {
@@ -187,9 +191,14 @@ export const FloatingChatButton = () => {
                 </>
               )}
               {!selectedConversation && (
-                <button onClick={() => setShowNewDialog(true)} className="p-1 rounded hover:bg-white/20 transition-colors" title="Nova Conversa">
-                  <Plus className="h-4 w-4 text-white" />
-                </button>
+                <>
+                  <button onClick={() => setShowCreateGroupCall(true)} className="p-1 rounded hover:bg-white/20 transition-colors" title="Chamada de vídeo em grupo">
+                    <UsersRound className="h-4 w-4 text-white" />
+                  </button>
+                  <button onClick={() => setShowNewDialog(true)} className="p-1 rounded hover:bg-white/20 transition-colors" title="Nova Conversa">
+                    <Plus className="h-4 w-4 text-white" />
+                  </button>
+                </>
               )}
               <button onClick={() => setIsOpen(false)} className="p-1 rounded hover:bg-white/20 transition-colors">
                 <X className="h-4 w-4 text-white" />
@@ -460,6 +469,26 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
           leadId={selectedLeadForChat.id}
           leadName={selectedLeadForChat.name}
           leadPhone={selectedLeadForChat.telefone || ''}
+        />
+      )}
+      {/* Group Video Call */}
+      <CreatePublicMeetingDialog
+        open={showCreateGroupCall}
+        onClose={() => setShowCreateGroupCall(false)}
+        onMeetingCreated={(id) => console.log('Meeting created:', id)}
+        onJoinMeeting={(id) => {
+          setShowCreateGroupCall(false);
+          setActiveGroupCall({ meetingId: id });
+        }}
+      />
+
+      {activeGroupCall && currentUserId && (
+        <GroupCallModal
+          open={true}
+          onClose={() => setActiveGroupCall(null)}
+          meetingId={activeGroupCall.meetingId}
+          hostUserId={currentUserId}
+          hostUserName=""
         />
       )}
     </div>
