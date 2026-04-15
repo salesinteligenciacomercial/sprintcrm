@@ -33,6 +33,8 @@ export const FloatingChatButton = () => {
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
   const [popupSize, setPopupSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+  const [showCreateGroupCall, setShowCreateGroupCall] = useState(false);
+  const [activeGroupCall, setActiveGroupCall] = useState<{ meetingId: string } | null>(null);
   const navigate = useNavigate();
 
   const {
