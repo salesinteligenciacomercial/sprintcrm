@@ -1678,6 +1678,7 @@ function Conversas() {
         const isGroupMessage = novaMensagem.is_group === true || /@g\.us$/.test(novaMensagem.numero || '');
         // ⚡ CORREÇÃO: Detectar Instagram via origem
         const isInstagramMessage = novaMensagem.origem === 'Instagram' || (novaMensagem.origem_api === 'meta' && String(novaMensagem.telefone_formatado || novaMensagem.numero || '').replace(/[^0-9]/g, '').length > 13);
+        const isMessengerMessage = !isInstagramMessage && (novaMensagem.origem === 'Messenger' || novaMensagem.origem === 'Facebook' || novaMensagem.origem === 'messenger');
         
         const telefone = isGroupMessage 
           ? (novaMensagem.numero || '') // Manter formato original para grupos
@@ -1924,7 +1925,7 @@ function Conversas() {
                 }
                 return cleanKey;
               })(),
-              channel: isInstagramMessage ? 'instagram' : 'whatsapp' as const,
+              channel: isInstagramMessage ? 'instagram' : isMessengerMessage ? 'facebook' : 'whatsapp' as const,
               status: novaMensagemObj.sender === 'user' ? 'answered' : 'waiting',
               lastMessage: novaMensagem.mensagem || '',
               unread: novaMensagemObj.sender === 'contact' ? 1 : 0,
