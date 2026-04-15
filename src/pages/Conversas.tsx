@@ -8927,13 +8927,6 @@ function Conversas() {
               <span className="text-xs">Transferidos</span>
             </Button>
             
-            {/* 🆕 Botão Filtros Avançados */}
-            <ConversasAdvancedFilter
-              companyId={userCompanyId}
-              filters={advancedFilters}
-              onFiltersChange={setAdvancedFilters}
-              allTags={allTags}
-            />
           </div>
         </div>
 
