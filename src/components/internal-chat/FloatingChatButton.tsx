@@ -131,8 +131,8 @@ export const FloatingChatButton = () => {
           style={{
             right: `${position.x}px`,
             bottom: `${position.y + 64}px`,
-            width: '320px',
-            maxHeight: '480px',
+            width: '416px',
+            maxHeight: '576px',
           }}
         >
           {/* Header */}
