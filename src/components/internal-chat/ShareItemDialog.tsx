@@ -247,7 +247,7 @@ export const ShareItemDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md w-[95vw] max-h-[85vh]">
+      <DialogContent className="sm:max-w-md w-[95vw] max-h-[85vh]" style={{ zIndex: 99999 }}>
         <DialogHeader>
           <DialogTitle className="text-lg">Compartilhar Item</DialogTitle>
         </DialogHeader>
