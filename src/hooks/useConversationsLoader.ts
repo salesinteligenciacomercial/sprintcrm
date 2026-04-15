@@ -93,17 +93,15 @@ export const useConversationsLoader = () => {
         if (!conv.numero || conv.numero.includes('{{')) return false;
         if (!conv.mensagem || conv.mensagem.includes('{{')) return false;
         
-        // Validação 3: VALIDAR RIGOROSAMENTE o tamanho do telefone
+        // Validação 3: VALIDAR tamanho do telefone - permitir Instagram IDs (15+ dígitos)
         const telefoneNormalizado = conv.telefone_formatado?.replace(/[^0-9]/g, '') || conv.numero?.replace(/[^0-9]/g, '') || '';
+        const isInstagram = conv.origem_api === 'meta' && telefoneNormalizado.length >= 15;
+        const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
         
-        // ⚡ CORREÇÃO CRÍTICA: Telefones válidos brasileiros têm 11-13 dígitos APENAS
-        // - 11 dígitos: DDD + número (ex: 11987654321)
-        // - 12 dígitos: 0 + DDD + número (ex: 011987654321) 
-        // - 13 dígitos: 55 + DDD + número (ex: 5511987654321)
-        // QUALQUER COISA DIFERENTE é número corrompido/malformado/de outra instância
-        if (telefoneNormalizado.length > 0) {
+        // Instagram IDs e grupos não seguem validação de telefone brasileiro
+        if (!isInstagram && !isGroup && telefoneNormalizado.length > 0) {
           if (telefoneNormalizado.length < 11 || telefoneNormalizado.length > 13) {
-            console.warn(`🚫 [FILTRO CRÍTICO] Telefone malformado/outra instância bloqueado: ${telefoneNormalizado} (${telefoneNormalizado.length} dígitos) - company: ${conv.company_id}`);
+            console.warn(`🚫 [FILTRO CRÍTICO] Telefone malformado bloqueado: ${telefoneNormalizado} (${telefoneNormalizado.length} dígitos)`);
             return false;
           }
         }
@@ -115,58 +113,27 @@ export const useConversationsLoader = () => {
       const conversasMap = new Map<string, any[]>();
       validConversas.forEach(conv => {
         const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
+        const normalizedDigits = String(conv.telefone_formatado || conv.numero || '').replace(/[^0-9]/g, '');
+        const isInstagram = conv.origem_api === 'meta' && normalizedDigits.length >= 15;
         
-        // ✅ NORMALIZAÇÃO RIGOROSA: SEMPRE usar o mesmo critério de chave
         let key: string;
         if (isGroup) {
           key = conv.numero; // Grupos mantêm o ID original
+        } else if (isInstagram) {
+          // ⚡ Instagram IDs: usar prefixo ig_ para não confundir com telefone
+          key = `ig_${normalizedDigits}`;
         } else {
-          // ✅ CORREÇÃO DEFINITIVA: Normalizar SEMPRE com detecção de números malformados
-          const normalizePhone = (phone: string): string => {
-            if (!phone) return '';
-            // Remove tudo exceto dígitos
-            let digits = phone.replace(/[^0-9]/g, '');
-            
-            // ⚡ CORREÇÃO CRÍTICA: Detectar números malformados com DDI duplicado
-            // Ex: "5515578500694049" (16 dígitos) -> remover "5515" duplicado
-            if (digits.length > 13) {
-              console.log('⚠️ [AGRUPAMENTO] Número suspeito com mais de 13 dígitos:', {
-                original: digits,
-                tamanho: digits.length
-              });
-              
-              // Tentar extrair os últimos 12 dígitos (55 + DDD + número)
-              // ou últimos 11 (DDD + número)
-              if (digits.length === 16 && digits.startsWith('5515')) {
-                // Caso específico: 5515578500694049 -> pegar últimos 12 dígitos
-                digits = digits.substring(digits.length - 12);
-                console.log('✅ [AGRUPAMENTO] Número corrigido (últimos 12 dígitos):', digits);
-              } else if (digits.length > 13) {
-                // Caso genérico: pegar últimos 12 ou 13 dígitos
-                digits = digits.substring(digits.length - 12);
-                console.log('✅ [AGRUPAMENTO] Número corrigido (últimos 12 dígitos):', digits);
-              }
-            }
-            
-            return digits;
-          };
+          // Telefone WhatsApp: normalizar
+          let digits = normalizedDigits;
           
-          const tel1 = normalizePhone(conv.telefone_formatado || '');
-          const tel2 = normalizePhone(conv.numero || '');
+          // Detectar DDI duplicado (ex: 5515578500694049 -> últimos 12 dígitos)
+          if (digits.length > 13) {
+            digits = digits.substring(digits.length - 12);
+          }
           
-          // SEMPRE priorizar telefone_formatado (mais confiável)
-          key = tel1 || tel2;
-          
-          console.log('🔑 [AGRUPAMENTO] Chave de agrupamento:', {
-            telefone_formatado: conv.telefone_formatado,
-            numero: conv.numero,
-            tel1_normalizado: tel1,
-            tel2_normalizado: tel2,
-            chave_final: key
-          });
+          key = digits;
         }
         
-        // Se não tem telefone válido, usar numero original
         if (!key) {
           key = conv.numero;
         }
@@ -174,8 +141,7 @@ export const useConversationsLoader = () => {
         if (!conversasMap.has(key)) {
           conversasMap.set(key, []);
         }
-        const mensagens = conversasMap.get(key)!;
-        mensagens.push(conv);
+        conversasMap.get(key)!.push(conv);
       });
 
       // ⚡ OTIMIZAÇÃO: Buscar apenas leads necessários com query filtrada
@@ -270,23 +236,45 @@ export const useConversationsLoader = () => {
       // Criar conversas - ⚡ CORREÇÃO DEFINITIVA: Priorizar nome do lead e unificar nomes variantes
       const novasConversas: Conversation[] = Array.from(conversasMap.entries())
         .map(([telefone, mensagens]) => {
-          const leadInfo = leadsMap.get(telefone);
+          // Para Instagram, buscar lead pelo ID sem prefixo ig_
+          const lookupKey = telefone.replace(/^ig_/, '').replace(/[^0-9]/g, '');
+          const leadInfo = leadsMap.get(lookupKey) || leadsMap.get(telefone);
           const isGroup = mensagens[0]?.is_group || /@g\.us$/.test(telefone);
+          const isInstagramConversation = telefone.startsWith('ig_') || mensagens.some(m => {
+            const digits = String(m.telefone_formatado || m.numero || '').replace(/[^0-9]/g, '');
+            return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
+          });
+          
+          // Helper: verificar se nome é um placeholder numérico do Instagram
+          const isBadInstagramName = (name: string | undefined | null): boolean => {
+            if (!name || name.trim() === '') return true;
+            const n = name.trim();
+            if (/^\d{10,}$/.test(n)) return true; // Apenas dígitos (ID numérico)
+            if (/^ig_\d+$/.test(n)) return true;
+            if (/^Contato\s+Instagram$/i.test(n)) return true;
+            if (/^Instagram\s+\d+$/i.test(n)) return true;
+            if (n === telefone || n === lookupKey) return true;
+            return false;
+          };
           
           // ⚡ PRIORIDADE 1: Nome do lead cadastrado no CRM (mais confiável)
           let contactName = leadInfo?.name;
           
-          // Se não tem lead ou nome é igual ao telefone, buscar melhor nome nas mensagens
+          // Se nome do lead é um placeholder numérico, ignorar
+          if (isInstagramConversation && isBadInstagramName(contactName)) {
+            contactName = undefined;
+          }
+          
+          // Se não tem lead ou nome é inválido, buscar melhor nome nas mensagens
           if (!contactName || contactName === telefone || contactName.trim() === '') {
-            // ⚡ PRIORIDADE 2: Buscar o nome mais completo nas mensagens (ignorando variações)
+            // ⚡ PRIORIDADE 2: Buscar o nome mais completo nas mensagens
             const nomesEncontrados = mensagens
               .map(m => m.nome_contato?.trim())
               .filter(nome => {
                 if (!nome || nome === telefone) return false;
-                const nomeLower = nome.toLowerCase();
-                // Ignorar nomes genéricos ou variações de teste
-                const nomesInvalidos = ['jeohvah', 'jeo', 'test', 'teste', 'user'];
-                return !nomesInvalidos.some(invalido => nomeLower.includes(invalido));
+                // Para Instagram, filtrar nomes numéricos
+                if (isInstagramConversation && isBadInstagramName(nome)) return false;
+                return true;
               });
             
             // Pegar o nome mais longo (geralmente é o mais completo)
@@ -297,13 +285,13 @@ export const useConversationsLoader = () => {
             }
           }
           
-          // ⚡ CORREÇÃO CRÍTICA: Fallback CORRETO baseado no tipo da conversa
+          // ⚡ Fallback baseado no tipo da conversa
           if (!contactName || contactName.trim() === '') {
-            // Se é grupo e não tem nome, usar "Grupo"
             if (isGroup) {
               contactName = 'Grupo';
+            } else if (isInstagramConversation) {
+              contactName = `Contato Instagram`; // Placeholder legível em vez de número
             } else {
-              // Se é conversa individual, usar o telefone
               contactName = telefone;
             }
           }
@@ -388,13 +376,17 @@ export const useConversationsLoader = () => {
                            mensagens.find(m => m.origem_api)?.origem_api || 
                            'evolution';
 
-          // Avatar: usar foto do lead se disponível
-          const avatarUrl = leadInfo?.profilePictureUrl || undefined;
+          // Avatar: usar foto do lead se disponível, com fallback por canal
+          const avatarUrl = leadInfo?.profilePictureUrl 
+            ? leadInfo.profilePictureUrl
+            : isInstagramConversation
+              ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=E1306C&color=fff`
+              : undefined;
 
           return {
             id: leadInfo?.leadId || `conv-${telefone}`,
             contactName,
-            channel: "whatsapp" as const,
+            channel: isInstagramConversation ? "instagram" as const : "whatsapp" as const,
             status: statusConversa,
             lastMessage: ultimaMensagem?.content || '',
             unread: 0,
