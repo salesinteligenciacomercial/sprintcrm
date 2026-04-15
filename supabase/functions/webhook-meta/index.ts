@@ -589,15 +589,15 @@ function transformInstagramPayload(entry: any) {
       
       messages.push({
         message_id: messageData.mid || `ig_${Date.now()}`,
-        from: senderId,
+        from: isEcho ? recipientId : senderId,
         timestamp: messaging.timestamp || Math.floor(Date.now() / 1000),
         type: messageType,
         content: messageContent || '[Mensagem Instagram]',
         media_id: mediaUrl,
-        contact_name: senderId,
+        contact_name: isEcho ? recipientId : senderId,
         instagram_account_id: instagramAccountId,
         recipient_id: recipientId,
-        is_from_me: false,
+        is_from_me: isEcho,
         source: 'instagram',
       });
     }
