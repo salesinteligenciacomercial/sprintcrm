@@ -357,13 +357,17 @@ export const useConversationsLoader = () => {
                            mensagens.find(m => m.origem_api)?.origem_api || 
                            'evolution';
 
-          // Avatar: usar foto do lead se disponível
-          const avatarUrl = leadInfo?.profilePictureUrl || undefined;
+          // Avatar: usar foto do lead se disponível, com fallback por canal
+          const avatarUrl = leadInfo?.profilePictureUrl 
+            ? leadInfo.profilePictureUrl
+            : isInstagramConversation
+              ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=E1306C&color=fff`
+              : undefined;
 
           return {
             id: leadInfo?.leadId || `conv-${telefone}`,
             contactName,
-            channel: "whatsapp" as const,
+            channel: isInstagramConversation ? "instagram" as const : "whatsapp" as const,
             status: statusConversa,
             lastMessage: ultimaMensagem?.content || '',
             unread: 0,
