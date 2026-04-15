@@ -446,6 +446,17 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
           </button>
         )}
       </div>
+
+      {/* ConversaPopup for shared leads */}
+      {selectedLeadForChat && (
+        <ConversaPopup
+          open={conversaPopupOpen}
+          onOpenChange={setConversaPopupOpen}
+          leadId={selectedLeadForChat.id}
+          leadName={selectedLeadForChat.name}
+          telefone={selectedLeadForChat.telefone || ''}
+        />
+      )}
     </div>
   );
 };
