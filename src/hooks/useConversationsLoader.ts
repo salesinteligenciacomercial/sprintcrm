@@ -192,7 +192,7 @@ export const useConversationsLoader = () => {
           
           const leadsResult = await supabase
             .from('leads')
-            .select('id, phone, name, telefone')
+            .select('id, phone, name, telefone, profile_picture_url')
             .eq('company_id', userCompanyId)
             .or(batch.map(tel => `phone.ilike.%${tel}%,telefone.ilike.%${tel}%`).join(','))
             .limit(batchSize);
@@ -205,7 +205,7 @@ export const useConversationsLoader = () => {
       
       console.log(`📊 [LOAD] ${conversasData.length} mensagens, ${conversasMap.size} conversas, ${leadsData.length} leads`);
       
-      const leadsMap = new Map<string, { name: string; leadId: string }>();
+      const leadsMap = new Map<string, { name: string; leadId: string; profilePictureUrl?: string }>();
       leadsData.forEach(lead => {
         const phoneRaw = lead.phone || lead.telefone;
         if (!phoneRaw) return;
@@ -214,7 +214,8 @@ export const useConversationsLoader = () => {
         if (phoneKey) {
           leadsMap.set(phoneKey, {
             name: lead.name || phoneKey,
-            leadId: lead.id
+            leadId: lead.id,
+            profilePictureUrl: lead.profile_picture_url || undefined,
           });
         }
       });
