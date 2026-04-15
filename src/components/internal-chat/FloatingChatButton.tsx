@@ -114,7 +114,21 @@ export const FloatingChatButton = () => {
     if (newConvo) { setSelectedConversation(newConvo); markAsRead(conversationId); }
   };
 
-  const handleCallUser = () => { navigate('/chat-interno'); setIsOpen(false); toast.info('Use o módulo Bate-papo Interno para chamadas de vídeo/voz'); };
+  const handleCallUser = async (callType: 'audio' | 'video') => {
+    if (!selectedConversation || !currentUserId) return;
+    const otherParticipant = selectedConversation.participants.find(p => p.user_id !== currentUserId);
+    if (!otherParticipant) { toast.error('Participante não encontrado'); return; }
+    const userName = otherParticipant.profile?.full_name || otherParticipant.profile?.email || 'Usuário';
+    const meeting = await createMeeting(callType, otherParticipant.user_id, userName);
+    if (meeting) {
+      setActiveCall({
+        meetingId: meeting.id,
+        remoteUserId: otherParticipant.user_id,
+        remoteUserName: userName,
+        callType,
+      });
+    }
+  };
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
