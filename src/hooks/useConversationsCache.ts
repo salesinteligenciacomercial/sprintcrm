@@ -252,7 +252,7 @@ export const useConversationsCache = (companyId: string | null) => {
           const { data: leadsData } = await supabase
             .from('leads')
             .select(`
-              id, phone, name, value, tags, status,
+              id, phone, name, value, tags, status, profile_picture_url,
               etapa_id, funil_id, responsaveis, responsavel_id,
               etapas:etapa_id(nome),
               funis:funil_id(nome)
@@ -399,12 +399,18 @@ export const useConversationsCache = (companyId: string | null) => {
           return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
         });
 
-        // ⚡ Avatar placeholder - será carregado assincronamente
-        const avatarUrl = isGroup
-          ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=10b981&color=fff`
-          : isInstagramConversation
-            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=E1306C&color=fff`
-            : `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=0ea5e9&color=fff`;
+        // ⚡ Avatar - usar foto do lead se disponível, senão placeholder
+        const normalizedPhoneForAvatar = telefone.replace(/^ig_/, '').replace(/[^0-9]/g, '');
+        const leadForAvatar = leadsMap.get(normalizedPhoneForAvatar) || leadsMap.get(telefone);
+        const leadProfilePic = leadForAvatar?.profile_picture_url;
+        
+        const avatarUrl = leadProfilePic
+          ? leadProfilePic
+          : isGroup
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=10b981&color=fff`
+            : isInstagramConversation
+              ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=E1306C&color=fff`
+              : `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName)}&background=0ea5e9&color=fff`;
 
         // 🆕 Buscar dados do lead vinculado
         const normalizedPhone = telefone.replace(/^ig_/, '').replace(/[^0-9]/g, '');
