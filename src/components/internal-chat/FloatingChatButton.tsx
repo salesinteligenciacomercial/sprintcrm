@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { useInternalChat, InternalConversation } from '@/hooks/useInternalChat';
-import { useInternalMessages } from '@/hooks/useInternalMessages';
+import { useInternalMessages, InternalMessage } from '@/hooks/useInternalMessages';
 import { NewConversationDialog } from './NewConversationDialog';
 import { MessageItem } from './MessageItem';
 import { format, isToday, isYesterday } from 'date-fns';
