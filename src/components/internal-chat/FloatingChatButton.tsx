@@ -293,6 +293,13 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
     setSending(false);
   };
 
+  const handleShareItem = async (itemType: string, itemId: string, itemName: string) => {
+    setSending(true);
+    await sendMessage(`📌 ${itemName}`, 'shared_item', undefined, undefined, itemType, itemId);
+    setSending(false);
+    setShowShareDialog(false);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
