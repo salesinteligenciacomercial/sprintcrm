@@ -37,6 +37,12 @@ export const FloatingChatButton = () => {
   const [popupSize, setPopupSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
   const [showCreateGroupCall, setShowCreateGroupCall] = useState(false);
   const [activeGroupCall, setActiveGroupCall] = useState<{ meetingId: string } | null>(null);
+  const [activeCall, setActiveCall] = useState<{
+    meetingId: string;
+    remoteUserId: string;
+    remoteUserName: string;
+    callType: 'audio' | 'video';
+  } | null>(null);
   const navigate = useNavigate();
 
   const {
