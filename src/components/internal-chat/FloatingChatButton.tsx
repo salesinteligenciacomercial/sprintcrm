@@ -10,6 +10,7 @@ import { useInternalChat, InternalConversation } from '@/hooks/useInternalChat';
 import { useInternalMessages, InternalMessage } from '@/hooks/useInternalMessages';
 import { NewConversationDialog } from './NewConversationDialog';
 import { InlineSharePanel } from './InlineSharePanel';
+import { ConversaPopup } from '@/components/leads/ConversaPopup';
 import { MessageItem } from './MessageItem';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
