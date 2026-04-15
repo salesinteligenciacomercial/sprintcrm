@@ -17,7 +17,7 @@ export function MainLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
-  const { chatVisible, dialerVisible } = useFloatingButtonsVisibility();
+  const { chatVisible, dialerVisible, supportVisible } = useFloatingButtonsVisibility();
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const isSupabaseConfigured = supabaseUrl && supabaseKey && 
@@ -232,6 +232,9 @@ export function MainLayout() {
       
       {/* Botão flutuante do discador */}
       {dialerVisible && <FloatingDialerButton />}
+      
+      {/* Botão flutuante do suporte técnico */}
+      {supportVisible && <FloatingSupportButton />}
     </div>
   );
 }
