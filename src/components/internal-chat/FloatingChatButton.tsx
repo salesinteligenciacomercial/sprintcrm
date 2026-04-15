@@ -244,7 +244,7 @@ const ConversationPopupList = ({ conversations, loading, currentUserId, onSelect
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   <span className="text-[10px] text-muted-foreground shrink-0">{conv.updated_at ? formatTime(conv.updated_at) : ''}</span>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{conv.last_message || 'Nenhuma mensagem'}</p>
+                <p className="text-xs text-muted-foreground truncate">{typeof conv.last_message === 'string' ? conv.last_message : (conv.last_message as any)?.content || 'Nenhuma mensagem'}</p>
               </div>
               {unread > 0 && (
                 <Badge className="h-5 min-w-5 flex items-center justify-center p-0 text-[10px] bg-primary text-primary-foreground shrink-0">
