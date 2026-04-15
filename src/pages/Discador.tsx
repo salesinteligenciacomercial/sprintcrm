@@ -73,6 +73,10 @@ const Discador = () => {
               Central de ligações Faça e Receba na  Waze Platform  
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <Switch id="dialer-float" checked={dialerVisible} onCheckedChange={toggleDialer} />
+            <Label htmlFor="dialer-float" className="text-sm cursor-pointer">Webphone flutuante</Label>
+          </div>
         </div>
 
         {/* Tabs Navigation */}
