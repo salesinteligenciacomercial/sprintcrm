@@ -223,7 +223,7 @@ const ConversationPopupList = ({ conversations, loading, currentUserId, onSelect
   }
 
   return (
-    <ScrollArea className="flex-1" style={{ maxHeight: '380px' }}>
+    <ScrollArea className="flex-1" style={{ maxHeight: '496px' }}>
       <div className="divide-y">
         {conversations.map(conv => {
           const unread = conv.unread_count || 0;
@@ -294,9 +294,9 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
   };
 
   return (
-    <div className="flex flex-col flex-1" style={{ maxHeight: '420px' }}>
+    <div className="flex flex-col flex-1" style={{ maxHeight: '536px' }}>
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: '340px', minHeight: '200px' }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2" style={{ maxHeight: '440px', minHeight: '240px' }}>
         {loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
