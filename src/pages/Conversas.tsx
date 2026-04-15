@@ -3833,7 +3833,8 @@ function Conversas() {
           const digits = String(m.telefone_formatado || m.numero || '').replace(/[^0-9]/g, '');
           return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
         });
-        const channelDetected: "whatsapp" | "instagram" | "facebook" = isInstagramConv ? 'instagram' : 'whatsapp';
+        const isMessengerConv = !isInstagramConv && mensagens.some(m => m.origem === 'Messenger' || m.origem === 'Facebook' || m.origem === 'messenger');
+        const channelDetected: "whatsapp" | "instagram" | "facebook" = isInstagramConv ? 'instagram' : isMessengerConv ? 'facebook' : 'whatsapp';
 
         // ⚡ CORREÇÃO: Detectar origemApi a partir das mensagens
         const detectedOrigemApi: "evolution" | "meta" | undefined = 
