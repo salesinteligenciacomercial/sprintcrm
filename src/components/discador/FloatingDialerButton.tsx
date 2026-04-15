@@ -68,7 +68,7 @@ export const FloatingDialerButton = () => {
     if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) hasMoved.current = true;
     setPosition({
       x: Math.max(0, Math.min(window.innerWidth - 60, dragStartRef.current.posX + deltaX)),
-      y: Math.max(0, Math.min(window.innerHeight - 60, dragStartRef.current.posY + deltaY)),
+      y: Math.max(0, Math.min(window.innerHeight - 60, dragStartRef.current.posY - deltaY)),
     });
   }, [isDragging]);
 
