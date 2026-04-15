@@ -93,17 +93,15 @@ export const useConversationsLoader = () => {
         if (!conv.numero || conv.numero.includes('{{')) return false;
         if (!conv.mensagem || conv.mensagem.includes('{{')) return false;
         
-        // Validação 3: VALIDAR RIGOROSAMENTE o tamanho do telefone
+        // Validação 3: VALIDAR tamanho do telefone - permitir Instagram IDs (15+ dígitos)
         const telefoneNormalizado = conv.telefone_formatado?.replace(/[^0-9]/g, '') || conv.numero?.replace(/[^0-9]/g, '') || '';
+        const isInstagram = conv.origem_api === 'meta' && telefoneNormalizado.length >= 15;
+        const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
         
-        // ⚡ CORREÇÃO CRÍTICA: Telefones válidos brasileiros têm 11-13 dígitos APENAS
-        // - 11 dígitos: DDD + número (ex: 11987654321)
-        // - 12 dígitos: 0 + DDD + número (ex: 011987654321) 
-        // - 13 dígitos: 55 + DDD + número (ex: 5511987654321)
-        // QUALQUER COISA DIFERENTE é número corrompido/malformado/de outra instância
-        if (telefoneNormalizado.length > 0) {
+        // Instagram IDs e grupos não seguem validação de telefone brasileiro
+        if (!isInstagram && !isGroup && telefoneNormalizado.length > 0) {
           if (telefoneNormalizado.length < 11 || telefoneNormalizado.length > 13) {
-            console.warn(`🚫 [FILTRO CRÍTICO] Telefone malformado/outra instância bloqueado: ${telefoneNormalizado} (${telefoneNormalizado.length} dígitos) - company: ${conv.company_id}`);
+            console.warn(`🚫 [FILTRO CRÍTICO] Telefone malformado bloqueado: ${telefoneNormalizado} (${telefoneNormalizado.length} dígitos)`);
             return false;
           }
         }
