@@ -11,6 +11,8 @@ import { useInternalMessages, InternalMessage } from '@/hooks/useInternalMessage
 import { NewConversationDialog } from './NewConversationDialog';
 import { InlineSharePanel } from './InlineSharePanel';
 import { ConversaPopup } from '@/components/leads/ConversaPopup';
+import { CreatePublicMeetingDialog } from '@/components/meetings/CreatePublicMeetingDialog';
+import { GroupCallModal } from '@/components/meetings/GroupCallModal';
 import { MessageItem } from './MessageItem';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
