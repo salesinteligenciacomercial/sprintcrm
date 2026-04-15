@@ -238,7 +238,10 @@ export const useConversationsLoader = () => {
         .map(([telefone, mensagens]) => {
           const leadInfo = leadsMap.get(telefone);
           const isGroup = mensagens[0]?.is_group || /@g\.us$/.test(telefone);
-          
+          const isInstagramConversation = telefone.startsWith('ig_') || mensagens.some(m => {
+            const digits = String(m.telefone_formatado || m.numero || '').replace(/[^0-9]/g, '');
+            return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
+          });
           // ⚡ PRIORIDADE 1: Nome do lead cadastrado no CRM (mais confiável)
           let contactName = leadInfo?.name;
           
