@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { MessageCircle, X, ArrowLeft, Plus, Phone, Users, User, Send, Paperclip, Loader2, Mic, Image, FileText, StopCircle, Share2, Maximize2, Minimize2 } from 'lucide-react';
+import { MessageCircle, X, ArrowLeft, Plus, Phone, Users, User, Send, Paperclip, Loader2, Mic, Image, FileText, StopCircle, Share2, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { useInternalChat, InternalConversation } from '@/hooks/useInternalChat';
 import { useInternalMessages, InternalMessage } from '@/hooks/useInternalMessages';
 import { NewConversationDialog } from './NewConversationDialog';
 import { InlineSharePanel } from './InlineSharePanel';
+import { ConversaPopup } from '@/components/leads/ConversaPopup';
 import { MessageItem } from './MessageItem';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -265,6 +266,8 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [conversaPopupOpen, setConversaPopupOpen] = useState(false);
+  const [selectedLeadForChat, setSelectedLeadForChat] = useState<{ id: string; name: string; telefone?: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -344,10 +347,39 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
 
   const formatRecTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
+  const openLeadConversation = async (msg: InternalMessage) => {
+    if (msg.shared_item_type === 'lead' && msg.shared_item_id) {
+      try {
+        const { data } = await (await import('@/integrations/supabase/client')).supabase
+          .from('leads')
+          .select('id, name, telefone, phone')
+          .eq('id', msg.shared_item_id)
+          .maybeSingle();
+        if (data) {
+          setSelectedLeadForChat({ id: data.id, name: data.name, telefone: data.telefone || data.phone || '' });
+          setConversaPopupOpen(true);
+        }
+      } catch (err) { console.error('Error fetching lead:', err); }
+    }
+  };
+
   const renderMessageContent = (msg: InternalMessage) => {
     if (msg.message_type === 'image' && msg.media_url) return <img src={msg.media_url} alt="img" className="rounded max-w-full max-h-[160px] cursor-pointer" onClick={() => window.open(msg.media_url!, '_blank')} />;
     if (msg.message_type === 'audio' && msg.media_url) return <audio controls src={msg.media_url} className="max-w-full h-8" />;
     if (msg.message_type === 'file' && msg.media_url) return <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 underline text-xs"><FileText className="h-3 w-3" /> {msg.file_name || 'Arquivo'}</a>;
+    if (msg.message_type === 'shared_item' && msg.shared_item_type === 'lead') {
+      return (
+        <div>
+          <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+          <button
+            onClick={() => openLeadConversation(msg)}
+            className="mt-1 flex items-center gap-1 text-[10px] underline opacity-80 hover:opacity-100 transition-opacity"
+          >
+            <MessageCircle className="h-3 w-3" /> Abrir conversa
+          </button>
+        </div>
+      );
+    }
     return <p className="whitespace-pre-wrap break-words">{msg.content}</p>;
   };
 
@@ -414,6 +446,17 @@ const ChatPopupWindow = ({ conversation, currentUserId }: ChatPopupWindowProps) 
           </button>
         )}
       </div>
+
+      {/* ConversaPopup for shared leads */}
+      {selectedLeadForChat && (
+        <ConversaPopup
+          open={conversaPopupOpen}
+          onOpenChange={setConversaPopupOpen}
+          leadId={selectedLeadForChat.id}
+          leadName={selectedLeadForChat.name}
+          leadPhone={selectedLeadForChat.telefone || ''}
+        />
+      )}
     </div>
   );
 };
