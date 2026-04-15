@@ -5,11 +5,13 @@ const STORAGE_KEY = 'floating-buttons-visibility';
 interface FloatingButtonsVisibility {
   chatButton: boolean;
   dialerButton: boolean;
+  supportButton: boolean;
 }
 
 const getDefaults = (): FloatingButtonsVisibility => ({
   chatButton: true,
   dialerButton: true,
+  supportButton: true,
 });
 
 const load = (): FloatingButtonsVisibility => {
@@ -25,11 +27,9 @@ export const useFloatingButtonsVisibility = () => {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(visibility));
-    // Dispatch event so other components react
     window.dispatchEvent(new CustomEvent('floating-buttons-changed', { detail: visibility }));
   }, [visibility]);
 
-  // Listen for changes from other tabs/components
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as FloatingButtonsVisibility;
@@ -47,10 +47,16 @@ export const useFloatingButtonsVisibility = () => {
     setVisibility(prev => ({ ...prev, dialerButton: !prev.dialerButton }));
   }, []);
 
+  const toggleSupport = useCallback(() => {
+    setVisibility(prev => ({ ...prev, supportButton: !prev.supportButton }));
+  }, []);
+
   return {
     chatVisible: visibility.chatButton,
     dialerVisible: visibility.dialerButton,
+    supportVisible: visibility.supportButton,
     toggleChat,
     toggleDialer,
+    toggleSupport,
   };
 };

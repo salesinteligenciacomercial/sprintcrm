@@ -10,6 +10,7 @@ import { SystemUpdatesModal } from "@/components/updates/SystemUpdatesModal";
 import { useSystemUpdates } from "@/hooks/useSystemUpdates";
 import { FloatingChatButton } from "@/components/internal-chat";
 import { FloatingDialerButton } from "@/components/discador/FloatingDialerButton";
+import { FloatingSupportButton } from "@/components/support-chat/FloatingSupportButton";
 import { useFloatingButtonsVisibility } from "@/hooks/useFloatingButtonsVisibility";
 
 export function MainLayout() {
