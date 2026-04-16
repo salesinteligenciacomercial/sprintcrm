@@ -1168,7 +1168,7 @@ export default function Analytics() {
       </Card>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className={`grid w-full h-auto p-1`} style={{ gridTemplateColumns: `repeat(${5 + (isMasterAccount || isSegmentoFinanceiro(companySegmento) ? 1 : 0) + (isMasterAccount || isSegmentoJuridico(companySegmento) ? 1 : 0)}, minmax(0, 1fr))` }}>
+        <TabsList className={`grid w-full h-auto p-1`} style={{ gridTemplateColumns: `repeat(${4 + (isMasterAccount || isSegmentoFinanceiro(companySegmento) ? 1 : 0) + (isMasterAccount || isSegmentoJuridico(companySegmento) ? 1 : 0)}, minmax(0, 1fr))` }}>
           <TabsTrigger value="overview" className="gap-2 py-3">
             <Eye className="h-4 w-4" />
             <span className="hidden sm:inline">Visão Geral</span>
@@ -1192,10 +1192,6 @@ export default function Analytics() {
           <TabsTrigger value="campaigns" className="gap-2 py-3">
             <Megaphone className="h-4 w-4" />
             <span className="hidden sm:inline">Campanhas</span>
-          </TabsTrigger>
-          <TabsTrigger value="operations" className="gap-2 py-3">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Equipe & Operações</span>
           </TabsTrigger>
           <TabsTrigger value="customize" className="gap-2 py-3">
             <Cake className="h-4 w-4" />
@@ -1679,7 +1675,8 @@ export default function Analytics() {
           <CampaignAnalytics userCompanyId={userCompanyId} globalFilters={globalFilters} />
         </TabsContent>
 
-        {/* Equipe & Operações - Unificado */}
+        {/* Equipe & Operações removido */}
+        {false && (
         <TabsContent value="operations" className="space-y-6">
           <Tabs defaultValue="communication" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-4">
@@ -2516,6 +2513,7 @@ export default function Analytics() {
             </TabsContent>
           </Tabs>
         </TabsContent>
+        )}
 
         {/* Aniversariantes */}
         <TabsContent value="customize" className="space-y-6">
