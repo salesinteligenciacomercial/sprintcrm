@@ -51,10 +51,10 @@ export const useConversationsLoader = () => {
       
       console.log(`📊 [LOAD] Carregando ${MESSAGES_TO_FETCH} mensagens recentes...`);
       
-      // ⚡ OTIMIZAÇÃO: Query com campos essenciais + origem_api para identificação visual
+      // ⚡ OTIMIZAÇÃO: Query com campos essenciais + origem/origem_api para identificação visual
       let query = supabase
         .from('conversas')
-        .select('id, numero, telefone_formatado, mensagem, nome_contato, tipo_mensagem, status, created_at, is_group, fromme, company_id, sent_by, assigned_user_id, owner_id, midia_url, origem_api')
+        .select('id, numero, telefone_formatado, mensagem, nome_contato, tipo_mensagem, status, created_at, is_group, fromme, company_id, sent_by, assigned_user_id, owner_id, midia_url, origem, origem_api')
         .eq('company_id', userCompanyId)
         .order('created_at', { ascending: false });
       
