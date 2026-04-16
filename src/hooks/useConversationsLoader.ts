@@ -95,7 +95,8 @@ export const useConversationsLoader = () => {
         
         // Validação 3: VALIDAR tamanho do telefone - permitir Instagram IDs (15+ dígitos)
         const telefoneNormalizado = conv.telefone_formatado?.replace(/[^0-9]/g, '') || conv.numero?.replace(/[^0-9]/g, '') || '';
-        const isInstagram = conv.origem_api === 'meta' && telefoneNormalizado.length >= 15;
+        const isMessenger = conv.origem === 'Messenger' || conv.origem === 'Facebook' || conv.origem === 'messenger';
+        const isInstagram = !isMessenger && conv.origem_api === 'meta' && telefoneNormalizado.length >= 15;
         const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
         
         // Instagram IDs e grupos não seguem validação de telefone brasileiro
@@ -114,7 +115,8 @@ export const useConversationsLoader = () => {
       validConversas.forEach(conv => {
         const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
         const normalizedDigits = String(conv.telefone_formatado || conv.numero || '').replace(/[^0-9]/g, '');
-        const isInstagram = conv.origem_api === 'meta' && normalizedDigits.length >= 15;
+        const isMessenger = conv.origem === 'Messenger' || conv.origem === 'Facebook' || conv.origem === 'messenger';
+        const isInstagram = !isMessenger && conv.origem_api === 'meta' && normalizedDigits.length >= 15;
         
         let key: string;
         if (isGroup) {
@@ -242,7 +244,8 @@ export const useConversationsLoader = () => {
           const isGroup = mensagens[0]?.is_group || /@g\.us$/.test(telefone);
           const isInstagramConversation = telefone.startsWith('ig_') || mensagens.some(m => {
             const digits = String(m.telefone_formatado || m.numero || '').replace(/[^0-9]/g, '');
-            return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
+            const isMessenger = m.origem === 'Messenger' || m.origem === 'Facebook' || m.origem === 'messenger';
+            return !isMessenger && (m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15));
           });
           const isMessengerConversation = !isInstagramConversation && mensagens.some(m => {
             return m.origem === 'Messenger' || m.origem === 'Facebook' || m.origem === 'messenger';

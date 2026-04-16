@@ -225,7 +225,8 @@ export const useConversationsCache = (companyId: string | null) => {
       validConversas.forEach(conv => {
         const isGroup = conv.is_group || /@g\.us$/.test(conv.numero || '');
         const normalizedDigits = String(conv.telefone_formatado || conv.numero || '').replace(/[^0-9]/g, '');
-        const isInstagram = conv.origem === 'Instagram' || (conv.origem_api === 'meta' && normalizedDigits.length >= 15);
+        const isMessenger = conv.origem === 'Messenger' || conv.origem === 'Facebook' || conv.origem === 'messenger';
+        const isInstagram = !isMessenger && (conv.origem === 'Instagram' || (conv.origem_api === 'meta' && normalizedDigits.length >= 15));
 
         const key = isGroup
           ? String(conv.numero || '')
@@ -356,7 +357,11 @@ export const useConversationsCache = (companyId: string | null) => {
         const isGroup = mensagens[0]?.is_group || /@g\.us$/.test(telefone);
         const isInstagramConversation = telefone.startsWith('ig_') || mensagens.some(m => {
           const digits = String(m.telefone_formatado || m.numero || '').replace(/[^0-9]/g, '');
-          return m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15);
+          const isMessenger = m.origem === 'Messenger' || m.origem === 'Facebook' || m.origem === 'messenger';
+          return !isMessenger && (m.origem === 'Instagram' || (m.origem_api === 'meta' && digits.length >= 15));
+        });
+        const isMessengerConversation = !isInstagramConversation && mensagens.some(m => {
+          return m.origem === 'Messenger' || m.origem === 'Facebook' || m.origem === 'messenger';
         });
 
         const isInstagramPlaceholderName = (value?: string | null): boolean => {
@@ -452,7 +457,7 @@ export const useConversationsCache = (companyId: string | null) => {
         return {
           id: telefone,
           contactName,
-          channel: isInstagramConversation ? "instagram" as const : "whatsapp" as const,
+          channel: isInstagramConversation ? "instagram" as const : isMessengerConversation ? "facebook" as const : "whatsapp" as const,
           status: statusConversa,
           lastMessage: ultimaMensagem?.content || '',
           unread: 0,
