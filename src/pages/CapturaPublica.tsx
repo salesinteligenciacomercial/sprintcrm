@@ -294,6 +294,7 @@ export default function CapturaPublica() {
       });
 
       setLeadCreated(true);
+      fireConversionEvents(data);
       setMessages(prev => [...prev, { role: 'assistant', content: '✅ Obrigado! Suas informações foram recebidas com sucesso. Nossa equipe entrará em contato em breve!' }]);
 
       if (res.data?.success) {
