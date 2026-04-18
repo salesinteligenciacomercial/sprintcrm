@@ -11,6 +11,8 @@ import { ChatCaptureWidget } from "./ChatCaptureWidget";
 import { WhatsAppFloating } from "./WhatsAppFloating";
 import { AnimatedSection } from "./AnimatedSection";
 import { StatsCounter } from "./StatsCounter";
+import { AgendamentoModal } from "./AgendamentoModal";
+import { Link } from "react-router-dom";
 
 const ICON_MAP: Record<string, React.ComponentType<any>> = {
   Stethoscope, ShieldCheck, Clock, Award, Scale, BookOpen, Trophy, Users,
@@ -51,6 +53,8 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [chatOpen, setChatOpen] = useState(false);
+  const [agendaOpen, setAgendaOpen] = useState(false);
+  const agendamentoAtivo = config.agendamento_ativo !== false; // ativo por padrão
 
   const primary = theme.primary;
   const secondary = theme.secondary;
@@ -97,13 +101,20 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
               </button>
             ))}
           </nav>
-          {config.whatsapp && (
-            <Button asChild size="sm" style={{ background: primary }}>
-              <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
-                <MessageCircle className="w-4 h-4 mr-1" /> {isLanding ? 'Agendar' : 'Falar agora'}
-              </a>
-            </Button>
-          )}
+          <div className="hidden md:flex items-center gap-2">
+            {agendamentoAtivo && (
+              <Button size="sm" variant="outline" onClick={() => setAgendaOpen(true)}>
+                <Calendar className="w-4 h-4 mr-1" /> Agendar
+              </Button>
+            )}
+            {config.whatsapp && (
+              <Button asChild size="sm" style={{ background: primary }}>
+                <a href={`https://wa.me/${config.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                  <MessageCircle className="w-4 h-4 mr-1" /> {isLanding ? 'Falar' : 'Falar agora'}
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -139,14 +150,14 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
                 </div>
               )}
               <div className="flex gap-3 flex-wrap">
-                <Button size="lg" onClick={() => setChatOpen(true)} className="bg-white text-slate-900 hover:bg-slate-100 shadow-xl hover-scale">
-                  {config.hero_cta_texto || (isLanding ? 'Agendar agora' : 'Fale conosco')}
+                <Button size="lg" onClick={() => agendamentoAtivo ? setAgendaOpen(true) : setChatOpen(true)} className="bg-white text-slate-900 hover:bg-slate-100 shadow-xl hover-scale">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {config.hero_cta_texto || (isLanding ? 'Agendar agora' : 'Agendar consulta')}
                 </Button>
-                {config.hero_cta_secundario && (
-                  <Button size="lg" variant="outline" onClick={() => scrollTo('sobre')} className="border-white text-white hover:bg-white/10 bg-transparent">
-                    {config.hero_cta_secundario}
-                  </Button>
-                )}
+                <Button size="lg" variant="outline" onClick={() => setChatOpen(true)} className="border-white text-white hover:bg-white/10 bg-transparent">
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  {config.hero_cta_secundario || 'Falar com a IA'}
+                </Button>
               </div>
             </div>
             {(isLanding ? config.especialista_foto_url : config.hero_imagem_url) && (
@@ -513,8 +524,8 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
               <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100" onClick={() => setChatOpen(true)}>
                 <MessageCircle className="w-4 h-4 mr-2" /> Iniciar conversa
               </Button>
-              {config.agendamento_ativo && (
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 bg-transparent" onClick={() => setChatOpen(true)}>
+              {agendamentoAtivo && (
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 bg-transparent" onClick={() => setAgendaOpen(true)}>
                   <Calendar className="w-4 h-4 mr-2" /> Agendar horário
                 </Button>
               )}
@@ -548,6 +559,17 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
           companyName={isLanding ? especialistaName : companyName}
           config={config as any}
           theme={theme}
+        />
+      )}
+
+      {/* Modal de Agendamento (popup no site inteiro) */}
+      {!previewMode && agendamentoAtivo && (
+        <AgendamentoModal
+          open={agendaOpen}
+          onClose={() => setAgendaOpen(false)}
+          slug={slug}
+          companyName={isLanding ? especialistaName : companyName}
+          primary={primary}
         />
       )}
     </div>
