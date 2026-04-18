@@ -9,6 +9,7 @@ import { WhatsAppTemplatesManager } from "@/components/whatsapp/WhatsAppTemplate
 import { DisparoEmMassa } from "@/components/campanhas/DisparoEmMassa";
 import { CampanhasDashboard } from "@/components/campanhas/CampanhasDashboard";
 import { CapturePageConfig } from "@/components/ia/CapturePageConfig";
+import { SiteInstitucionalConfig } from "@/components/ia/SiteInstitucionalConfig";
 import { useEffect, useState } from "react";
 import { useAIAgents } from "@/hooks/useAIAgents";
 import { supabase } from "@/integrations/supabase/client";
@@ -137,7 +138,7 @@ export default function IA() {
       )}
 
       <Tabs defaultValue="agentes" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="agentes" className="gap-2">
             <Bot className="h-4 w-4" />
             Agentes
@@ -148,7 +149,11 @@ export default function IA() {
           </TabsTrigger>
           <TabsTrigger value="captura" className="gap-2">
             <Globe className="h-4 w-4" />
-            Página de Captura
+            Captura
+          </TabsTrigger>
+          <TabsTrigger value="site" className="gap-2">
+            <Globe className="h-4 w-4" />
+            Site Institucional
           </TabsTrigger>
           <TabsTrigger value="whatsapp-meta" className="gap-2 text-green-600">
             <Smartphone className="h-4 w-4" />
@@ -248,6 +253,13 @@ export default function IA() {
         {companyId && (
           <TabsContent value="captura" className="space-y-4 mt-6">
             <CapturePageConfig companyId={companyId} />
+          </TabsContent>
+        )}
+
+        {/* Site Institucional */}
+        {companyId && (
+          <TabsContent value="site" className="space-y-4 mt-6">
+            <SiteInstitucionalConfig companyId={companyId} />
           </TabsContent>
         )}
 
