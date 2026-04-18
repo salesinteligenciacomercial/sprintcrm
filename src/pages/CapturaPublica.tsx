@@ -44,6 +44,21 @@ interface CaptureConfig {
   og_titulo?: string;
   og_descricao?: string;
   og_imagem_url?: string;
+  // Tracking
+  facebook_pixel_id?: string;
+  google_analytics_id?: string;
+  google_tag_manager_id?: string;
+  google_ads_conversion_id?: string;
+  google_ads_conversion_label?: string;
+}
+
+declare global {
+  interface Window {
+    fbq?: any;
+    _fbq?: any;
+    gtag?: any;
+    dataLayer?: any[];
+  }
 }
 
 interface ChatMsg {
