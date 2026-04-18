@@ -6586,6 +6586,14 @@ export type Database = {
         Args: { p_company_id: string }
         Returns: string
       }
+      get_capture_page: {
+        Args: { _identifier: string }
+        Returns: {
+          capture_page_config: Json
+          id: string
+          name: string
+        }[]
+      }
       get_monthly_cost_comparison: {
         Args: { p_master_company_id: string; p_months?: number }
         Returns: {
