@@ -1,9 +1,21 @@
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, Phone, Mail, MapPin, Globe, ChevronDown } from "lucide-react";
+import { Send, MessageCircle, Phone, Mail, MapPin, Globe, ChevronDown, Star, Plus, Minus } from "lucide-react";
+
+interface Depoimento {
+  nome: string;
+  texto: string;
+  estrelas?: number;
+  foto_url?: string;
+}
+
+interface FaqItem {
+  pergunta: string;
+  resposta: string;
+}
 
 interface CaptureConfig {
   titulo?: string;
@@ -21,6 +33,17 @@ interface CaptureConfig {
   endereco?: string;
   site?: string;
   redes_sociais?: { instagram?: string; facebook?: string; linkedin?: string };
+  // Novos campos
+  depoimentos?: Depoimento[];
+  faq?: FaqItem[];
+  urgencia_ativa?: boolean;
+  urgencia_texto?: string;
+  whatsapp_flutuante_ativo?: boolean;
+  whatsapp_flutuante_mensagem?: string;
+  sugestoes_chat?: string[];
+  og_titulo?: string;
+  og_descricao?: string;
+  og_imagem_url?: string;
 }
 
 interface ChatMsg {
@@ -30,11 +53,13 @@ interface ChatMsg {
 
 export default function CapturaPublica() {
   const { companyId } = useParams<{ companyId: string }>();
+  const [searchParams] = useSearchParams();
   const [config, setConfig] = useState<CaptureConfig>({});
   const [companyName, setCompanyName] = useState('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [resolvedCompanyId, setResolvedCompanyId] = useState<string | null>(null);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   // Chat state
   const [messages, setMessages] = useState<ChatMsg[]>([]);
@@ -50,6 +75,15 @@ export default function CapturaPublica() {
   const primaryColor = config.cor_primaria || '#8B5CF6';
   const secondaryColor = config.cor_secundaria || '#6D28D9';
 
+  // UTM tracking
+  const utmParams = {
+    utm_source: searchParams.get('utm_source') || 'capture-page',
+    utm_medium: searchParams.get('utm_medium') || 'chat-ia',
+    utm_campaign: searchParams.get('utm_campaign') || undefined,
+    utm_content: searchParams.get('utm_content') || undefined,
+    utm_term: searchParams.get('utm_term') || undefined,
+  };
+
   useEffect(() => {
     loadCompanyConfig();
   }, [companyId]);
@@ -58,19 +92,46 @@ export default function CapturaPublica() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Open Graph & SEO dinâmico
+  useEffect(() => {
+    if (!companyName) return;
+    const titulo = config.og_titulo || config.titulo || `${companyName} — Fale conosco`;
+    const descricao = config.og_descricao || config.descricao || `Entre em contato com ${companyName}`;
+    const imagem = config.og_imagem_url || config.logo_url || '';
+
+    document.title = titulo;
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      let tag = document.querySelector(selector) as HTMLMetaElement | null;
+      if (!tag) {
+        tag = document.createElement('meta');
+        const [k, v] = selector.replace('meta[', '').replace(']', '').split('=');
+        tag.setAttribute(k, v.replace(/"/g, ''));
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute(attr, value);
+    };
+
+    setMeta('meta[name="description"]', 'content', descricao);
+    setMeta('meta[property="og:title"]', 'content', titulo);
+    setMeta('meta[property="og:description"]', 'content', descricao);
+    if (imagem) setMeta('meta[property="og:image"]', 'content', imagem);
+    setMeta('meta[property="og:type"]', 'content', 'website');
+    setMeta('meta[name="twitter:card"]', 'content', 'summary_large_image');
+    setMeta('meta[name="twitter:title"]', 'content', titulo);
+    setMeta('meta[name="twitter:description"]', 'content', descricao);
+    if (imagem) setMeta('meta[name="twitter:image"]', 'content', imagem);
+  }, [config, companyName]);
+
   const loadCompanyConfig = async () => {
     if (!companyId) { setNotFound(true); setLoading(false); return; }
 
-    // Use SECURITY DEFINER RPC to allow anonymous public access
     const { data: rows, error } = await supabase
       .rpc('get_capture_page', { _identifier: companyId });
 
-    if (error) {
-      console.error('[CapturaPublica] RPC error:', error);
-    }
+    if (error) console.error('[CapturaPublica] RPC error:', error);
 
     const data: any = Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
-
     if (!data) { setNotFound(true); setLoading(false); return; }
 
     setResolvedCompanyId(data.id);
@@ -92,18 +153,14 @@ export default function CapturaPublica() {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || sending) return;
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || sending) return;
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
 
     if (chatMode === 'questions' && config.perguntas) {
       const perguntas = config.perguntas;
       const currentQ = perguntas[currentQuestionIdx];
-      
-      // Save answer
-      const newData = { ...collectedData, [currentQ.campo]: userMsg };
+      const newData = { ...collectedData, [currentQ.campo]: text };
       setCollectedData(newData);
 
       const nextIdx = currentQuestionIdx + 1;
@@ -113,14 +170,19 @@ export default function CapturaPublica() {
           setMessages(prev => [...prev, { role: 'assistant', content: perguntas[nextIdx].label }]);
         }, 600);
       } else {
-        // All questions answered - create lead
         await createLead(newData);
         setChatMode('freeform');
       }
     } else {
-      // Freeform - call AI
-      await callAI(userMsg);
+      await callAI(text);
     }
+  };
+
+  const handleSend = async () => {
+    const userMsg = input.trim();
+    if (!userMsg) return;
+    setInput('');
+    await sendMessage(userMsg);
   };
 
   const createLead = async (data: Record<string, string>) => {
@@ -128,7 +190,6 @@ export default function CapturaPublica() {
     setSending(true);
 
     try {
-      const tag = config.tag_automatica || 'pagina-captura';
       const payload = {
         nome: data.nome || data.name || 'Visitante',
         telefone: data.telefone || data.phone || data.whatsapp,
@@ -137,8 +198,7 @@ export default function CapturaPublica() {
         mensagem: Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n'),
         origem: 'pagina-captura',
         company_slug: resolvedCompanyId || companyId,
-        utm_source: 'capture-page',
-        utm_medium: 'chat-ia',
+        ...utmParams,
       };
 
       const res = await supabase.functions.invoke('api-public-leads', {
@@ -146,8 +206,7 @@ export default function CapturaPublica() {
       });
 
       setLeadCreated(true);
-      const successMsg = '✅ Obrigado! Suas informações foram recebidas com sucesso. Nossa equipe entrará em contato em breve!';
-      setMessages(prev => [...prev, { role: 'assistant', content: successMsg }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: '✅ Obrigado! Suas informações foram recebidas com sucesso. Nossa equipe entrará em contato em breve!' }]);
 
       if (res.data?.success) {
         setTimeout(() => {
@@ -164,7 +223,6 @@ export default function CapturaPublica() {
     setSending(true);
     try {
       const history = messages.filter(m => m.role !== 'assistant' || !m.content.startsWith('✅')).slice(-10);
-      
       const res = await supabase.functions.invoke('api-public-ia', {
         body: {
           message,
@@ -204,10 +262,21 @@ export default function CapturaPublica() {
     );
   }
 
+  const whatsappLink = config.whatsapp
+    ? `https://wa.me/${config.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(config.whatsapp_flutuante_mensagem || `Olá! Vim pelo site da ${companyName}.`)}`
+    : null;
+
   return (
     <div className="min-h-screen" style={{ fontFamily: "'Inter', sans-serif" }}>
+      {/* Barra de urgência */}
+      {config.urgencia_ativa && config.urgencia_texto && (
+        <div className="text-white text-center py-2 px-4 text-sm font-medium" style={{ background: secondaryColor }}>
+          🔥 {config.urgencia_texto}
+        </div>
+      )}
+
       {/* Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-md border-b" style={{ background: `${primaryColor}ee`, borderColor: `${primaryColor}44` }}>
+      <header className="sticky top-0 z-40 backdrop-blur-md border-b" style={{ background: `${primaryColor}ee`, borderColor: `${primaryColor}44` }}>
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           {config.logo_url && (
             <img src={config.logo_url} alt={companyName} className="h-10 w-10 rounded-lg object-cover bg-white p-0.5" />
@@ -271,6 +340,38 @@ export default function CapturaPublica() {
         </section>
       )}
 
+      {/* Depoimentos */}
+      {config.depoimentos && config.depoimentos.length > 0 && (
+        <section className="py-16" style={{ background: `${primaryColor}06` }}>
+          <div className="max-w-6xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">O que dizem nossos clientes</h2>
+            <p className="text-center text-gray-500 mb-10">Avaliações reais de quem já confiou em nós</p>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {config.depoimentos.map((d, i) => (
+                <div key={i} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                  <div className="flex gap-1 mb-3">
+                    {Array.from({ length: d.estrelas || 5 }).map((_, k) => (
+                      <Star key={k} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600 italic mb-4">"{d.texto}"</p>
+                  <div className="flex items-center gap-3">
+                    {d.foto_url ? (
+                      <img src={d.foto_url} alt={d.nome} className="h-10 w-10 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold" style={{ background: primaryColor }}>
+                        {d.nome.charAt(0)}
+                      </div>
+                    )}
+                    <span className="font-semibold text-gray-800 text-sm">{d.nome}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Chat Section */}
       <section id="chat-section" className="py-16" style={{ background: `linear-gradient(180deg, #f8f9fa, ${primaryColor}08)` }}>
         <div className="max-w-2xl mx-auto px-4">
@@ -278,15 +379,12 @@ export default function CapturaPublica() {
           <p className="text-center text-gray-500 mb-8">Tire suas dúvidas ou solicite um atendimento</p>
 
           <div className="bg-white rounded-2xl shadow-xl border overflow-hidden" style={{ borderColor: `${primaryColor}22` }}>
-            {/* Chat messages */}
             <div className="h-[400px] overflow-y-auto p-4 space-y-3" style={{ background: `${primaryColor}05` }}>
               {messages.map((msg, i) => (
                 <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div
                     className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                      msg.role === 'user'
-                        ? 'text-white rounded-br-md'
-                        : 'bg-gray-100 text-gray-800 rounded-bl-md'
+                      msg.role === 'user' ? 'text-white rounded-br-md' : 'bg-gray-100 text-gray-800 rounded-bl-md'
                     }`}
                     style={msg.role === 'user' ? { background: primaryColor } : {}}
                   >
@@ -308,7 +406,28 @@ export default function CapturaPublica() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Input */}
+            {/* Sugestões rápidas */}
+            {config.sugestoes_chat && config.sugestoes_chat.length > 0 && messages.length <= 2 && (
+              <div className="px-3 pt-3 flex flex-wrap gap-2 border-t">
+                {config.sugestoes_chat.filter(s => s.trim()).map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => sendMessage(s)}
+                    disabled={sending}
+                    className="text-xs px-3 py-1.5 rounded-full border transition-colors hover:text-white disabled:opacity-50"
+                    style={{
+                      borderColor: primaryColor,
+                      color: primaryColor,
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = primaryColor; e.currentTarget.style.color = '#fff'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = primaryColor; }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div className="border-t p-3 flex gap-2">
               <Input
                 value={input}
@@ -332,6 +451,34 @@ export default function CapturaPublica() {
           </div>
         </div>
       </section>
+
+      {/* FAQ */}
+      {config.faq && config.faq.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-3xl mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-2 text-gray-800">Perguntas Frequentes</h2>
+            <p className="text-center text-gray-500 mb-10">Tire suas principais dúvidas rapidamente</p>
+            <div className="space-y-3">
+              {config.faq.map((item, i) => (
+                <div key={i} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-gray-50"
+                  >
+                    <span className="font-semibold text-gray-800">{item.pergunta}</span>
+                    {openFaq === i ? <Minus className="h-4 w-4 shrink-0" style={{ color: primaryColor }} /> : <Plus className="h-4 w-4 shrink-0" style={{ color: primaryColor }} />}
+                  </button>
+                  {openFaq === i && (
+                    <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed border-t bg-gray-50/50">
+                      {item.resposta}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="py-10 text-white" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` }}>
@@ -380,6 +527,21 @@ export default function CapturaPublica() {
           </div>
         </div>
       </footer>
+
+      {/* Botão flutuante WhatsApp */}
+      {config.whatsapp_flutuante_ativo && whatsappLink && (
+        <a
+          href={whatsappLink}
+          target="_blank"
+          rel="noopener"
+          className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#25D366] hover:bg-[#1ebe5b] shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+          aria-label="Falar no WhatsApp"
+        >
+          <svg viewBox="0 0 24 24" className="h-7 w-7 fill-white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.198-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+          </svg>
+        </a>
+      )}
     </div>
   );
 }
