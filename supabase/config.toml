@@ -95,3 +95,6 @@ verify_jwt = true
 
 [functions.disparo-em-massa]
 verify_jwt = false
+
+[functions.gerar-conteudo-site]
+verify_jwt = true
