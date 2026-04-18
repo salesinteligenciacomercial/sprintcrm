@@ -279,7 +279,10 @@ export function CapturePageConfig({ companyId }: { companyId: string }) {
                   <div className="flex-1 space-y-2">
                     <Input value={s.nome} onChange={e => updateServico(i, 'nome', e.target.value)} placeholder="Nome do serviço" />
                     <Input value={s.descricao || ''} onChange={e => updateServico(i, 'descricao', e.target.value)} placeholder="Descrição breve" />
-                    <Input value={s.imagem_url || ''} onChange={e => updateServico(i, 'imagem_url', e.target.value)} placeholder="URL da imagem (opcional)" />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Imagem ou vídeo do serviço</Label>
+                      <MediaUploadField value={s.imagem_url} onChange={v => updateServico(i, 'imagem_url', v)} accept="both" folder="servicos" placeholder="URL ou upload (imagem/vídeo)" />
+                    </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => removeServico(i)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                 </div>
