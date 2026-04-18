@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, Plus, Trash2, Eye, Save, Link2, Palette, FileText, MessageCircle, Globe, Star, HelpCircle, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MediaUploadField } from "./MediaUploadField";
 
 interface Servico { nome: string; descricao?: string; imagem_url?: string; }
 interface Pergunta { campo: string; label: string; tipo?: string; obrigatorio?: boolean; }
@@ -212,8 +213,8 @@ export function CapturePageConfig({ companyId }: { companyId: string }) {
               </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>URL do Logo</Label>
-                  <Input value={config.logo_url || ''} onChange={e => setConfig(p => ({ ...p, logo_url: e.target.value }))} placeholder="https://..." />
+                  <Label>Logo da Empresa</Label>
+                  <MediaUploadField value={config.logo_url} onChange={v => setConfig(p => ({ ...p, logo_url: v }))} accept="image" folder="logos" placeholder="URL ou faça upload do logo" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -252,8 +253,8 @@ export function CapturePageConfig({ companyId }: { companyId: string }) {
                     <Input value={config.og_titulo || ''} onChange={e => setConfig(p => ({ ...p, og_titulo: e.target.value }))} placeholder="Usa o título da página se vazio" />
                   </div>
                   <div className="space-y-2">
-                    <Label>Imagem de Compartilhamento (URL)</Label>
-                    <Input value={config.og_imagem_url || ''} onChange={e => setConfig(p => ({ ...p, og_imagem_url: e.target.value }))} placeholder="https://... (1200x630 recomendado)" />
+                    <Label>Imagem de Compartilhamento</Label>
+                    <MediaUploadField value={config.og_imagem_url} onChange={v => setConfig(p => ({ ...p, og_imagem_url: v }))} accept="image" folder="og" placeholder="1200x630 recomendado" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -278,7 +279,10 @@ export function CapturePageConfig({ companyId }: { companyId: string }) {
                   <div className="flex-1 space-y-2">
                     <Input value={s.nome} onChange={e => updateServico(i, 'nome', e.target.value)} placeholder="Nome do serviço" />
                     <Input value={s.descricao || ''} onChange={e => updateServico(i, 'descricao', e.target.value)} placeholder="Descrição breve" />
-                    <Input value={s.imagem_url || ''} onChange={e => updateServico(i, 'imagem_url', e.target.value)} placeholder="URL da imagem (opcional)" />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Imagem ou vídeo do serviço</Label>
+                      <MediaUploadField value={s.imagem_url} onChange={v => updateServico(i, 'imagem_url', v)} accept="both" folder="servicos" placeholder="URL ou upload (imagem/vídeo)" />
+                    </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => removeServico(i)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
                 </div>
@@ -349,7 +353,10 @@ export function CapturePageConfig({ companyId }: { companyId: string }) {
                       <Input value={d.nome} onChange={e => updateDepoimento(i, 'nome', e.target.value)} placeholder="Nome do cliente" />
                       <Input type="number" min={1} max={5} value={d.estrelas || 5} onChange={e => updateDepoimento(i, 'estrelas', parseInt(e.target.value) || 5)} placeholder="Estrelas (1-5)" />
                     </div>
-                    <Input value={d.foto_url || ''} onChange={e => updateDepoimento(i, 'foto_url', e.target.value)} placeholder="URL da foto (opcional)" />
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Foto do cliente (opcional)</Label>
+                      <MediaUploadField value={d.foto_url} onChange={v => updateDepoimento(i, 'foto_url', v)} accept="image" folder="depoimentos" placeholder="URL ou upload da foto" />
+                    </div>
                     <Textarea value={d.texto} onChange={e => updateDepoimento(i, 'texto', e.target.value)} placeholder="Depoimento do cliente..." rows={2} />
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => removeDepoimento(i)} className="text-destructive"><Trash2 className="h-4 w-4" /></Button>
