@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Copy, Plus, Trash2, Eye, Save, Link2, Palette, FileText, MessageCircle, Globe, Star, HelpCircle, Zap } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MediaUploadField } from "./MediaUploadField";
 
 interface Servico { nome: string; descricao?: string; imagem_url?: string; }
 interface Pergunta { campo: string; label: string; tipo?: string; obrigatorio?: boolean; }
