@@ -58,7 +58,9 @@ const INSTAGRAM_APP_ID = import.meta.env.VITE_INSTAGRAM_APP_ID || '1353481286527
 // Redireciona direto para a Edge Function (URL validada no Meta App).
 // A função troca o code pelo token e redireciona o usuário de volta para /configuracoes.
 const META_REDIRECT_URI = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'dteppsfseusqixuppglh'}.supabase.co/functions/v1/meta-oauth-callback`;
-const INSTAGRAM_REDIRECT_URI = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID || 'dteppsfseusqixuppglh'}.supabase.co/functions/v1/instagram-oauth-redirect`;
+const getInstagramRedirectUri = () => typeof window !== 'undefined'
+  ? `${window.location.origin}/oauth/callback`
+  : 'https://app.wazecrm.online/oauth/callback';
 
 const openOAuthWindow = (url: string, width = 700, height = 800) => {
   const features = `noopener,noreferrer,width=${width},height=${height}`;
@@ -79,13 +81,14 @@ const openOAuthWindow = (url: string, width = 700, height = 800) => {
 };
 
 const getInstagramOAuthUrl = (companyId: string) => {
+  const redirectUri = getInstagramRedirectUri();
   const returnUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/configuracoes`
     : 'https://app.wazecrm.online/configuracoes';
 
   const state = btoa(JSON.stringify({ companyId, returnUrl }));
 
-  return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${INSTAGRAM_APP_ID}&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}&response_type=code&state=${encodeURIComponent(state)}&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
+  return `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=${INSTAGRAM_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&state=${encodeURIComponent(state)}&scope=instagram_business_basic%2Cinstagram_business_manage_messages%2Cinstagram_business_manage_comments%2Cinstagram_business_content_publish%2Cinstagram_business_manage_insights`;
 };
 
 // Token de verificação MASTER GLOBAL para multi-tenant SaaS
@@ -144,6 +147,7 @@ export function MetaIntegrationsConfig({ companyId }: MetaIntegrationsConfigProp
 
   const handleOAuthLogin = (scope: string) => {
     if (scope === 'instagram') {
+      localStorage.setItem('instagram_oauth_company_id', companyId);
       openOAuthWindow(getInstagramOAuthUrl(companyId), 700, 800);
       return;
     }
