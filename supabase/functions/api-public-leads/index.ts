@@ -25,6 +25,7 @@ interface LeadInput {
   utm_campaign?: string;
   company_slug?: string;  // Identificador da empresa no CRM
   api_key?: string;       // Chave de API para autenticação
+  tag_automatica?: string; // Tag customizada da página de captura
 }
 
 serve(async (req) => {
@@ -213,8 +214,15 @@ serve(async (req) => {
       if (body.origem) tags.push(body.origem);
       if (body.servico_interesse) tags.push(body.servico_interesse);
       if (body.utm_source) tags.push(`utm:${body.utm_source}`);
+      if (body.utm_campaign) tags.push(`campanha:${body.utm_campaign}`);
       if (body.como_conheceu) tags.push(body.como_conheceu);
-      tags.push('site-institucional');
+      if (body.tag_automatica) tags.push(body.tag_automatica);
+      // Tag padrão para identificar leads vindos de páginas de captura
+      if (body.origem === 'pagina-captura') {
+        tags.push('Página de Captura');
+      } else {
+        tags.push('site-institucional');
+      }
 
       // Criar notas com informações adicionais
       let notes = `Lead captado via ${body.origem || 'site institucional'} em ${new Date().toLocaleString('pt-BR')}`;

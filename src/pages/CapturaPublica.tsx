@@ -286,6 +286,7 @@ export default function CapturaPublica() {
         mensagem: Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n'),
         origem: 'pagina-captura',
         company_slug: resolvedCompanyId || companyId,
+        tag_automatica: config.tag_automatica,
         ...utmParams,
       };
 
