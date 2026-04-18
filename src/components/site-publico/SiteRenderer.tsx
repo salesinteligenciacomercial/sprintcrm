@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import {
   Phone, Mail, MapPin, MessageCircle, Star, ChevronDown, Check,
   Stethoscope, ShieldCheck, Clock, Award, Scale, BookOpen, Trophy, Users,
-  Calendar, GraduationCap, Briefcase, Sparkles
+  Calendar, GraduationCap, Briefcase, Sparkles, Instagram, Facebook, Youtube, Linkedin, ExternalLink, Image as ImageIcon, PlayCircle
 } from "lucide-react";
 import { ChatCaptureWidget } from "./ChatCaptureWidget";
 import { WhatsAppFloating } from "./WhatsAppFloating";
@@ -480,7 +480,178 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
         </AnimatedSection>
       )}
 
-      {/* CONTATO */}
+      {/* REDES SOCIAIS */}
+      {enabled('social') && (config.instagram_url || config.facebook_url || config.youtube_url || config.tiktok_url || config.linkedin_url || (config.instagram_posts && config.instagram_posts.length > 0)) && (
+        <AnimatedSection id="social" className="py-16 md:py-24 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <div className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: accent }}>Siga nas redes</div>
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: primary }}>Acompanhe nosso dia a dia</h2>
+              {config.instagram_username && (
+                <p className="text-slate-600 mt-2">@{config.instagram_username}</p>
+              )}
+            </div>
+
+            {/* Ícones sociais */}
+            <div className="flex justify-center gap-3 mb-10 flex-wrap">
+              {config.instagram_url && (
+                <a href={config.instagram_url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-full flex items-center justify-center text-white hover:scale-110 transition shadow-lg" style={{ background: 'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)' }}>
+                  <Instagram className="w-6 h-6" />
+                </a>
+              )}
+              {config.facebook_url && (
+                <a href={config.facebook_url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-full flex items-center justify-center text-white hover:scale-110 transition shadow-lg bg-[#1877F2]">
+                  <Facebook className="w-6 h-6" />
+                </a>
+              )}
+              {config.youtube_url && (
+                <a href={config.youtube_url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-full flex items-center justify-center text-white hover:scale-110 transition shadow-lg bg-[#FF0000]">
+                  <Youtube className="w-6 h-6" />
+                </a>
+              )}
+              {config.linkedin_url && (
+                <a href={config.linkedin_url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-full flex items-center justify-center text-white hover:scale-110 transition shadow-lg bg-[#0A66C2]">
+                  <Linkedin className="w-6 h-6" />
+                </a>
+              )}
+              {config.tiktok_url && (
+                <a href={config.tiktok_url} target="_blank" rel="noreferrer" className="w-14 h-14 rounded-full flex items-center justify-center text-white hover:scale-110 transition shadow-lg bg-black">
+                  <PlayCircle className="w-6 h-6" />
+                </a>
+              )}
+            </div>
+
+            {/* Feed Instagram (posts manuais) */}
+            {config.instagram_posts && config.instagram_posts.length > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {config.instagram_posts.slice(0, 8).map((p, i) => (
+                  <a key={i} href={p.link || config.instagram_url || '#'} target="_blank" rel="noreferrer" className="relative group aspect-square overflow-hidden rounded-xl bg-slate-200">
+                    <img src={p.imagem_url} alt={p.legenda || `Post ${i + 1}`} className="w-full h-full object-cover group-hover:scale-110 transition" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <Instagram className="w-8 h-8 text-white" />
+                    </div>
+                    {p.tipo === 'reel' && (
+                      <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded">Reel</div>
+                    )}
+                  </a>
+                ))}
+              </div>
+            )}
+
+            {/* Embed Facebook page */}
+            {config.facebook_embed_ativo && config.facebook_url && (
+              <div className="mt-10 flex justify-center">
+                <iframe
+                  src={`https://www.facebook.com/plugins/page.php?href=${encodeURIComponent(config.facebook_url)}&tabs=timeline&width=500&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true`}
+                  width="500" height="500" style={{ border: 'none', overflow: 'hidden', maxWidth: '100%' }}
+                  scrolling="no" frameBorder={0} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                />
+              </div>
+            )}
+          </div>
+        </AnimatedSection>
+      )}
+
+      {/* LOCALIZAÇÃO + GOOGLE REVIEWS */}
+      {enabled('localizacao') && (config.google_maps_embed_url || config.google_place_id || config.endereco_completo || config.endereco || (config.google_reviews && config.google_reviews.length > 0)) && (
+        <AnimatedSection id="localizacao" className="py-16 md:py-24">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <div className="text-sm font-semibold uppercase tracking-wider mb-2" style={{ color: accent }}>Onde estamos</div>
+              <h2 className="text-3xl md:text-4xl font-bold" style={{ color: primary }}>Localização & Avaliações</h2>
+              {(config.google_rating || config.google_reviews_total) && (
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star key={i} className={`w-5 h-5 ${i < Math.round(config.google_rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} />
+                    ))}
+                  </div>
+                  <span className="font-bold text-lg">{config.google_rating?.toFixed(1)}</span>
+                  {config.google_reviews_total && (
+                    <span className="text-slate-500 text-sm">({config.google_reviews_total} avaliações no Google)</span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Mapa */}
+              <div>
+                {(config.google_maps_embed_url || config.google_place_id) && (
+                  <div className="rounded-2xl overflow-hidden shadow-lg aspect-square lg:aspect-auto lg:h-full min-h-[400px]">
+                    <iframe
+                      src={config.google_maps_embed_url || `https://www.google.com/maps/embed/v1/place?key=&q=place_id:${config.google_place_id}`}
+                      width="100%" height="100%" style={{ border: 0, minHeight: 400 }}
+                      allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                )}
+                {(config.endereco_completo || config.endereco) && (
+                  <div className="mt-4 p-4 bg-slate-50 rounded-xl flex items-start gap-3">
+                    <MapPin className="w-5 h-5 mt-0.5 shrink-0" style={{ color: primary }} />
+                    <div className="flex-1">
+                      <p className="text-slate-700 text-sm">{config.endereco_completo || config.endereco}</p>
+                      {(config.google_maps_link || config.google_place_id) && (
+                        <a href={config.google_maps_link || `https://www.google.com/maps/place/?q=place_id:${config.google_place_id}`} target="_blank" rel="noreferrer" className="text-xs font-medium mt-1 inline-flex items-center gap-1 hover:underline" style={{ color: primary }}>
+                          Ver no Google Maps <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews Google */}
+              {config.google_reviews && config.google_reviews.length > 0 && (
+                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.83z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    <span className="font-semibold">Avaliações do Google</span>
+                  </div>
+                  {config.google_reviews.map((r, i) => (
+                    <Card key={i} className="p-5 hover:shadow-md transition">
+                      <div className="flex items-start gap-3">
+                        {r.foto_autor ? (
+                          <img src={r.foto_autor} alt={r.autor} className="w-10 h-10 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ background: primary }}>
+                            {r.autor.charAt(0)}
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-sm">{r.autor}</span>
+                            {r.data && <span className="text-xs text-slate-400">{r.data}</span>}
+                          </div>
+                          <div className="flex gap-0.5 my-1">
+                            {Array.from({ length: 5 }).map((_, idx) => (
+                              <Star key={idx} className={`w-3.5 h-3.5 ${idx < r.estrelas ? 'fill-yellow-400 text-yellow-400' : 'text-slate-300'}`} />
+                            ))}
+                          </div>
+                          <p className="text-sm text-slate-700 leading-relaxed">{r.texto}</p>
+                          {r.fotos && r.fotos.length > 0 && (
+                            <div className="flex gap-2 mt-3 flex-wrap">
+                              {r.fotos.map((f, fi) => (
+                                <img key={fi} src={f} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                              ))}
+                            </div>
+                          )}
+                          {r.video_url && (
+                            <a href={r.video_url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-medium" style={{ color: primary }}>
+                              <PlayCircle className="w-4 h-4" /> Ver vídeo
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </AnimatedSection>
+      )}
+
       {enabled('contato') && (
         <AnimatedSection id="contato" className="py-16 md:py-24" style={{ background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`, color: 'white' }}>
           <div className="max-w-5xl mx-auto px-4 text-center">

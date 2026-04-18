@@ -13,6 +13,8 @@ export type SiteSectionKey =
   | 'faq'
   | 'estatisticas'
   | 'diferenciais'
+  | 'localizacao'
+  | 'social'
   | 'contato';
 
 export interface SiteSectionConfig {
@@ -130,6 +132,45 @@ export interface SiteConfig {
   // WhatsApp flutuante
   whatsapp_flutuante_ativo?: boolean;
   whatsapp_flutuante_mensagem?: string;
+
+  // Localização / Google Meu Negócio
+  google_place_id?: string; // ID do local no Google
+  google_maps_embed_url?: string; // URL completa do iframe (alternativa ao place_id)
+  google_maps_link?: string; // link "ver no Google Maps"
+  endereco_completo?: string;
+  google_reviews_ativo?: boolean;
+  google_rating?: number; // 0-5 (média)
+  google_reviews_total?: number;
+  google_reviews?: GoogleReview[]; // reviews manuais/sincronizados
+
+  // Redes sociais
+  instagram_url?: string;
+  instagram_username?: string; // sem @
+  instagram_embed_ativo?: boolean; // mostrar feed
+  instagram_posts?: SocialPost[]; // posts manuais (imagens)
+  facebook_url?: string;
+  facebook_page_id?: string;
+  facebook_embed_ativo?: boolean;
+  youtube_url?: string;
+  tiktok_url?: string;
+  linkedin_url?: string;
+}
+
+export interface GoogleReview {
+  autor: string;
+  foto_autor?: string;
+  estrelas: number; // 1-5
+  texto: string;
+  data?: string; // ex: "há 2 semanas"
+  fotos?: string[]; // fotos enviadas pelo cliente
+  video_url?: string;
+}
+
+export interface SocialPost {
+  imagem_url: string;
+  link?: string;
+  legenda?: string;
+  tipo?: 'image' | 'video' | 'reel';
 }
 
 const SECTIONS_INSTITUCIONAL: SiteSectionConfig[] = [
@@ -144,6 +185,8 @@ const SECTIONS_INSTITUCIONAL: SiteSectionConfig[] = [
   { key: 'planos', enabled: false, title: 'Planos' },
   { key: 'blog', enabled: false, title: 'Blog' },
   { key: 'faq', enabled: true, title: 'FAQ' },
+  { key: 'social', enabled: true, title: 'Redes Sociais' },
+  { key: 'localizacao', enabled: true, title: 'Localização' },
   { key: 'contato', enabled: true, title: 'Contato' },
 ];
 
@@ -156,6 +199,8 @@ const SECTIONS_LANDING_PESSOAL: SiteSectionConfig[] = [
   { key: 'galeria', enabled: false, title: 'Galeria' },
   { key: 'depoimentos', enabled: true, title: 'Depoimentos' },
   { key: 'faq', enabled: true, title: 'FAQ' },
+  { key: 'social', enabled: true, title: 'Redes' },
+  { key: 'localizacao', enabled: true, title: 'Localização' },
   { key: 'contato', enabled: true, title: 'Agendar' },
 ];
 
