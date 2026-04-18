@@ -5,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+const CRM_PUBLIC_ORIGIN = 'https://app.wazecrm.online';
+
 export default function OAuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -33,8 +35,8 @@ export default function OAuthCallback() {
       console.log('[OAuthCallback] Error:', error);
 
       let stateCompanyId: string | null = null;
-      let returnUrl = '/configuracoes';
-      let redirectUri = 'https://wazecrm.lovable.app/oauth/callback';
+      let returnUrl = `${CRM_PUBLIC_ORIGIN}/configuracoes`;
+      let redirectUri = `${CRM_PUBLIC_ORIGIN}/oauth/callback`;
 
       if (stateParam) {
         try {
