@@ -34,12 +34,14 @@ export default function OAuthCallback() {
 
       let stateCompanyId: string | null = null;
       let returnUrl = '/configuracoes';
+      let redirectUri = 'https://wazecrm.lovable.app/oauth/callback';
 
       if (stateParam) {
         try {
           const decoded = JSON.parse(atob(stateParam));
           stateCompanyId = decoded.companyId || null;
           returnUrl = decoded.returnUrl || '/configuracoes';
+          redirectUri = decoded.redirectUri || redirectUri;
         } catch (stateError) {
           console.warn('[OAuthCallback] Invalid state param:', stateError);
         }
@@ -114,7 +116,7 @@ export default function OAuthCallback() {
           body: {
             code,
             companyId,
-            redirectUri: `${window.location.origin}/oauth/callback`
+            redirectUri
           }
         });
 
