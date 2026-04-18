@@ -7,8 +7,9 @@ const corsHeaders = {
 };
 
 // Instagram tem App ID/Secret separados do Facebook
-const INSTAGRAM_APP_ID = Deno.env.get('INSTAGRAM_APP_ID') || '1353481286527361';
-const INSTAGRAM_APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || Deno.env.get('META_APP_SECRET') || '';
+// Forçamos o ID do Instagram (1353481286527361) - o secret pode estar com valor errado
+const INSTAGRAM_APP_ID = '1353481286527361';
+const INSTAGRAM_APP_SECRET = Deno.env.get('INSTAGRAM_APP_SECRET') || '';
 const DEFAULT_REDIRECT_URI = 'https://wazecrm.lovable.app/oauth/callback';
 
 serve(async (req: Request) => {
