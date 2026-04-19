@@ -33,7 +33,18 @@ export function StorageCleanup() {
   const [cleaning, setCleaning] = useState(false);
   const [analysis, setAnalysis] = useState<StorageAnalysis | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [cleanResult, setCleanResult] = useState<{ deletedCount: number } | null>(null);
+  const [cleanResult, setCleanResult] = useState<{ deletedCount: number; deletedSizeMB?: number } | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [scopeAll, setScopeAll] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
+      if (data?.role === "super_admin") setIsSuperAdmin(true);
+    })();
+  }, []);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
