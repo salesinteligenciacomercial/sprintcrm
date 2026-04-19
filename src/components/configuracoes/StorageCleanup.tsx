@@ -77,14 +77,13 @@ export function StorageCleanup() {
     setCleaning(true);
     try {
       const { data, error } = await supabase.functions.invoke("cleanup-storage", {
-        body: { action: "cleanup", limit: 5000 },
+        body: { action: "cleanup", limit: 10000, scope: scopeAll ? "all" : "company" },
       });
 
       if (error) throw error;
       if (data) {
-        setCleanResult({ deletedCount: data.deletedCount || 0 });
-        toast.success(`${data.deletedCount} arquivos órfãos removidos com sucesso!`);
-        // Re-analyze after cleanup
+        setCleanResult({ deletedCount: data.deletedCount || 0, deletedSizeMB: data.deletedSizeMB });
+        toast.success(`${data.deletedCount} arquivos removidos (${data.deletedSizeMB || 0} MB liberados)!`);
         setTimeout(handleAnalyze, 2000);
       }
     } catch (error: any) {
