@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { HardDrive, Trash2, Search, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,7 +33,18 @@ export function StorageCleanup() {
   const [cleaning, setCleaning] = useState(false);
   const [analysis, setAnalysis] = useState<StorageAnalysis | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [cleanResult, setCleanResult] = useState<{ deletedCount: number } | null>(null);
+  const [cleanResult, setCleanResult] = useState<{ deletedCount: number; deletedSizeMB?: number } | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [scopeAll, setScopeAll] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id).single();
+      if (data?.role === "super_admin") setIsSuperAdmin(true);
+    })();
+  }, []);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
@@ -39,7 +52,7 @@ export function StorageCleanup() {
     setCleanResult(null);
     try {
       const { data, error } = await supabase.functions.invoke("cleanup-storage", {
-        body: { action: "analyze" },
+        body: { action: "analyze", scope: scopeAll ? "all" : "company" },
       });
 
       if (error) throw error;
@@ -64,14 +77,13 @@ export function StorageCleanup() {
     setCleaning(true);
     try {
       const { data, error } = await supabase.functions.invoke("cleanup-storage", {
-        body: { action: "cleanup", limit: 5000 },
+        body: { action: "cleanup", limit: 10000, scope: scopeAll ? "all" : "company" },
       });
 
       if (error) throw error;
       if (data) {
-        setCleanResult({ deletedCount: data.deletedCount || 0 });
-        toast.success(`${data.deletedCount} arquivos órfãos removidos com sucesso!`);
-        // Re-analyze after cleanup
+        setCleanResult({ deletedCount: data.deletedCount || 0, deletedSizeMB: data.deletedSizeMB });
+        toast.success(`${data.deletedCount} arquivos removidos (${data.deletedSizeMB || 0} MB liberados)!`);
         setTimeout(handleAnalyze, 2000);
       }
     } catch (error: any) {
@@ -152,6 +164,26 @@ export function StorageCleanup() {
               <p className="text-xs text-muted-foreground text-center">
                 {analyzing ? "Analisando arquivos... Isso pode levar alguns minutos." : "Removendo arquivos órfãos..."}
               </p>
+            </div>
+          )}
+
+          {/* Scope toggle for super admins */}
+          {isSuperAdmin && (
+            <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+              <div>
+                <Label htmlFor="scope-all" className="text-sm font-medium">
+                  Varrer TODAS as subcontas
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Quando ativado, analisa e limpa arquivos de todas as empresas (recomendado para liberar espaço total).
+                </p>
+              </div>
+              <Switch
+                id="scope-all"
+                checked={scopeAll}
+                onCheckedChange={setScopeAll}
+                disabled={analyzing || cleaning}
+              />
             </div>
           )}
 
