@@ -3,6 +3,36 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
+// 📊 Helper de diagnóstico da URA: registra fire-and-forget quando um fluxo NÃO é disparado
+// Motivos: flow_state_active | human_assignment | excluded_tag | out_of_schedule
+//          no_active_flow | keyword_no_match | no_trigger_match | ai_mode_off | ai_mode_fluxo
+function logSkip(
+  supabase: any,
+  companyId: string | null | undefined,
+  telefone: string | null | undefined,
+  motivo: string,
+  details: Record<string, unknown> = {},
+  flowId: string | null = null,
+) {
+  if (!companyId || !telefone) return;
+  try {
+    supabase
+      .from('automation_skip_logs')
+      .insert({
+        company_id: companyId,
+        telefone: String(telefone),
+        flow_id: flowId,
+        motivo,
+        details,
+      })
+      .then(({ error }: any) => {
+        if (error) console.warn('⚠️ [SKIP-LOG] erro ao gravar:', error.message);
+      });
+  } catch (e) {
+    console.warn('⚠️ [SKIP-LOG] exceção:', e);
+  }
+}
+
 // Helper function to upload media to Storage
 async function uploadMediaToStorage(
   supabase: any,
@@ -1866,6 +1896,10 @@ serve(async (req) => {
                 telefone: telCheck,
                 assignmentId: assignment.id
               });
+              logSkip(supabase, companyId, numeroLimpo, 'human_assignment', {
+                telefone: telCheck,
+                assignmentId: assignment.id,
+              });
             }
           }
           
@@ -1881,7 +1915,9 @@ serve(async (req) => {
           
           let flowStarted = false;
           
-          if (activeFlows && activeFlows.length > 0) {
+          if (!activeFlows || activeFlows.length === 0) {
+            logSkip(supabase, companyId, numeroLimpo, 'no_active_flow', { searchedCompanies: companyIdsToSearch });
+          } else {
             console.log(`🔍 [WEBHOOK-FLOW] ${activeFlows.length} fluxo(s) ativo(s) encontrado(s), mensagem: "${validatedData.mensagem}"`);
             for (const flow of activeFlows) {
               const nodes = (flow.nodes as any[]) || [];
@@ -1903,6 +1939,7 @@ serve(async (req) => {
                 
                 if (hasBlockedTag) {
                   console.log(`🚫 [WEBHOOK-FLOW] Lead tem tag bloqueada, pulando fluxo ${flow.id}`, { leadTags, excludeTags });
+                  logSkip(supabase, companyId, numeroLimpo, 'excluded_tag', { leadTags, excludeTags, flowName: (flow as any).name }, flow.id);
                   continue;
                 }
               }
@@ -1932,6 +1969,7 @@ serve(async (req) => {
                 
                 if (!isAllowedDay || !isWithinTime) {
                   console.log(`🕐 [WEBHOOK-FLOW] Fora do horário de funcionamento do fluxo ${flow.id}`, { currentDay, currentTime, allowedDays, startTime, endTime });
+                  logSkip(supabase, companyId, numeroLimpo, 'out_of_schedule', { currentDay, currentTime, allowedDays, startTime, endTime, flowName: (flow as any).name }, flow.id);
                   
                   // Send out-of-hours message if configured
                   const outOfHoursMessage = flowSettings?.schedule?.outOfHoursMessage;
@@ -1992,6 +2030,7 @@ serve(async (req) => {
                 console.log(`🔑 [WEBHOOK-FLOW] Verificando palavra-chave: "${keyword}" na mensagem: "${msg}"`);
                 if (!msg.includes(keyword)) {
                   console.log(`⏭️ [WEBHOOK-FLOW] Palavra-chave "${keyword}" NÃO encontrada, pulando fluxo`);
+                  logSkip(supabase, companyId, numeroLimpo, 'keyword_no_match', { keyword, message: msg.substring(0, 200), flowName: (flow as any).name }, flow.id);
                   continue;
                 }
                 console.log(`✅ [WEBHOOK-FLOW] Palavra-chave "${keyword}" encontrada!`);
@@ -2003,6 +2042,7 @@ serve(async (req) => {
                 );
                 if (!hasNovaMensagem) {
                   console.log(`⏭️ [WEBHOOK-FLOW] Fluxo ${flow.id} não tem gatilho nova_mensagem nem palavra_chave`);
+                  logSkip(supabase, companyId, numeroLimpo, 'no_trigger_match', { flowName: (flow as any).name }, flow.id);
                   continue;
                 }
               }

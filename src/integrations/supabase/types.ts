@@ -440,6 +440,36 @@ export type Database = {
         }
         Relationships: []
       }
+      automation_skip_logs: {
+        Row: {
+          company_id: string
+          created_at: string
+          details: Json
+          flow_id: string | null
+          id: string
+          motivo: string
+          telefone: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          details?: Json
+          flow_id?: string | null
+          id?: string
+          motivo: string
+          telefone: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          details?: Json
+          flow_id?: string | null
+          id?: string
+          motivo?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
       bancos_disponiveis: {
         Row: {
           ativo: boolean | null
@@ -6671,6 +6701,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      purge_automation_skip_logs: { Args: never; Returns: undefined }
       reorder_etapas: {
         Args: { p_funil_id: string; p_order: string[] }
         Returns: undefined
