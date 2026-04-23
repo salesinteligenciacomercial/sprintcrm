@@ -77,8 +77,13 @@ export function AgendamentoFlow({ slug, companyName, primary, onSuccess }: { slu
   }, [data, profissional, slug]);
 
   const handleSubmit = async () => {
-    if (!form.nome || !form.telefone || !form.tipo_servico || !data || !horario) {
-      toast.error('Preencha todos os campos obrigatórios');
+    if (!form.nome || !form.telefone || !data || !horario) {
+      toast.error('Preencha nome, WhatsApp, data e horário');
+      return;
+    }
+    const telDigits = form.telefone.replace(/\D/g, '');
+    if (telDigits.length < 10) {
+      toast.error('WhatsApp inválido. Use DDD + número (ex: 11999999999)');
       return;
     }
     setSubmitting(true);
@@ -88,6 +93,8 @@ export function AgendamentoFlow({ slug, companyName, primary, onSuccess }: { slu
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          tipo_servico: form.tipo_servico?.trim() || 'Agendamento',
+          telefone: telDigits,
           data: format(data, 'yyyy-MM-dd'),
           horario,
           profissional_id: profissional?.id,
@@ -278,8 +285,8 @@ export function AgendamentoFlow({ slug, companyName, primary, onSuccess }: { slu
             <Input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="seu@email.com" />
           </div>
           <div>
-            <Label>Tipo de atendimento *</Label>
-            <Input value={form.tipo_servico} onChange={e => setForm({ ...form, tipo_servico: e.target.value })} placeholder="Ex: Consulta, Avaliação, Reunião" />
+            <Label>Tipo de atendimento</Label>
+            <Input value={form.tipo_servico} onChange={e => setForm({ ...form, tipo_servico: e.target.value })} placeholder="Ex: Consulta, Avaliação, Reunião (opcional)" />
           </div>
           <div>
             <Label>Observações</Label>
