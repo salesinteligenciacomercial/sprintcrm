@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, Download, FileText, UserPlus, Settings, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
-import confetti from "canvas-confetti";
+import { toast } from "sonner";
 import { ProspeccaoKPIs } from "@/components/prospeccao/ProspeccaoKPIs";
 import { ProspeccaoTable } from "@/components/prospeccao/ProspeccaoTable";
 import { ProspeccaoCharts } from "@/components/prospeccao/ProspeccaoCharts";
@@ -28,7 +28,7 @@ import { WeeklyLeaderboard } from "@/components/prospeccao/rpg/WeeklyLeaderboard
 import { AchievementsGallery } from "@/components/prospeccao/rpg/AchievementsGallery";
 import { RankLadder } from "@/components/prospeccao/rpg/RankLadder";
 import { LevelUpModal } from "@/components/prospeccao/rpg/LevelUpModal";
-import { ClassicVsRpgToggle } from "@/components/prospeccao/rpg/ClassicVsRpgToggle";
+// ClassicVsRpgToggle removido — visual unificado corporativo
 import { RewardShop } from "@/components/prospeccao/rpg/RewardShop";
 import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
 import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
@@ -84,13 +84,14 @@ export default function Prospeccao() {
   const { isAdmin, userRoles } = usePermissions();
   const isManagerLike = isAdmin || userRoles.some((r) => r.role === "gestor");
 
-  // Detect level up via realtime profile
+  // Detect level up — toast discreto em vez de modal full-screen
   const lastLevel = useRef<number | null>(null);
   useEffect(() => {
     if (!profile) return;
     if (lastLevel.current !== null && profile.level > lastLevel.current) {
-      setNewLevel(profile.level);
-      setShowLevelUp(true);
+      toast.success(`🎉 Você subiu para o Nível ${profile.level}!`, {
+        description: "Continue assim — sua evolução está sendo registrada.",
+      });
     }
     lastLevel.current = profile.level;
   }, [profile?.level]);
@@ -142,56 +143,33 @@ export default function Prospeccao() {
     if (activeTab === "followup") followUpRefetch();
     else refetch();
     interactionsRefetch();
-    // small celebration on every register
-    if (gamificationOn) {
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 }, colors: ["#00f0ff", "#ff2bd6", "#7a3cff"] });
-    }
   };
 
-  const RPG_TAB_LABELS: Record<string, string> = {
-    organic: "⚔️ Caçada",
-    paid: "💰 Mercenário",
-    followup: "📜 Reforço",
-    arena: "🏆 Arena",
-    coldcall: "📞 Cold Call",
-    instagram: "📸 Instagram",
-    whatsapp: "💬 WhatsApp",
-    funil: "🗺️ Funil",
-    closer: "📥 Caixa Closer",
-    comando: "🎖️ Comando",
-    fila: "🎯 Minha Fila",
-  };
-  const CLASSIC_TAB_LABELS: Record<string, string> = {
-    organic: "Orgânico",
-    paid: "Tráfego Pago",
-    followup: "Follow-Up",
+  const labels: Record<string, string> = {
+    organic: "Visão Geral",
+    paid: "Pipeline Pago",
+    followup: "Follow-ups",
     arena: "Ranking",
     coldcall: "Cold Call",
     instagram: "Instagram",
     whatsapp: "WhatsApp",
     funil: "Funil de Vendas",
-    closer: "Caixa do Closer",
-    comando: "Gestor",
+    closer: "Leads Qualificados",
+    comando: "Painel do Gestor",
     fila: "Minha Fila",
   };
-  const labels = gamificationOn ? RPG_TAB_LABELS : CLASSIC_TAB_LABELS;
 
   return (
-    <div className={`space-y-6 p-4 md:p-6 ${gamificationOn ? "rpg-hex-bg min-h-screen" : ""}`}>
+    <div className="space-y-6 p-4 md:p-6">
       {gamificationOn && <KillFeed companyId={companyId} enableSound={soundOn} />}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            {gamificationOn ? "🎮 Sales Quest · Prospecção" : "Acompanhamento de Prospecção"}
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground">Prospecção Comercial</h1>
           <p className="text-sm text-muted-foreground">
-            {gamificationOn
-              ? "Cace leads, complete missões, suba de nível"
-              : "Acompanhe o funil de prospecção, tráfego pago e follow-up"}
+            Acompanhe metas, pipeline e performance da equipe de vendas
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <ClassicVsRpgToggle rpgMode={rpgMode} onChange={setRpgMode} />
           <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -203,7 +181,7 @@ export default function Prospeccao() {
             </SelectContent>
           </Select>
           <Button variant="outline" size="sm" onClick={() => setShowScripts(true)}>
-            <FileText className="h-4 w-4 mr-1" /> {gamificationOn ? "Grimório" : "Scripts"}
+            <FileText className="h-4 w-4 mr-1" /> Scripts
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportCSV}>
             <Download className="h-4 w-4 mr-1" /> CSV
