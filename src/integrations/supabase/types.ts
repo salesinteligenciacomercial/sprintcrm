@@ -999,6 +999,247 @@ export type Database = {
         }
         Relationships: []
       }
+      commercial_script_edges: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          script_id: string
+          source_handle: string | null
+          source_node_id: string
+          target_node_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          script_id: string
+          source_handle?: string | null
+          source_node_id: string
+          target_node_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          script_id?: string
+          source_handle?: string | null
+          source_node_id?: string
+          target_node_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_script_edges_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_scripts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_script_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_script_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commercial_script_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_script_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_script_executions: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          context: Json
+          conversation_id: string | null
+          current_node_id: string | null
+          id: string
+          lead_id: string | null
+          next_run_at: string | null
+          script_id: string
+          started_at: string
+          started_by: string | null
+          status: string
+          telefone_formatado: string | null
+          trigger_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          context?: Json
+          conversation_id?: string | null
+          current_node_id?: string | null
+          id?: string
+          lead_id?: string | null
+          next_run_at?: string | null
+          script_id: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          telefone_formatado?: string | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          context?: Json
+          conversation_id?: string | null
+          current_node_id?: string | null
+          id?: string
+          lead_id?: string | null
+          next_run_at?: string | null
+          script_id?: string
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          telefone_formatado?: string | null
+          trigger_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_script_executions_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_script_logs: {
+        Row: {
+          action_taken: string | null
+          company_id: string
+          error_message: string | null
+          executed_at: string
+          execution_id: string
+          id: string
+          node_id: string | null
+          node_type: string | null
+          result: Json | null
+        }
+        Insert: {
+          action_taken?: string | null
+          company_id: string
+          error_message?: string | null
+          executed_at?: string
+          execution_id: string
+          id?: string
+          node_id?: string | null
+          node_type?: string | null
+          result?: Json | null
+        }
+        Update: {
+          action_taken?: string | null
+          company_id?: string
+          error_message?: string | null
+          executed_at?: string
+          execution_id?: string
+          id?: string
+          node_id?: string | null
+          node_type?: string | null
+          result?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_script_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_script_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_script_nodes: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          node_type: string
+          position_x: number
+          position_y: number
+          script_id: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          node_type: string
+          position_x?: number
+          position_y?: number
+          script_id: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          node_type?: string
+          position_x?: number
+          position_y?: number
+          script_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commercial_script_nodes_script_id_fkey"
+            columns: ["script_id"]
+            isOneToOne: false
+            referencedRelation: "commercial_scripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commercial_scripts: {
+        Row: {
+          active: boolean
+          category: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          start_node_id: string | null
+          triggers: Json
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          start_node_id?: string | null
+          triggers?: Json
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          start_node_id?: string | null
+          triggers?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           allow_ai_features: boolean | null
