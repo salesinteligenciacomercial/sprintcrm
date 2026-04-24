@@ -1,6 +1,9 @@
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { Trophy, Flame } from "lucide-react";
 import { getRankByLevel } from "@/hooks/usePlayerProfile";
+import { ClassAvatar } from "./ClassAvatar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   companyId: string | null;
@@ -11,6 +14,20 @@ const PODIUM_COLOR = ["rpg-rank-gold rpg-glow-gold", "rpg-rank-silver", "rpg-ran
 
 export function WeeklyLeaderboard({ companyId, currentUserId }: Props) {
   const { data: rows = [], isLoading } = useLeaderboard(companyId, 10);
+  const [classes, setClasses] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!companyId || rows.length === 0) return;
+    (async () => {
+      const ids = rows.map((r) => r.user_id);
+      const { data } = await supabase
+        .from("prospecting_player_profile")
+        .select("user_id, class")
+        .in("user_id", ids)
+        .eq("company_id", companyId);
+      if (data) setClasses(Object.fromEntries(data.map((d: any) => [d.user_id, d.class])));
+    })();
+  }, [companyId, rows.length]);
 
   return (
     <div className="rpg-card rounded-lg p-4">
@@ -32,9 +49,10 @@ export function WeeklyLeaderboard({ companyId, currentUserId }: Props) {
                 key={r.user_id}
                 className={`flex items-center gap-2 p-2 rounded border ${isMe ? "border-cyan-400 bg-cyan-500/5 rpg-glow-cyan" : "border-border bg-background/30"}`}
               >
-                <div className={`w-7 h-7 rounded flex items-center justify-center rpg-text-mono text-xs font-bold border ${i < 3 ? PODIUM_COLOR[i] : "border-border text-muted-foreground"}`}>
+                <div className={`w-6 h-6 rounded flex items-center justify-center rpg-text-mono text-[10px] font-bold border shrink-0 ${i < 3 ? PODIUM_COLOR[i] : "border-border text-muted-foreground"}`}>
                   {i + 1}
                 </div>
+                <ClassAvatar name={r.full_name} playerClass={classes[r.user_id]} size="xs" />
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{r.full_name} {isMe && <span className="rpg-neon-cyan text-[10px]">[VOCÊ]</span>}</div>
                   <div className="rpg-text-mono text-[10px] text-muted-foreground flex gap-2">
