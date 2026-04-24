@@ -268,7 +268,11 @@ export default function Prospeccao() {
               </div>
             )}
 
-            {isCloserTab ? (
+            {isFilaTab ? (
+              <div className="mt-4">
+                <SDRQueuePanel />
+              </div>
+            ) : isCloserTab ? (
               <div className="mt-4">
                 <CloserInbox />
               </div>
