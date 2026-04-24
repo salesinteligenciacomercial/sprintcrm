@@ -436,7 +436,29 @@ function Conversas() {
   // Para evitar loops e melhorar performance
   // Avatares são carregados quando a conversa é aberta
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  // ⚡ INSTANT-PAINT: Hidrata conversas SINCRONAMENTE do sessionStorage no 1º render
+  // Elimina o delay de espera por auth.getUser() + user_roles + companies antes de mostrar a lista
+  const [conversations, setConversations] = useState<Conversation[]>(() => {
+    try {
+      const cachedData = sessionStorage.getItem(CONVERSATIONS_CACHE_KEY);
+      const cacheTimestamp = sessionStorage.getItem(CONVERSATIONS_CACHE_TIMESTAMP_KEY);
+      if (!cachedData || !cacheTimestamp) return [];
+      const age = Date.now() - parseInt(cacheTimestamp, 10);
+      if (age > CACHE_MAX_AGE) return [];
+      const parsed = JSON.parse(cachedData);
+      if (!Array.isArray(parsed) || parsed.length === 0) return [];
+      // Reconstruir Date nos timestamps
+      return parsed.map((conv: any) => ({
+        ...conv,
+        messages: (conv.messages || []).map((msg: any) => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+        }))
+      }));
+    } catch {
+      return [];
+    }
+  });
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
   const [filter, setFilter] = useState<"all" | "waiting" | "answered" | "resolved" | "group" | "responsible" | "transferred" | "instagram" | "messenger">("all");
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(defaultFilters);
