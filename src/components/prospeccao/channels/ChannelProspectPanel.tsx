@@ -39,6 +39,7 @@ export function ChannelProspectPanel({ channel }: Props) {
   // Popup de conversa inline (Instagram/WhatsApp)
   const [conversaOpen, setConversaOpen] = useState(false);
   const [activeLead, setActiveLead] = useState<{ id: string; name: string; phone?: string } | null>(null);
+  const [handoffLead, setHandoffLead] = useState<{ id: string; name: string } | null>(null);
 
   const { allTags } = useTagsManager();
 
@@ -211,6 +212,9 @@ export function ChannelProspectPanel({ channel }: Props) {
                          channel === "instagram" ? <Instagram className="h-3.5 w-3.5 mr-1" /> :
                          <Send className="h-3.5 w-3.5 mr-1" />}
                         {meta.cta}
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => setHandoffLead({ id: lead.id, name: lead.name || "Lead" })} title="Passar para Closer">
+                        <ArrowRightLeft className="h-3.5 w-3.5" />
                       </Button>
                       <Button size="icon" variant="ghost" onClick={() => navigate(`/leads?id=${lead.id}`)} title="Abrir lead">
                         <ExternalLink className="h-3.5 w-3.5" />
