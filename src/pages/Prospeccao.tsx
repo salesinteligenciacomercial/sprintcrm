@@ -33,6 +33,7 @@ import { RewardShop } from "@/components/prospeccao/rpg/RewardShop";
 import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
 import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
 import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
+import { ChannelProspectPanel } from "@/components/prospeccao/channels/ChannelProspectPanel";
 
 const RPG_KEY = "prospeccao_rpg_mode";
 const SOUND_KEY = "prospeccao_rpg_sound";
@@ -41,7 +42,7 @@ export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
   const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_KEY) === "true");
-  const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena">("organic");
+  const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena" | "coldcall" | "instagram" | "whatsapp">("organic");
   const [subTab, setSubTab] = useState<"registros" | "interacoes">("registros");
   const [period, setPeriod] = useState("30");
   const [showForm, setShowForm] = useState(false);
@@ -56,7 +57,8 @@ export default function Prospeccao() {
   useEffect(() => { localStorage.setItem(RPG_KEY, String(rpgMode)); }, [rpgMode]);
   useEffect(() => { localStorage.setItem(SOUND_KEY, String(soundOn)); }, [soundOn]);
 
-  const channelType = activeTab === "followup" || activeTab === "arena" ? "organic" : activeTab;
+  const isChannelTab = activeTab === "coldcall" || activeTab === "instagram" || activeTab === "whatsapp";
+  const channelType = activeTab === "followup" || activeTab === "arena" || isChannelTab ? "organic" : activeTab;
   const { data, isLoading, refetch } = useProspeccaoData(channelType as "organic" | "paid", parseInt(period));
   const { data: followUpData, isLoading: followUpLoading, refetch: followUpRefetch } = useFollowUpData(parseInt(period));
 
@@ -139,12 +141,18 @@ export default function Prospeccao() {
     paid: "💰 Mercenário",
     followup: "📜 Reforço",
     arena: "🏆 Arena",
+    coldcall: "📞 Cold Call",
+    instagram: "📸 Instagram",
+    whatsapp: "💬 WhatsApp",
   };
   const CLASSIC_TAB_LABELS: Record<string, string> = {
     organic: "Orgânico",
     paid: "Tráfego Pago",
     followup: "Follow-Up",
     arena: "Ranking",
+    coldcall: "Cold Call",
+    instagram: "Instagram",
+    whatsapp: "WhatsApp",
   };
   const labels = gamificationOn ? RPG_TAB_LABELS : CLASSIC_TAB_LABELS;
 
@@ -214,14 +222,17 @@ export default function Prospeccao() {
       <div className={`flex gap-6 ${isMobile ? "flex-col" : ""}`}>
         <div className="flex-1 min-w-0">
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setSubTab("registros"); }}>
-            <TabsList>
+            <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="organic">{labels.organic}</TabsTrigger>
               <TabsTrigger value="paid">{labels.paid}</TabsTrigger>
               <TabsTrigger value="followup">{labels.followup}</TabsTrigger>
+              <TabsTrigger value="coldcall">{labels.coldcall}</TabsTrigger>
+              <TabsTrigger value="instagram">{labels.instagram}</TabsTrigger>
+              <TabsTrigger value="whatsapp">{labels.whatsapp}</TabsTrigger>
               {gamificationOn && <TabsTrigger value="arena">{labels.arena}</TabsTrigger>}
             </TabsList>
 
-            {activeTab !== "arena" && (
+            {activeTab !== "arena" && !isChannelTab && (
               <div className="flex gap-1 mt-3 mb-4">
                 <Button variant={subTab === "registros" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("registros")}>Registros</Button>
                 <Button variant={subTab === "interacoes" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("interacoes")}>
@@ -241,6 +252,10 @@ export default function Prospeccao() {
                 {gamificationCfg?.shop_enabled && (
                   <RewardShop companyId={companyId} userCoins={profile?.coins ?? 0} />
                 )}
+              </div>
+            ) : isChannelTab ? (
+              <div className="mt-4">
+                <ChannelProspectPanel channel={activeTab as "coldcall" | "instagram" | "whatsapp"} />
               </div>
             ) : subTab === "interacoes" ? (
               <div className="space-y-6">
