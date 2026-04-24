@@ -158,6 +158,7 @@ export default function Prospeccao() {
     funil: "🗺️ Funil",
     closer: "📥 Caixa Closer",
     comando: "🎖️ Comando",
+    fila: "🎯 Minha Fila",
   };
   const CLASSIC_TAB_LABELS: Record<string, string> = {
     organic: "Orgânico",
@@ -170,6 +171,7 @@ export default function Prospeccao() {
     funil: "Funil de Vendas",
     closer: "Caixa do Closer",
     comando: "Gestor",
+    fila: "Minha Fila",
   };
   const labels = gamificationOn ? RPG_TAB_LABELS : CLASSIC_TAB_LABELS;
 
