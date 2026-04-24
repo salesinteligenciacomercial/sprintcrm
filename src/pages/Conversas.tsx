@@ -61,6 +61,7 @@ import { useAttendanceProtocol } from "@/hooks/useAttendanceProtocol";
 import * as evolutionAPI from "@/services/evolutionApi";
 import { ConversasAdvancedFilter, AdvancedFilters, defaultFilters } from "@/components/conversas/ConversasAdvancedFilter";
 import { ConversaTemplateSender } from "@/components/conversas/ConversaTemplateSender";
+import { RoteirosComerciaisDialog } from "@/components/conversas/RoteirosComerciaisDialog";
 
 // Verificar se URL do WhatsApp (pps.whatsapp.net) expirou
 function isExpiredWhatsAppUrl(url: string): boolean {
