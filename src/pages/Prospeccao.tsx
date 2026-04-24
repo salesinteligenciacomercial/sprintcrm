@@ -79,6 +79,8 @@ export default function Prospeccao() {
   const { data: profile, userId, companyId } = usePlayerProfile();
   const { data: gamificationCfg } = useGamificationConfig(companyId);
   const gamificationOn = rpgMode && (gamificationCfg?.enabled ?? true);
+  const { isAdmin, userRoles } = usePermissions();
+  const isManagerLike = isAdmin || userRoles.some((r) => r.role === "gestor");
 
   // Detect level up via realtime profile
   const lastLevel = useRef<number | null>(null);
@@ -244,10 +246,12 @@ export default function Prospeccao() {
               <TabsTrigger value="instagram">{labels.instagram}</TabsTrigger>
               <TabsTrigger value="whatsapp">{labels.whatsapp}</TabsTrigger>
               <TabsTrigger value="funil">{labels.funil}</TabsTrigger>
+              <TabsTrigger value="closer">{labels.closer}</TabsTrigger>
+              {isManagerLike && <TabsTrigger value="comando">{labels.comando}</TabsTrigger>}
               {gamificationOn && <TabsTrigger value="arena">{labels.arena}</TabsTrigger>}
             </TabsList>
 
-            {activeTab !== "arena" && !isChannelTab && !isFunilTab && (
+            {activeTab !== "arena" && !isChannelTab && !isFunilTab && !isCloserTab && !isComandoTab && (
               <div className="flex gap-1 mt-3 mb-4">
                 <Button variant={subTab === "registros" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("registros")}>Registros</Button>
                 <Button variant={subTab === "interacoes" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("interacoes")}>
