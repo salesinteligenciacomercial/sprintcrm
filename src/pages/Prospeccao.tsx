@@ -222,14 +222,17 @@ export default function Prospeccao() {
       <div className={`flex gap-6 ${isMobile ? "flex-col" : ""}`}>
         <div className="flex-1 min-w-0">
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setSubTab("registros"); }}>
-            <TabsList>
+            <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="organic">{labels.organic}</TabsTrigger>
               <TabsTrigger value="paid">{labels.paid}</TabsTrigger>
               <TabsTrigger value="followup">{labels.followup}</TabsTrigger>
+              <TabsTrigger value="coldcall">{labels.coldcall}</TabsTrigger>
+              <TabsTrigger value="instagram">{labels.instagram}</TabsTrigger>
+              <TabsTrigger value="whatsapp">{labels.whatsapp}</TabsTrigger>
               {gamificationOn && <TabsTrigger value="arena">{labels.arena}</TabsTrigger>}
             </TabsList>
 
-            {activeTab !== "arena" && (
+            {activeTab !== "arena" && !isChannelTab && (
               <div className="flex gap-1 mt-3 mb-4">
                 <Button variant={subTab === "registros" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("registros")}>Registros</Button>
                 <Button variant={subTab === "interacoes" ? "default" : "ghost"} size="sm" onClick={() => setSubTab("interacoes")}>
@@ -249,6 +252,10 @@ export default function Prospeccao() {
                 {gamificationCfg?.shop_enabled && (
                   <RewardShop companyId={companyId} userCoins={profile?.coins ?? 0} />
                 )}
+              </div>
+            ) : isChannelTab ? (
+              <div className="mt-4">
+                <ChannelProspectPanel channel={activeTab as "coldcall" | "instagram" | "whatsapp"} />
               </div>
             ) : subTab === "interacoes" ? (
               <div className="space-y-6">
