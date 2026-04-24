@@ -59,33 +59,18 @@ export function MarkProspectionButton({ leadId, contactPhone, channel, companyId
       }
 
       // 2) registra interação
-      const { error } = await supabase.from("prospecting_interactions" as any).insert({
+      const { error } = await supabase.from("prospecting_interactions").insert({
         company_id: companyId,
         user_id: user.id,
         lead_id: leadId || null,
-        contact_phone: contactPhone || null,
+        lead_phone: contactPhone || null,
         channel: channelKey,
         outcome,
-        source: "conversa_manual",
-      });
+        log_type: "prospecting",
+        interaction_summary: `Marcado manualmente via Conversas (${channelKey})`,
+      } as any);
 
-      if (error) {
-        // Fallback: tabela genérica caso interactions não exista
-        await supabase.from("prospecting_daily_logs").insert({
-          company_id: companyId,
-          user_id: user.id,
-          channel_type: "organic",
-          source: channelKey,
-          log_date: new Date().toISOString().slice(0, 10),
-          leads_prospected: outcome === "contacted" ? 1 : 0,
-          responses: outcome === "responded" ? 1 : 0,
-          opportunities: outcome === "opportunity" ? 1 : 0,
-          meetings_scheduled: outcome === "meeting_scheduled" ? 1 : 0,
-          sales_closed: outcome === "sale_closed" ? 1 : 0,
-          gross_value: 0,
-          ad_spend: 0,
-        } as any);
-      }
+      if (error) throw error;
 
       toast.success(`Marcado como ${outcome.replace("_", " ")} via ${channelKey}`);
     } catch (e: any) {
