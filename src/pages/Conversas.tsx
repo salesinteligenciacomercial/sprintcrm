@@ -10120,6 +10120,14 @@ function Conversas() {
                             origemApi={selectedConv.origemApi}
                           />
                         )}
+                        {/* Roteiros Comerciais */}
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start"
+                          onClick={() => setRoteirosDialogOpen(true)}
+                        >
+                          <Workflow className="h-4 w-4 mr-2" /> Roteiros Comerciais
+                        </Button>
                         {/* Quick Messages */}
                         <Dialog>
                           <DialogTrigger asChild>
