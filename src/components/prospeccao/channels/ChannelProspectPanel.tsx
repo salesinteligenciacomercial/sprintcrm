@@ -174,7 +174,6 @@ export function ChannelProspectPanel({ channel }: Props) {
                         size="sm"
                         variant={channel === "coldcall" ? "default" : "outline"}
                         onClick={() => handleAction(lead)}
-                        className={channel === "coldcall" ? "bg-cyan-600 hover:bg-cyan-700" : ""}
                       >
                         {channel === "coldcall" ? <PhoneCall className="h-3.5 w-3.5 mr-1" /> :
                          channel === "instagram" ? <Instagram className="h-3.5 w-3.5 mr-1" /> :
