@@ -3864,6 +3864,9 @@ function Conversas() {
           unread: messagensFormatadas.length > 0 && messagensFormatadas[messagensFormatadas.length - 1]?.sender === 'contact' ? 1 : 0,
           messages: messagensFormatadas,
           tags: leadInfo?.tags || [],
+          funnelStage: leadInfo?.stage || undefined,
+          valor: leadInfo?.value != null ? `R$ ${Number(leadInfo.value).toLocaleString('pt-BR')}` : undefined,
+          leadId: leadInfo?.leadId || undefined,
           phoneNumber: telefone,
           avatarUrl: isGroup 
             ? `https://ui-avatars.com/api/?name=${encodeURIComponent('Grupo')}&background=10b981&color=fff` 
