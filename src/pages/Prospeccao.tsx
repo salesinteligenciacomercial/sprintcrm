@@ -270,6 +270,7 @@ export default function Prospeccao() {
           {gamificationOn ? (
             <>
               <QuestBoard userId={userId} companyId={companyId} />
+              <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
               <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
             </>
           ) : (
