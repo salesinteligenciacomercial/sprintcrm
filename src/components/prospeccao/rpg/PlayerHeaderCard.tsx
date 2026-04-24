@@ -1,6 +1,7 @@
 import { PlayerProfile, xpNeededForLevel, getRankByLevel } from "@/hooks/usePlayerProfile";
 import { Flame, Gem, Zap, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ClassAvatar } from "./ClassAvatar";
 
 interface Props {
   profile: PlayerProfile | null | undefined;
@@ -26,14 +27,12 @@ export function PlayerHeaderCard({ profile, onShowAchievements, onShowRanks }: P
   const rank = getRankByLevel(profile.level);
 
   return (
-    <div className="rpg-card rounded-lg p-5 rpg-grid-bg relative overflow-hidden rpg-scanline">
+    <div className="rpg-card rpg-hex-bg rounded-lg p-5 relative overflow-hidden rpg-scanline">
       <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
-        {/* Avatar + level */}
+        {/* Avatar de classe */}
         <div className="relative">
-          <div className={`w-20 h-20 rounded-lg border-2 ${rank.className} flex items-center justify-center bg-background/40 rpg-glow-cyan rpg-text-mono text-3xl font-bold`}>
-            {profile.level}
-          </div>
-          <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[10px] rpg-text-mono uppercase tracking-wider rounded border ${rank.className} bg-background`}>
+          <ClassAvatar name={profile.title || "Operador"} playerClass={profile.class} size="xl" level={profile.level} online />
+          <div className={`absolute -bottom-6 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[10px] rpg-text-mono uppercase tracking-wider rounded border ${rank.className} bg-background whitespace-nowrap`}>
             {rank.name}
           </div>
         </div>
