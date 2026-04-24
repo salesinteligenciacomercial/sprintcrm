@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, FileText, UserPlus, Settings } from "lucide-react";
+import { Plus, Download, FileText, UserPlus, Settings, Volume2, VolumeX } from "lucide-react";
 import { Link } from "react-router-dom";
 import confetti from "canvas-confetti";
 import { ProspeccaoKPIs } from "@/components/prospeccao/ProspeccaoKPIs";
@@ -30,12 +30,17 @@ import { RankLadder } from "@/components/prospeccao/rpg/RankLadder";
 import { LevelUpModal } from "@/components/prospeccao/rpg/LevelUpModal";
 import { ClassicVsRpgToggle } from "@/components/prospeccao/rpg/ClassicVsRpgToggle";
 import { RewardShop } from "@/components/prospeccao/rpg/RewardShop";
+import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
+import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
+import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
 
 const RPG_KEY = "prospeccao_rpg_mode";
+const SOUND_KEY = "prospeccao_rpg_sound";
 
 export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
+  const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_KEY) === "true");
   const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena">("organic");
   const [subTab, setSubTab] = useState<"registros" | "interacoes">("registros");
   const [period, setPeriod] = useState("30");
@@ -49,6 +54,7 @@ export default function Prospeccao() {
   const [newLevel, setNewLevel] = useState(0);
 
   useEffect(() => { localStorage.setItem(RPG_KEY, String(rpgMode)); }, [rpgMode]);
+  useEffect(() => { localStorage.setItem(SOUND_KEY, String(soundOn)); }, [soundOn]);
 
   const channelType = activeTab === "followup" || activeTab === "arena" ? "organic" : activeTab;
   const { data, isLoading, refetch } = useProspeccaoData(channelType as "organic" | "paid", parseInt(period));
@@ -143,7 +149,8 @@ export default function Prospeccao() {
   const labels = gamificationOn ? RPG_TAB_LABELS : CLASSIC_TAB_LABELS;
 
   return (
-    <div className={`space-y-6 p-4 md:p-6 ${gamificationOn ? "rpg-grid-bg min-h-screen" : ""}`}>
+    <div className={`space-y-6 p-4 md:p-6 ${gamificationOn ? "rpg-hex-bg min-h-screen" : ""}`}>
+      {gamificationOn && <KillFeed companyId={companyId} enableSound={soundOn} />}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
@@ -180,12 +187,20 @@ export default function Prospeccao() {
             <Plus className="h-4 w-4 mr-1" /> Registrar
           </Button>
           {gamificationOn && (
-            <Button size="sm" variant="ghost" asChild>
-              <Link to="/configuracoes/gamificacao"><Settings className="h-4 w-4" /></Link>
-            </Button>
+            <>
+              <Button size="sm" variant="ghost" onClick={() => setSoundOn((s) => !s)} title={soundOn ? "Desligar som" : "Ligar som"}>
+                {soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </Button>
+              <Button size="sm" variant="ghost" asChild>
+                <Link to="/configuracoes/gamificacao"><Settings className="h-4 w-4" /></Link>
+              </Button>
+            </>
           )}
         </div>
       </div>
+
+      {/* Arena ao vivo (topo) */}
+      {gamificationOn && <ArenaTopBar companyId={companyId} currentUserId={userId} />}
 
       {/* Player Header (modo RPG) */}
       {gamificationOn && (
@@ -256,6 +271,7 @@ export default function Prospeccao() {
           {gamificationOn ? (
             <>
               <QuestBoard userId={userId} companyId={companyId} />
+              <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
               <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
             </>
           ) : (
