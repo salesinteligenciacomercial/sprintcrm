@@ -30,12 +30,17 @@ import { RankLadder } from "@/components/prospeccao/rpg/RankLadder";
 import { LevelUpModal } from "@/components/prospeccao/rpg/LevelUpModal";
 import { ClassicVsRpgToggle } from "@/components/prospeccao/rpg/ClassicVsRpgToggle";
 import { RewardShop } from "@/components/prospeccao/rpg/RewardShop";
+import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
+import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
+import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
 
 const RPG_KEY = "prospeccao_rpg_mode";
+const SOUND_KEY = "prospeccao_rpg_sound";
 
 export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
+  const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_KEY) === "true");
   const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena">("organic");
   const [subTab, setSubTab] = useState<"registros" | "interacoes">("registros");
   const [period, setPeriod] = useState("30");
@@ -49,6 +54,7 @@ export default function Prospeccao() {
   const [newLevel, setNewLevel] = useState(0);
 
   useEffect(() => { localStorage.setItem(RPG_KEY, String(rpgMode)); }, [rpgMode]);
+  useEffect(() => { localStorage.setItem(SOUND_KEY, String(soundOn)); }, [soundOn]);
 
   const channelType = activeTab === "followup" || activeTab === "arena" ? "organic" : activeTab;
   const { data, isLoading, refetch } = useProspeccaoData(channelType as "organic" | "paid", parseInt(period));
