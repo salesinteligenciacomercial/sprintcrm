@@ -259,8 +259,52 @@ export default function Prospeccao() {
                 )}
               </div>
             ) : isChannelTab ? (
-              <div className="mt-4">
-                <ChannelProspectPanel channel={activeTab as "coldcall" | "instagram" | "whatsapp"} />
+              <div className="mt-4 space-y-3">
+                {(activeTab === "instagram" || activeTab === "whatsapp") && (
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex gap-1">
+                      <Button
+                        variant={channelView === "prospect" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setChannelView("prospect")}
+                      >
+                        🎯 Prospecção
+                      </Button>
+                      <Button
+                        variant={channelView === "chat" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setChannelView("chat")}
+                      >
+                        💬 Bate-papo
+                      </Button>
+                    </div>
+                    {channelView === "chat" && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          to={`/conversas?channel=${activeTab === "instagram" ? "instagram" : "whatsapp"}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Abrir em nova aba
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
+                {channelView === "chat" && (activeTab === "instagram" || activeTab === "whatsapp") ? (
+                  <div
+                    className="rounded-lg border border-border overflow-hidden bg-background"
+                    style={{ height: "calc(100vh - 360px)", minHeight: 600 }}
+                  >
+                    <iframe
+                      src={`/conversas?channel=${activeTab === "instagram" ? "instagram" : "whatsapp"}&embedded=1`}
+                      title={`Bate-papo ${activeTab}`}
+                      className="w-full h-full border-0"
+                    />
+                  </div>
+                ) : (
+                  <ChannelProspectPanel channel={activeTab as "coldcall" | "instagram" | "whatsapp"} />
+                )}
               </div>
             ) : isFunilTab ? (
               <div className="mt-4 space-y-3">
