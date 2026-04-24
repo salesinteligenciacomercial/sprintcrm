@@ -58,7 +58,7 @@ export default function Prospeccao() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showRanks, setShowRanks] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
-  const [newLevel, setNewLevel] = useState(0);
+  const [newLevel] = useState(0);
 
   useEffect(() => { localStorage.setItem(RPG_KEY, String(rpgMode)); }, [rpgMode]);
   useEffect(() => { localStorage.setItem(SOUND_KEY, String(soundOn)); }, [soundOn]);
@@ -261,8 +261,8 @@ export default function Prospeccao() {
             ) : activeTab === "arena" ? (
               <div className="space-y-6 mt-4">
                 <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
-                <div className="rpg-card rounded-lg p-4">
-                  <h3 className="rpg-text-mono text-sm uppercase tracking-wider rpg-neon-cyan mb-3">🏆 Conquistas</h3>
+                <div className="bg-card border border-border rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-3">🏆 Conquistas e Trilha de Carreira</h3>
                   <Button variant="outline" onClick={() => setShowAchievements(true)}>Abrir Galeria</Button>
                   <Button variant="outline" className="ml-2" onClick={() => setShowRanks(true)}>Ver Ranks</Button>
                 </div>
