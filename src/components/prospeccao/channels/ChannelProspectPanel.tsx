@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Phone, MessageSquare, Instagram, Send, Search, Star, StarOff, ExternalLink, Loader2, PhoneCall, Tag as TagIcon } from "lucide-react";
+import { Phone, MessageSquare, Instagram, Send, Search, Star, StarOff, ExternalLink, Loader2, PhoneCall, Tag as TagIcon, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { CallModal } from "@/components/discador/CallModal";
 import { PostCallNotesDialog } from "@/components/discador/PostCallNotesDialog";
 import { useTagsManager } from "@/hooks/useTagsManager";
 import { ConversaPopup } from "@/components/leads/ConversaPopup";
+import { HandoffDialog } from "@/components/prospeccao/comercial/HandoffDialog";
 
 interface Props {
   channel: ProspectChannel;
