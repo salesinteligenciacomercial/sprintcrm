@@ -1835,7 +1835,6 @@ serve(async (req) => {
           console.log("🔄 Tentando Meta como fallback...");
           result = await sendMetaFallback(connection, formattedNumber, validatedData);
         }
-        }
       }
     }
 
