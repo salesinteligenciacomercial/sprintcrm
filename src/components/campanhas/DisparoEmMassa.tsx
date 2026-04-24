@@ -467,6 +467,22 @@ export function DisparoEmMassa() {
 
     setActiveCampaignId(campaignId);
 
+    // Marcar leads como "para prospectar" se a opção estiver ativa
+    if (markAsProspect && leadsToSend.length > 0) {
+      try {
+        const ids = leadsToSend.map((l) => l.id);
+        await supabase
+          .from('leads')
+          .update({
+            to_prospect: true,
+            prospecting_priority: 1,
+          } as any)
+          .in('id', ids);
+      } catch (err) {
+        console.warn('Falha ao marcar leads para prospecção:', err);
+      }
+    }
+
     // Fire and forget - edge function processes in background
     supabase.functions.invoke('disparo-em-massa', {
       body: { campaign_id: campaignId },
