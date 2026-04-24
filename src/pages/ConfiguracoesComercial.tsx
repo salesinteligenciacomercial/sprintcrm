@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { useSalesTeams, useUpdateCommercialRole } from "@/hooks/useSalesTeams";
 import { useCompanyGoals } from "@/hooks/useCommercialGoals";
 import { useTeamPerformance } from "@/hooks/useTeamPerformance";
-import { useTeamMembers } from "@/hooks/useTeamMembers";
+
 
 const METRICS = [
   { value: "leads_prospected", label: "Leads prospectados" },
