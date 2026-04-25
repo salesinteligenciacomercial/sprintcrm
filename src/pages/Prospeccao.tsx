@@ -344,7 +344,7 @@ export default function Prospeccao() {
                 </div>
                 <div className="rounded-lg border border-border overflow-hidden bg-background" style={{ height: "calc(100vh - 320px)", minHeight: 600 }}>
                   <iframe
-                    src="/kanban"
+                    src="/kanban?embed=1"
                     title="Funil de Vendas"
                     className="w-full h-full border-0"
                   />
