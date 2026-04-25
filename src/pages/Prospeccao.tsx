@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, FileText, UserPlus, Settings, Volume2, VolumeX } from "lucide-react";
+import { Plus, Download, FileText, UserPlus, Settings, Volume2, VolumeX, PanelRightClose, PanelRightOpen, Table as TableIcon, LayoutGrid } from "lucide-react";
+import { PipelineFunnelVisual } from "@/components/prospeccao/PipelineFunnelVisual";
+import { QuickActionCards } from "@/components/prospeccao/QuickActionCards";
+import { ProspeccaoKanbanView } from "@/components/prospeccao/ProspeccaoKanbanView";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { ProspeccaoKPIs } from "@/components/prospeccao/ProspeccaoKPIs";
@@ -59,6 +62,10 @@ export default function Prospeccao() {
   const [showRanks, setShowRanks] = useState(false);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [newLevel] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => localStorage.getItem("prospeccao_sidebar") !== "false");
+  const [recordsView, setRecordsView] = useState<"table" | "kanban">("table");
+  const [activeFunnelStage, setActiveFunnelStage] = useState<string | null>(null);
+  useEffect(() => { localStorage.setItem("prospeccao_sidebar", String(sidebarOpen)); }, [sidebarOpen]);
 
   useEffect(() => { localStorage.setItem(RPG_KEY, String(rpgMode)); }, [rpgMode]);
   useEffect(() => { localStorage.setItem(SOUND_KEY, String(soundOn)); }, [soundOn]);
@@ -180,17 +187,13 @@ export default function Prospeccao() {
               <SelectItem value="90">90 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => setShowScripts(true)}>
-            <FileText className="h-4 w-4 mr-1" /> Scripts
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
-            <Download className="h-4 w-4 mr-1" /> CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowInteractionForm(true)}>
-            <UserPlus className="h-4 w-4 mr-1" /> Interação
-          </Button>
-          <Button size="sm" onClick={handleRegister}>
-            <Plus className="h-4 w-4 mr-1" /> Registrar
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSidebarOpen((s) => !s)}
+            title={sidebarOpen ? "Recolher painel lateral" : "Expandir painel lateral"}
+          >
+            {sidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
           </Button>
           {gamificationOn && (
             <>
@@ -204,6 +207,14 @@ export default function Prospeccao() {
           )}
         </div>
       </div>
+
+      {/* Cards de Ação Rápida */}
+      <QuickActionCards
+        onRegister={handleRegister}
+        onInteraction={() => setShowInteractionForm(true)}
+        onScripts={() => setShowScripts(true)}
+        onExport={handleExportCSV}
+      />
 
       {/* Arena ao vivo (topo) */}
       {gamificationOn && <ArenaTopBar companyId={companyId} currentUserId={userId} />}
@@ -345,14 +356,36 @@ export default function Prospeccao() {
             ) : (
               <>
                 <TabsContent value="organic" className="space-y-6 mt-0">
+                  <PipelineFunnelVisual
+                    data={data || []}
+                    isLoading={isLoading}
+                    activeStage={activeFunnelStage}
+                    onStageClick={setActiveFunnelStage}
+                  />
                   <ProspeccaoKPIs data={data || []} channelType="organic" isLoading={isLoading} />
                   <ProspeccaoCharts data={data || []} channelType="organic" />
-                  <ProspeccaoTable data={data || []} channelType="organic" isLoading={isLoading} onRefresh={refetch} />
+                  <RecordsViewToggle view={recordsView} onChange={setRecordsView} />
+                  {recordsView === "table" ? (
+                    <ProspeccaoTable data={data || []} channelType="organic" isLoading={isLoading} onRefresh={refetch} />
+                  ) : (
+                    <ProspeccaoKanbanView data={data || []} />
+                  )}
                 </TabsContent>
                 <TabsContent value="paid" className="space-y-6 mt-0">
+                  <PipelineFunnelVisual
+                    data={data || []}
+                    isLoading={isLoading}
+                    activeStage={activeFunnelStage}
+                    onStageClick={setActiveFunnelStage}
+                  />
                   <ProspeccaoKPIs data={data || []} channelType="paid" isLoading={isLoading} />
                   <ProspeccaoCharts data={data || []} channelType="paid" />
-                  <ProspeccaoTable data={data || []} channelType="paid" isLoading={isLoading} onRefresh={refetch} />
+                  <RecordsViewToggle view={recordsView} onChange={setRecordsView} />
+                  {recordsView === "table" ? (
+                    <ProspeccaoTable data={data || []} channelType="paid" isLoading={isLoading} onRefresh={refetch} />
+                  ) : (
+                    <ProspeccaoKanbanView data={data || []} />
+                  )}
                 </TabsContent>
                 <TabsContent value="followup" className="space-y-6 mt-0">
                   <FollowUpKPIs data={followUpData || []} isLoading={followUpLoading} />
@@ -363,17 +396,19 @@ export default function Prospeccao() {
           </Tabs>
         </div>
 
-        <div className={`${isMobile ? "w-full" : "w-72 shrink-0"} space-y-4`}>
-          {gamificationOn ? (
-            <>
-              <QuestBoard userId={userId} companyId={companyId} />
-              <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
-              <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
-            </>
-          ) : (
-            <BenchmarkPanel />
-          )}
-        </div>
+        {sidebarOpen && (
+          <div className={`${isMobile ? "w-full" : "w-72 shrink-0"} space-y-4 animate-in slide-in-from-right-4 duration-200`}>
+            {gamificationOn ? (
+              <>
+                <QuestBoard userId={userId} companyId={companyId} />
+                <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
+                <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
+              </>
+            ) : (
+              <BenchmarkPanel />
+            )}
+          </div>
+        )}
       </div>
 
       <ProspeccaoFormDialog open={showForm} onOpenChange={setShowForm} channelType={channelType as "organic" | "paid"} onSuccess={handleRefreshAll} />
@@ -388,6 +423,32 @@ export default function Prospeccao() {
           <LevelUpModal open={showLevelUp} onOpenChange={setShowLevelUp} newLevel={newLevel} />
         </>
       )}
+    </div>
+  );
+}
+
+function RecordsViewToggle({ view, onChange }: { view: "table" | "kanban"; onChange: (v: "table" | "kanban") => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold text-foreground">Registros</h3>
+      <div className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5">
+        <Button
+          size="sm"
+          variant={view === "table" ? "default" : "ghost"}
+          className="h-7 px-3 text-xs"
+          onClick={() => onChange("table")}
+        >
+          <TableIcon className="h-3.5 w-3.5 mr-1" /> Tabela
+        </Button>
+        <Button
+          size="sm"
+          variant={view === "kanban" ? "default" : "ghost"}
+          className="h-7 px-3 text-xs"
+          onClick={() => onChange("kanban")}
+        >
+          <LayoutGrid className="h-3.5 w-3.5 mr-1" /> Kanban
+        </Button>
+      </div>
     </div>
   );
 }
