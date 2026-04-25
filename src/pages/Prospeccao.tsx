@@ -46,6 +46,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 const RPG_KEY = "prospeccao_rpg_mode";
 const SOUND_KEY = "prospeccao_rpg_sound";
 
+
 export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
