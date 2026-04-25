@@ -396,17 +396,19 @@ export default function Prospeccao() {
           </Tabs>
         </div>
 
-        <div className={`${isMobile ? "w-full" : "w-72 shrink-0"} space-y-4`}>
-          {gamificationOn ? (
-            <>
-              <QuestBoard userId={userId} companyId={companyId} />
-              <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
-              <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
-            </>
-          ) : (
-            <BenchmarkPanel />
-          )}
-        </div>
+        {sidebarOpen && (
+          <div className={`${isMobile ? "w-full" : "w-72 shrink-0"} space-y-4 animate-in slide-in-from-right-4 duration-200`}>
+            {gamificationOn ? (
+              <>
+                <QuestBoard userId={userId} companyId={companyId} />
+                <TeamLobbyPanel companyId={companyId} currentUserId={userId} />
+                <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
+              </>
+            ) : (
+              <BenchmarkPanel />
+            )}
+          </div>
+        )}
       </div>
 
       <ProspeccaoFormDialog open={showForm} onOpenChange={setShowForm} channelType={channelType as "organic" | "paid"} onSuccess={handleRefreshAll} />
