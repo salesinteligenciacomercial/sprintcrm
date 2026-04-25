@@ -38,7 +38,7 @@ export function ScriptLibrary({ open, onOpenChange }: Props) {
               size="sm"
               onClick={() => {
                 onOpenChange(false);
-                navigate("/processos-comerciais");
+                navigate("/processos");
               }}
             >
               <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
