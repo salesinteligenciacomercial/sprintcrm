@@ -61,6 +61,307 @@ export type Database = {
           },
         ]
       }
+      advisory_action_plans: {
+        Row: {
+          company_id: string
+          created_at: string
+          due_date: string | null
+          id: string
+          notes: string | null
+          responsible_user_id: string | null
+          session_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          responsible_user_id?: string | null
+          session_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          notes?: string | null
+          responsible_user_id?: string | null
+          session_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      advisory_diagnostics: {
+        Row: {
+          ai_strategic_plan: string | null
+          company_id: string
+          created_at: string
+          estagio_comercial: string | null
+          ferramentas_atuais: string[] | null
+          filled_by: string
+          id: string
+          meta_faturamento: number | null
+          obs: string | null
+          prazo_meses: number | null
+          principais_gargalos: string[] | null
+          segmento: string | null
+          tamanho_time: number | null
+          ticket_medio: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_strategic_plan?: string | null
+          company_id: string
+          created_at?: string
+          estagio_comercial?: string | null
+          ferramentas_atuais?: string[] | null
+          filled_by: string
+          id?: string
+          meta_faturamento?: number | null
+          obs?: string | null
+          prazo_meses?: number | null
+          principais_gargalos?: string[] | null
+          segmento?: string | null
+          tamanho_time?: number | null
+          ticket_medio?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_strategic_plan?: string | null
+          company_id?: string
+          created_at?: string
+          estagio_comercial?: string | null
+          ferramentas_atuais?: string[] | null
+          filled_by?: string
+          id?: string
+          meta_faturamento?: number | null
+          obs?: string | null
+          prazo_meses?: number | null
+          principais_gargalos?: string[] | null
+          segmento?: string | null
+          tamanho_time?: number | null
+          ticket_medio?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      advisory_playbooks: {
+        Row: {
+          category: string
+          company_id: string | null
+          content_md: string
+          created_at: string
+          description: string | null
+          id: string
+          is_template: boolean
+          tags: string[] | null
+          title: string
+        }
+        Insert: {
+          category: string
+          company_id?: string | null
+          content_md: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          tags?: string[] | null
+          title: string
+        }
+        Update: {
+          category?: string
+          company_id?: string | null
+          content_md?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          tags?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
+      advisory_revenue_calc: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          meta_faturamento: number
+          result: Json | null
+          reunioes_por_sdr_mes: number | null
+          scenario_name: string
+          taxa_conversao: number
+          taxa_show: number | null
+          ticket_medio: number
+          user_id: string
+          vendas_por_closer_mes: number | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          meta_faturamento: number
+          result?: Json | null
+          reunioes_por_sdr_mes?: number | null
+          scenario_name: string
+          taxa_conversao: number
+          taxa_show?: number | null
+          ticket_medio: number
+          user_id: string
+          vendas_por_closer_mes?: number | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          meta_faturamento?: number
+          result?: Json | null
+          reunioes_por_sdr_mes?: number | null
+          scenario_name?: string
+          taxa_conversao?: number
+          taxa_show?: number | null
+          ticket_medio?: number
+          user_id?: string
+          vendas_por_closer_mes?: number | null
+        }
+        Relationships: []
+      }
+      advisory_track_modules: {
+        Row: {
+          checklist: Json | null
+          content_md: string | null
+          content_type: string
+          created_at: string
+          description: string | null
+          duration_min: number | null
+          id: string
+          order_position: number | null
+          title: string
+          track_id: string
+          video_url: string | null
+        }
+        Insert: {
+          checklist?: Json | null
+          content_md?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          duration_min?: number | null
+          id?: string
+          order_position?: number | null
+          title: string
+          track_id: string
+          video_url?: string | null
+        }
+        Update: {
+          checklist?: Json | null
+          content_md?: string | null
+          content_type?: string
+          created_at?: string
+          description?: string | null
+          duration_min?: number | null
+          id?: string
+          order_position?: number | null
+          title?: string
+          track_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisory_track_modules_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "advisory_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advisory_track_progress: {
+        Row: {
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          module_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          module_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advisory_track_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "advisory_track_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      advisory_tracks: {
+        Row: {
+          color: string | null
+          company_id: string | null
+          cover_emoji: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_template: boolean
+          level: string | null
+          name: string
+          order_position: number | null
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          company_id?: string | null
+          cover_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          level?: string | null
+          name: string
+          order_position?: number | null
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          company_id?: string | null
+          cover_emoji?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_template?: boolean
+          level?: string | null
+          name?: string
+          order_position?: number | null
+          slug?: string
+        }
+        Relationships: []
+      }
       agendas: {
         Row: {
           capacidade_simultanea: number | null
@@ -7604,6 +7905,170 @@ export type Database = {
           },
         ]
       }
+      wmi_advisor_chats: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wmi_assessments: {
+        Row: {
+          ai_insights: string | null
+          bottlenecks: Json | null
+          classification: string
+          company_id: string
+          created_at: string
+          id: string
+          pillar_automacao: number
+          pillar_details: Json | null
+          pillar_gestao: number
+          pillar_pessoas: number
+          pillar_processos: number
+          pillar_prospeccao: number
+          total_score: number
+        }
+        Insert: {
+          ai_insights?: string | null
+          bottlenecks?: Json | null
+          classification?: string
+          company_id: string
+          created_at?: string
+          id?: string
+          pillar_automacao?: number
+          pillar_details?: Json | null
+          pillar_gestao?: number
+          pillar_pessoas?: number
+          pillar_processos?: number
+          pillar_prospeccao?: number
+          total_score?: number
+        }
+        Update: {
+          ai_insights?: string | null
+          bottlenecks?: Json | null
+          classification?: string
+          company_id?: string
+          created_at?: string
+          id?: string
+          pillar_automacao?: number
+          pillar_details?: Json | null
+          pillar_gestao?: number
+          pillar_pessoas?: number
+          pillar_processos?: number
+          pillar_prospeccao?: number
+          total_score?: number
+        }
+        Relationships: []
+      }
+      wmi_benchmarks: {
+        Row: {
+          id: string
+          market_average: number
+          metric_key: string
+          metric_label: string
+          segmento: string
+          source: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          market_average: number
+          metric_key: string
+          metric_label: string
+          segmento: string
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          market_average?: number
+          metric_key?: string
+          metric_label?: string
+          segmento?: string
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wmi_roadmap_items: {
+        Row: {
+          assessment_id: string | null
+          company_id: string
+          completed_at: string | null
+          created_at: string
+          description: string | null
+          expected_impact: string | null
+          id: string
+          pillar: string
+          priority: string
+          status: string
+          title: string
+          week: number
+        }
+        Insert: {
+          assessment_id?: string | null
+          company_id: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          expected_impact?: string | null
+          id?: string
+          pillar: string
+          priority?: string
+          status?: string
+          title: string
+          week?: number
+        }
+        Update: {
+          assessment_id?: string | null
+          company_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string | null
+          expected_impact?: string | null
+          id?: string
+          pillar?: string
+          priority?: string
+          status?: string
+          title?: string
+          week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wmi_roadmap_items_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "wmi_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -7626,6 +8091,7 @@ export type Database = {
         Args: { p_company_id: string; p_end_date: string; p_start_date: string }
         Returns: Json
       }
+      calculate_wmi_score: { Args: { p_company_id?: string }; Returns: Json }
       claim_next_queue_lead: {
         Args: { _queue_id: string; _user_id: string }
         Returns: {
