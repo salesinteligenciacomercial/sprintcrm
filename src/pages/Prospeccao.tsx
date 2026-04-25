@@ -187,17 +187,13 @@ export default function Prospeccao() {
               <SelectItem value="90">90 dias</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => setShowScripts(true)}>
-            <FileText className="h-4 w-4 mr-1" /> Scripts
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV}>
-            <Download className="h-4 w-4 mr-1" /> CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowInteractionForm(true)}>
-            <UserPlus className="h-4 w-4 mr-1" /> Interação
-          </Button>
-          <Button size="sm" onClick={handleRegister}>
-            <Plus className="h-4 w-4 mr-1" /> Registrar
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSidebarOpen((s) => !s)}
+            title={sidebarOpen ? "Recolher painel lateral" : "Expandir painel lateral"}
+          >
+            {sidebarOpen ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
           </Button>
           {gamificationOn && (
             <>
@@ -211,6 +207,14 @@ export default function Prospeccao() {
           )}
         </div>
       </div>
+
+      {/* Cards de Ação Rápida */}
+      <QuickActionCards
+        onRegister={handleRegister}
+        onInteraction={() => setShowInteractionForm(true)}
+        onScripts={() => setShowScripts(true)}
+        onExport={handleExportCSV}
+      />
 
       {/* Arena ao vivo (topo) */}
       {gamificationOn && <ArenaTopBar companyId={companyId} currentUserId={userId} />}
