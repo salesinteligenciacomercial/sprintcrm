@@ -46,28 +46,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 const RPG_KEY = "prospeccao_rpg_mode";
 const SOUND_KEY = "prospeccao_rpg_sound";
 
-function RecordsViewToggle({ view, onChange }: { view: "table" | "kanban"; onChange: (v: "table" | "kanban") => void }) {
-  return (
-    <div className="inline-flex items-center gap-1 rounded-md border border-border bg-card p-1">
-      <Button
-        size="sm"
-        variant={view === "table" ? "default" : "ghost"}
-        onClick={() => onChange("table")}
-        className="h-8 gap-2"
-      >
-        <TableIcon className="h-4 w-4" /> Tabela
-      </Button>
-      <Button
-        size="sm"
-        variant={view === "kanban" ? "default" : "ghost"}
-        onClick={() => onChange("kanban")}
-        className="h-8 gap-2"
-      >
-        <LayoutGrid className="h-4 w-4" /> Kanban
-      </Button>
-    </div>
-  );
-}
 
 export default function Prospeccao() {
   const isMobile = useIsMobile();
