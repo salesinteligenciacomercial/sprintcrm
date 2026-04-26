@@ -8,7 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadarPilares } from "@/components/wmi/RadarPilares";
 import { AdvisorChat } from "@/components/wmi/AdvisorChat";
-import { Activity, Trophy, Sparkles, ArrowRight, GraduationCap, Loader2, CheckCircle2, Circle, AlertTriangle, TrendingUp, TrendingDown, Minus, Target, FileText, BarChart3, Bot, Users, Zap } from "lucide-react";
+import { Diagnostico360 } from "@/components/wmi/Diagnostico360";
+import { Activity, Trophy, Sparkles, ArrowRight, GraduationCap, Loader2, CheckCircle2, Circle, AlertTriangle, TrendingUp, TrendingDown, Minus, Target, FileText, BarChart3, Bot, Users, Zap, ClipboardCheck } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -155,8 +156,9 @@ export default function Maturidade() {
 
       {/* TABS DETALHE */}
       <Tabs defaultValue="pilares" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="pilares" className="gap-2"><Zap className="h-4 w-4" /> Pilares</TabsTrigger>
+          <TabsTrigger value="diagnostico" className="gap-2"><ClipboardCheck className="h-4 w-4" /> Diagnóstico 360</TabsTrigger>
           <TabsTrigger value="roadmap" className="gap-2"><Sparkles className="h-4 w-4" /> Roadmap IA</TabsTrigger>
           <TabsTrigger value="benchmark" className="gap-2"><BarChart3 className="h-4 w-4" /> Benchmark</TabsTrigger>
           <TabsTrigger value="evolucao" className="gap-2"><TrendingUp className="h-4 w-4" /> Evolução</TabsTrigger>
@@ -202,7 +204,11 @@ export default function Maturidade() {
           </div>
         </TabsContent>
 
-        {/* ROADMAP */}
+        {/* DIAGNÓSTICO 360 */}
+        <TabsContent value="diagnostico">
+          <Diagnostico360 />
+        </TabsContent>
+
         <TabsContent value="roadmap" className="space-y-4">
           {!roadmap?.length ? (
             <Card>
