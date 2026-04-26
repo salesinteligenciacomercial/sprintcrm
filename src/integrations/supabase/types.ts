@@ -2579,6 +2579,119 @@ export type Database = {
           },
         ]
       }
+      diagnostico_alavancas: {
+        Row: {
+          cor: string | null
+          created_at: string
+          descricao: string | null
+          foco: string
+          icon: string | null
+          id: string
+          nome: string
+          numero: number
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          foco: string
+          icon?: string | null
+          id?: string
+          nome: string
+          numero: number
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          descricao?: string | null
+          foco?: string
+          icon?: string | null
+          id?: string
+          nome?: string
+          numero?: number
+        }
+        Relationships: []
+      }
+      diagnostico_perguntas: {
+        Row: {
+          alavanca_id: string
+          created_at: string
+          id: string
+          ordem: number
+          pergunta: string
+          peso: number
+        }
+        Insert: {
+          alavanca_id: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          pergunta: string
+          peso?: number
+        }
+        Update: {
+          alavanca_id?: string
+          created_at?: string
+          id?: string
+          ordem?: number
+          pergunta?: string
+          peso?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "diagnostico_perguntas_alavanca_id_fkey"
+            columns: ["alavanca_id"]
+            isOneToOne: false
+            referencedRelation: "diagnostico_alavancas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      diagnostico_respostas: {
+        Row: {
+          classificacao: string | null
+          company_id: string
+          created_at: string
+          diagnostico_ia: string | null
+          id: string
+          nota: string
+          percentual: number
+          plano_acao_ia: Json | null
+          pontuacoes: Json
+          respostas_perguntas: Json | null
+          total_score: number
+          user_id: string | null
+        }
+        Insert: {
+          classificacao?: string | null
+          company_id: string
+          created_at?: string
+          diagnostico_ia?: string | null
+          id?: string
+          nota?: string
+          percentual?: number
+          plano_acao_ia?: Json | null
+          pontuacoes?: Json
+          respostas_perguntas?: Json | null
+          total_score?: number
+          user_id?: string | null
+        }
+        Update: {
+          classificacao?: string | null
+          company_id?: string
+          created_at?: string
+          diagnostico_ia?: string | null
+          id?: string
+          nota?: string
+          percentual?: number
+          plano_acao_ia?: Json | null
+          pontuacoes?: Json
+          respostas_perguntas?: Json | null
+          total_score?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       disparo_campaigns: {
         Row: {
           campaign_name: string
