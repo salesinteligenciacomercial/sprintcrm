@@ -77,33 +77,67 @@ Gere um roadmap evolutivo de 3 semanas. Retorne APENAS via tool call.`;
         tool_choice: { type: "function", function: { name: "generate_roadmap" } },
       };
     } else if (mode === "diagnostico_360") {
-      // Análise do Diagnóstico 360 (avaliação manual por alavancas)
+      // Plano Comercial Executivo Completo
       const userPrompt = `Resultado do Diagnóstico 360 da empresa:
 ${JSON.stringify(diagnostic, null, 2)}
 
 A empresa obteve nota ${diagnostic?.nota} (${diagnostic?.percentual}%) — classificação: ${diagnostic?.classificacao}.
 
-Gere um plano de ação completo e específico para esta empresa, em markdown, com:
+Gere um **PLANO COMERCIAL EXECUTIVO COMPLETO E PRONTO PARA EXECUÇÃO**, em markdown rico, contendo TODAS as seções abaixo de forma específica, detalhada e mensurável (sem genericismos):
 
-## 🎯 Diagnóstico Executivo
-(2-3 parágrafos analisando o cenário atual e o "balde furado" mais crítico)
+## 🎯 1. Diagnóstico Executivo
+2-3 parágrafos analisando cenário atual, "balde furado" mais crítico e impacto financeiro estimado.
 
-## 🚨 Top 3 Gargalos Críticos
-(as alavancas mais fracas, com impacto financeiro estimado)
+## 🚨 2. Top 3 Gargalos Críticos
+As 3 alavancas mais fracas, com causa-raiz e perda estimada em R$/leads/mês.
 
-## ⚡ Plano de Ação Imediato (Próximos 30 dias)
-(5 ações concretas, priorizadas, cada uma com: o quê fazer, como fazer, KPI de sucesso)
+## ⚙️ 3. Processos Comerciais
+- Fluxo de qualificação ideal (BANT/SPIN/MEDDIC adaptado)
+- Etapas do funil recomendadas (com critérios de avanço)
+- SLAs por etapa (tempo de resposta, follow-up, etc.)
 
-## 📈 Plano 60-90 dias (Estruturação)
-(3-4 iniciativas estratégicas)
+## 📞 4. Atendimento
+- Padrão de abordagem (script de abertura)
+- Tempo de primeira resposta (meta em minutos)
+- Cadência de follow-up (D+0, D+1, D+3, D+7, D+14, D+30)
+- Tom de voz e quebra de objeções principais
 
-## 💎 Visão de 6 meses
-(onde a empresa estará se executar o plano)
+## 💰 5. Vendas
+- Processo de descoberta de dor
+- Estrutura de apresentação de proposta
+- Técnicas de fechamento adequadas ao ticket
+- Negociação e ancoragem de preço
 
-## 🛠 Módulos da Waze recomendados
-(quais módulos da plataforma destravar para cada gargalo: Funil, IA, Discador, Cadências, Automações, Analytics, Mentoria)
+## 📚 6. Playbooks Recomendados (entregar conteúdo, não apenas título)
+Para cada playbook abaixo, escreva um resumo executivo de 3-5 bullets prontos para uso:
+- Playbook de Prospecção Outbound
+- Playbook de Qualificação Inbound
+- Playbook de Reativação de Leads Frios
+- Playbook de Upsell/Cross-sell
 
-Seja específico, direto e mensurável. Use números e metas.`;
+## 🎯 7. Metas e Objetivos (próximos 90 dias)
+Tabela com: Métrica | Atual estimado | Meta 30d | Meta 60d | Meta 90d
+Inclua: leads/mês, taxa de conversão, ticket médio, ciclo de venda, MRR/faturamento.
+
+## 📊 8. KPIs e Indicadores de Acompanhamento
+Lista de 8-10 KPIs operacionais e estratégicos com fórmula e frequência de medição (diária/semanal/mensal).
+
+## ⚡ 9. Plano de Ação 30/60/90 dias
+- **Dias 1-30 (Quick Wins)**: 5 ações com responsável sugerido, prazo e KPI
+- **Dias 31-60 (Estruturação)**: 4 iniciativas
+- **Dias 61-90 (Otimização)**: 3 iniciativas
+
+## 🏆 10. Visão de 6 meses
+Onde a empresa estará se executar o plano (números esperados).
+
+## 🛠 11. Módulos Waze recomendados
+Mapeamento gargalo → módulo: Funil, Cadências IA, Discador, Automações, Conversas, Analytics, Mentoria, Processos Comerciais. Justifique cada um.
+
+REGRAS:
+- Seja **específico, direto e mensurável**. Use números, percentuais e prazos.
+- NÃO entregue genericismos. NÃO escreva "considere", "talvez", "avalie".
+- Linguagem de consultor sênior (McKinsey/Falconi).
+- Adapte o nível de complexidade à classificação atual da empresa (${diagnostic?.classificacao}).`;
       payload = {
         model: "google/gemini-2.5-pro",
         messages: [
