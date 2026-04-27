@@ -219,6 +219,16 @@ export default function Maturidade() {
               )}
             </CardContent>
           </Card>
+
+          <div className="grid lg:grid-cols-2 gap-4">
+            <PillarEvolutionChart />
+            <SegmentBenchmarkCard
+              currentMetrics={{
+                win_rate: (score.pillars.gestao?.metrics as any)?.win_rate,
+                cycle_days: (score.pillars.gestao?.metrics as any)?.cycle_days,
+              }}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
