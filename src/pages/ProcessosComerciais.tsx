@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Target,
   FileText,
-  Zap
+  Zap,
+  BookOpen,
+  DollarSign,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NotionWorkspace } from "@/components/processos/notion/NotionWorkspace";
 import { CommercialIntelligenceDashboard } from "@/components/ia/CommercialIntelligenceDashboard";
+import { PlaybookAdoptionDashboard } from "@/components/processos/PlaybookAdoptionDashboard";
+import { CommissionCalculator } from "@/components/processos/CommissionCalculator";
 
 
 interface Stats {
@@ -87,6 +91,14 @@ export default function ProcessosComerciais() {
             <FileText className="h-4 w-4" />
             <span className="hidden md:inline">Workspace</span>
           </TabsTrigger>
+          <TabsTrigger value="adoption" className="flex items-center gap-2 py-2">
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden md:inline">Adoção Playbooks</span>
+          </TabsTrigger>
+          <TabsTrigger value="ote" className="flex items-center gap-2 py-2">
+            <DollarSign className="h-4 w-4" />
+            <span className="hidden md:inline">OTE & Comissões</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="intelligence">
@@ -95,6 +107,14 @@ export default function ProcessosComerciais() {
 
         <TabsContent value="workspace">
           <NotionWorkspace companyId={companyId} />
+        </TabsContent>
+
+        <TabsContent value="adoption">
+          <PlaybookAdoptionDashboard />
+        </TabsContent>
+
+        <TabsContent value="ote">
+          <CommissionCalculator />
         </TabsContent>
 
       </Tabs>

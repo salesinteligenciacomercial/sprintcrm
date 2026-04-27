@@ -8,6 +8,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadarPilares } from "@/components/wmi/RadarPilares";
 import { PlanoComercialCompleto } from "@/components/wmi/PlanoComercialCompleto";
+import { WMIAlertsPanel } from "@/components/wmi/WMIAlertsPanel";
+import { SegmentBenchmarkCard } from "@/components/wmi/SegmentBenchmarkCard";
+import { PillarEvolutionChart } from "@/components/wmi/PillarEvolutionChart";
 import {
   Activity, Trophy, Sparkles, ArrowRight, GraduationCap, AlertTriangle,
   TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck,
@@ -133,6 +136,9 @@ export default function Maturidade() {
         </Card>
       </div>
 
+      {/* Alertas Inteligentes */}
+      <WMIAlertsPanel />
+
       {/* TABS UNIFICADAS */}
       <Tabs defaultValue="plano" className="space-y-4">
         <TabsList className="flex-wrap h-auto">
@@ -213,6 +219,16 @@ export default function Maturidade() {
               )}
             </CardContent>
           </Card>
+
+          <div className="grid lg:grid-cols-2 gap-4">
+            <PillarEvolutionChart />
+            <SegmentBenchmarkCard
+              currentMetrics={{
+                win_rate: (score.pillars.gestao?.metrics as any)?.win_rate,
+                cycle_days: (score.pillars.gestao?.metrics as any)?.cycle_days,
+              }}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
