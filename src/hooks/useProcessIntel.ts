@@ -95,10 +95,10 @@ export function usePlaybookAdoptionStats() {
       if (e1) throw e1;
 
       const { data: playbooks, error: e2 } = await supabase
-        .from("commercial_playbooks" as any)
+        .from("processes_playbooks" as any)
         .select("id, title")
         .limit(50);
-      if (e2 && e2.code !== "PGRST116") {
+      if (e2 && (e2 as any).code !== "PGRST116") {
         // tabela pode ter outro nome — tentar fallback
       }
 
