@@ -1541,6 +1541,110 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_plans: {
+        Row: {
+          accelerator_multiplier: number | null
+          accelerator_threshold: number | null
+          base_salary: number
+          commission_pct: number
+          company_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          ote_target: number
+          quota_monthly: number
+          role: string
+          stage_kickers: Json | null
+          updated_at: string
+          variable_pct: number
+        }
+        Insert: {
+          accelerator_multiplier?: number | null
+          accelerator_threshold?: number | null
+          base_salary?: number
+          commission_pct?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          ote_target?: number
+          quota_monthly?: number
+          role?: string
+          stage_kickers?: Json | null
+          updated_at?: string
+          variable_pct?: number
+        }
+        Update: {
+          accelerator_multiplier?: number | null
+          accelerator_threshold?: number | null
+          base_salary?: number
+          commission_pct?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          ote_target?: number
+          quota_monthly?: number
+          role?: string
+          stage_kickers?: Json | null
+          updated_at?: string
+          variable_pct?: number
+        }
+        Relationships: []
+      }
+      commission_simulations: {
+        Row: {
+          achievement_pct: number
+          company_id: string
+          computed_payout: number | null
+          computed_total_earnings: number | null
+          created_at: string
+          details: Json | null
+          id: string
+          plan_id: string | null
+          sales_value: number
+          scenario_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          achievement_pct?: number
+          company_id: string
+          computed_payout?: number | null
+          computed_total_earnings?: number | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          plan_id?: string | null
+          sales_value?: number
+          scenario_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          achievement_pct?: number
+          company_id?: string
+          computed_payout?: number | null
+          computed_total_earnings?: number | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          plan_id?: string | null
+          sales_value?: number
+          scenario_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commission_simulations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "commission_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           allow_ai_features: boolean | null
@@ -3692,6 +3796,45 @@ export type Database = {
         }
         Relationships: []
       }
+      icp_profiles: {
+        Row: {
+          company_id: string
+          created_at: string
+          created_by: string | null
+          criteria: Json
+          hot_threshold: number
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+          warm_threshold: number
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          hot_threshold?: number
+          id?: string
+          is_default?: boolean
+          name: string
+          updated_at?: string
+          warm_threshold?: number
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          criteria?: Json
+          hot_threshold?: number
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+          warm_threshold?: number
+        }
+        Relationships: []
+      }
       internal_conversation_participants: {
         Row: {
           conversation_id: string
@@ -4045,6 +4188,53 @@ export type Database = {
           },
         ]
       }
+      lead_scores: {
+        Row: {
+          calculated_at: string
+          company_id: string
+          engagement_score: number
+          icp_profile_id: string | null
+          icp_score: number
+          id: string
+          lead_id: string
+          reasons: Json | null
+          temperature: string
+          total_score: number
+        }
+        Insert: {
+          calculated_at?: string
+          company_id: string
+          engagement_score?: number
+          icp_profile_id?: string | null
+          icp_score?: number
+          id?: string
+          lead_id: string
+          reasons?: Json | null
+          temperature?: string
+          total_score?: number
+        }
+        Update: {
+          calculated_at?: string
+          company_id?: string
+          engagement_score?: number
+          icp_profile_id?: string | null
+          icp_score?: number
+          id?: string
+          lead_id?: string
+          reasons?: Json | null
+          temperature?: string
+          total_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scores_icp_profile_id_fkey"
+            columns: ["icp_profile_id"]
+            isOneToOne: false
+            referencedRelation: "icp_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_tag_history: {
         Row: {
           action: string
@@ -4189,16 +4379,19 @@ export type Database = {
           funil_id: string | null
           govbr_login: string | null
           govbr_senha: string | null
+          icp_score: number | null
           id: string
           last_prospected_at: string | null
           lead_origem_id: string | null
           lead_source_type: string | null
+          lead_temperature: string | null
           loss_reason: string | null
           lost_at: string | null
           name: string
           notes: string | null
           owner_id: string | null
           phone: string | null
+          priority_score: number | null
           probability: number | null
           produto_id: string | null
           profile_picture_url: string | null
@@ -4248,16 +4441,19 @@ export type Database = {
           funil_id?: string | null
           govbr_login?: string | null
           govbr_senha?: string | null
+          icp_score?: number | null
           id?: string
           last_prospected_at?: string | null
           lead_origem_id?: string | null
           lead_source_type?: string | null
+          lead_temperature?: string | null
           loss_reason?: string | null
           lost_at?: string | null
           name: string
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          priority_score?: number | null
           probability?: number | null
           produto_id?: string | null
           profile_picture_url?: string | null
@@ -4307,16 +4503,19 @@ export type Database = {
           funil_id?: string | null
           govbr_login?: string | null
           govbr_senha?: string | null
+          icp_score?: number | null
           id?: string
           last_prospected_at?: string | null
           lead_origem_id?: string | null
           lead_source_type?: string | null
+          lead_temperature?: string | null
           loss_reason?: string | null
           lost_at?: string | null
           name?: string
           notes?: string | null
           owner_id?: string | null
           phone?: string | null
+          priority_score?: number | null
           probability?: number | null
           produto_id?: string | null
           profile_picture_url?: string | null
@@ -5124,6 +5323,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      playbook_adoption: {
+        Row: {
+          applied_count: number
+          company_id: string
+          created_at: string
+          id: string
+          last_applied_at: string | null
+          playbook_id: string
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          applied_count?: number
+          company_id: string
+          created_at?: string
+          id?: string
+          last_applied_at?: string | null
+          playbook_id: string
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          applied_count?: number
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_applied_at?: string | null
+          playbook_id?: string
+          user_id?: string
+          viewed_at?: string | null
+        }
+        Relationships: []
       }
       process_blocks: {
         Row: {
@@ -6500,6 +6732,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_machine_configs: {
+        Row: {
+          closer_capacity_per_day: number
+          closers_needed: number | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          cycle_days: number
+          id: string
+          is_active: boolean
+          lead_to_meeting_rate: number
+          leads_needed: number | null
+          meeting_show_rate: number
+          meetings_needed: number | null
+          name: string
+          pipeline_coverage: number
+          pipeline_value: number | null
+          revenue_goal: number
+          sales_needed: number | null
+          sdr_capacity_per_day: number
+          sdrs_needed: number | null
+          ticket_medio: number
+          updated_at: string
+          win_rate: number
+        }
+        Insert: {
+          closer_capacity_per_day?: number
+          closers_needed?: number | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          cycle_days?: number
+          id?: string
+          is_active?: boolean
+          lead_to_meeting_rate?: number
+          leads_needed?: number | null
+          meeting_show_rate?: number
+          meetings_needed?: number | null
+          name?: string
+          pipeline_coverage?: number
+          pipeline_value?: number | null
+          revenue_goal?: number
+          sales_needed?: number | null
+          sdr_capacity_per_day?: number
+          sdrs_needed?: number | null
+          ticket_medio?: number
+          updated_at?: string
+          win_rate?: number
+        }
+        Update: {
+          closer_capacity_per_day?: number
+          closers_needed?: number | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          cycle_days?: number
+          id?: string
+          is_active?: boolean
+          lead_to_meeting_rate?: number
+          leads_needed?: number | null
+          meeting_show_rate?: number
+          meetings_needed?: number | null
+          name?: string
+          pipeline_coverage?: number
+          pipeline_value?: number | null
+          revenue_goal?: number
+          sales_needed?: number | null
+          sdr_capacity_per_day?: number
+          sdrs_needed?: number | null
+          ticket_medio?: number
+          updated_at?: string
+          win_rate?: number
+        }
+        Relationships: []
       }
       sales_teams: {
         Row: {
@@ -8045,6 +8352,51 @@ export type Database = {
           metadata?: Json | null
           role?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      wmi_alerts: {
+        Row: {
+          acknowledged: boolean
+          alert_type: string
+          company_id: string
+          created_at: string
+          current_assessment_id: string | null
+          delta_score: number | null
+          id: string
+          message: string
+          pillar: string | null
+          previous_assessment_id: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          acknowledged?: boolean
+          alert_type: string
+          company_id: string
+          created_at?: string
+          current_assessment_id?: string | null
+          delta_score?: number | null
+          id?: string
+          message: string
+          pillar?: string | null
+          previous_assessment_id?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          acknowledged?: boolean
+          alert_type?: string
+          company_id?: string
+          created_at?: string
+          current_assessment_id?: string | null
+          delta_score?: number | null
+          id?: string
+          message?: string
+          pillar?: string | null
+          previous_assessment_id?: string | null
+          severity?: string
+          title?: string
         }
         Relationships: []
       }
