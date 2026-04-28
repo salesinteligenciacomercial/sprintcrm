@@ -210,6 +210,26 @@ export function RevenueMixEngine() {
         <KPI icon={Users} label="Leads necessários" value={fmt(totals.leads)} accent="text-primary" />
       </div>
 
+      {/* KPIs primários */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <KPI icon={Target} label="Receita projetada" value={money(totals.receita)} accent="text-emerald-600" sub={`Meta: ${money(cfg.revenue_goal)}`} />
+        <KPI icon={BadgePercent} label="% da meta" value={`${totals.metaPct.toFixed(0)}%`} accent={totals.metaPct >= 100 ? "text-emerald-600" : "text-amber-600"} progress={Math.min(totals.metaPct, 100)} />
+        <KPI icon={DollarSign} label="Margem bruta" value={money(totals.margem)} sub={`${totals.margemPct.toFixed(1)}% da receita`} />
+        <KPI icon={Briefcase} label="CAC total" value={money(totals.cac)} sub={`Unit.: ${money(totals.cacUnit)}`} />
+        <KPI icon={TrendingUp} label="Lucro líquido" value={money(totals.lucro)} accent={totals.lucro >= 0 ? "text-emerald-600" : "text-rose-600"} sub={`ROI ${totals.roi.toFixed(0)}%`} />
+        <KPI icon={Users} label="Leads necessários" value={fmt(totals.leads)} accent="text-primary" sub={`${fmt(totals.leadsDia)}/dia`} />
+      </div>
+
+      {/* KPIs estratégicos */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+        <KPI icon={Scale} label="Ticket médio pond." value={money(totals.ticketMedioPond)} accent="text-indigo-600" />
+        <KPI icon={PiggyBank} label="LTV / CAC" value={`${totals.ltvCac.toFixed(2)}x`} accent={totals.ltvCac >= 3 ? "text-emerald-600" : totals.ltvCac >= 1 ? "text-amber-600" : "text-rose-600"} sub={totals.ltvCac >= 3 ? "Saudável" : totals.ltvCac >= 1 ? "Ajustar" : "Crítico"} />
+        <KPI icon={Repeat} label="Payback CAC" value={`${totals.paybackMeses.toFixed(1)} m`} accent={totals.paybackMeses <= 6 ? "text-emerald-600" : "text-amber-600"} />
+        <KPI icon={Zap} label="Velocity" value={`${money(totals.velocity)}/dia`} accent="text-violet-600" />
+        <KPI icon={Activity} label="Conv. global" value={`${totals.conversaoGlobal.toFixed(1)}%`} sub="Lead → Venda" />
+        <KPI icon={Gauge} label="Pipeline alvo" value={money(totals.pipelineAlvo)} sub={`${cfg.pipeline_coverage}× cobertura`} />
+      </div>
+
       {/* Alerta de dependência */}
       {totals.dependencia >= 70 && offers.length > 1 && (
         <Card className="border-amber-500/40 bg-amber-500/5">
