@@ -11,11 +11,15 @@ export interface ICPCriterion {
 
 export interface ICPIntelligence {
   profile?: any;
+  buying_behavior?: any;
   pains?: any;
   desires?: string[];
   beliefs?: any;
   decision_map?: any;
+  channel_strategy?: any;
   prospecting_strategy?: any;
+  action_plan?: any;
+  product_fit?: any;
   scoring?: any;
   lead_score_criteria?: ICPCriterion[];
 }
