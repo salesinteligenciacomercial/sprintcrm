@@ -132,21 +132,6 @@ export function ICPIntelligenceBuilder({ onApplied }: Props) {
             </CardContent>
           </Card>
 
-      {data && (
-        <div className="space-y-4">
-          {/* Cabeçalho com Score */}
-          <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-transparent">
-            <CardContent className="p-4 grid grid-cols-2 md:grid-cols-5 gap-3 items-center">
-              <div className="col-span-2">
-                <p className="text-xs text-muted-foreground">Nicho analisado</p>
-                <p className="text-sm font-semibold">{data.niche}</p>
-              </div>
-              <Metric label="Fit Score" value={`${data.intelligence.scoring?.fit_score ?? "-"}/100`} accent="text-emerald-600" />
-              <Metric label="Potencial" value={data.intelligence.scoring?.potencial_fechamento || "-"} accent="text-primary" />
-              <Metric label="CAC" value={data.intelligence.scoring?.cac_estimado || "-"} />
-            </CardContent>
-          </Card>
-
           <div className="grid md:grid-cols-2 gap-4">
             <Block icon={Target} title="1. Perfil ideal do ICP" tone="primary">
               <Kv k="Segmento" v={data.intelligence.profile?.segmento} />
