@@ -11,11 +11,15 @@ export interface ICPCriterion {
 
 export interface ICPIntelligence {
   profile?: any;
+  buying_behavior?: any;
   pains?: any;
   desires?: string[];
   beliefs?: any;
   decision_map?: any;
+  channel_strategy?: any;
   prospecting_strategy?: any;
+  action_plan?: any;
+  product_fit?: any;
   scoring?: any;
   lead_score_criteria?: ICPCriterion[];
 }
@@ -37,8 +41,9 @@ export interface ICPProfile {
 
 export function useGenerateICPIntelligence() {
   return useMutation({
-    mutationFn: async (niche: string) => {
-      const { data, error } = await supabase.functions.invoke("generate-icp-intelligence", { body: { niche } });
+    mutationFn: async (input: string | { niche: string; segmento?: string; produtos?: any[] }) => {
+      const body = typeof input === "string" ? { niche: input } : input;
+      const { data, error } = await supabase.functions.invoke("generate-icp-intelligence", { body });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);
       return data as { niche: string; intelligence: ICPIntelligence };
