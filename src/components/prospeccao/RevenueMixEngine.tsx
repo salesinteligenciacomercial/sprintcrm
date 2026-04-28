@@ -434,12 +434,14 @@ function Mini({ icon: Icon, label, value }: any) {
   );
 }
 
-function KPI({ icon: Icon, label, value, accent }: any) {
+function KPI({ icon: Icon, label, value, accent, sub, progress }: any) {
   return (
     <Card>
       <CardContent className="p-3">
         <div className="flex items-center gap-1.5 text-muted-foreground"><Icon className="h-3.5 w-3.5" /><span className="text-[10px] uppercase tracking-wide">{label}</span></div>
         <p className={`text-lg font-bold mt-1 ${accent || ""}`}>{value}</p>
+        {typeof progress === "number" && <Progress value={progress} className="h-1 mt-1.5" />}
+        {sub && <p className="text-[10px] text-muted-foreground mt-1 truncate">{sub}</p>}
       </CardContent>
     </Card>
   );
