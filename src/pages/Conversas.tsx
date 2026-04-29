@@ -49,6 +49,7 @@ import { PastedImagePreview } from "@/components/conversas/PastedImagePreview";
 import { formatPhoneNumber, safeFormatPhoneNumber, normalizePhoneForComparison } from "@/utils/phoneFormatter";
 import { cleanAllConversationsHistory } from "@/utils/cleanConversationsHistory";
 import { getMediaUrl, MediaExpiredError } from "@/utils/mediaLoader";
+import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
 import { useLeadsSync } from "@/hooks/useLeadsSync";
 import { useGlobalSync } from "@/hooks/useGlobalSync";
 import { useWorkflowAutomation } from "@/hooks/useWorkflowAutomation";
@@ -761,6 +762,60 @@ function Conversas() {
     inflightAvatarPromisesRef.current.set(cacheKey, promise);
     return await promise;
   };
+
+  // 🖼️ Refresh em background de fotos de perfil ausentes/expiradas (URLs WhatsApp expiram em ~7 dias)
+  useEffect(() => {
+    if (!userCompanyId || conversations.length === 0) return;
+    let cancelled = false;
+
+    const refreshAvatars = async () => {
+      // Identifica conversas com avatar ausente, fallback ui-avatars OU URL WhatsApp expirada
+      const needsRefresh = conversations.filter(c => {
+        if (c.isGroup) return false;
+        const url = c.avatarUrl;
+        if (!url || url.includes('ui-avatars.com')) return true;
+        if (url.includes('pps.whatsapp.net')) {
+          // checar expiração via parâmetro oe (hex unix timestamp)
+          const m = url.match(/[?&]oe=([0-9a-fA-F]+)/);
+          if (m) {
+            const exp = parseInt(m[1], 16);
+            const now = Math.floor(Date.now() / 1000);
+            if (exp < now + 3600) return true;
+          }
+        }
+        return false;
+      }).slice(0, 30); // limite por ciclo para não sobrecarregar
+
+      for (const conv of needsRefresh) {
+        if (cancelled) return;
+        const phone = (conv.phoneNumber || conv.id).replace(/[^0-9]/g, '');
+        if (!phone || phone.length < 8) continue;
+        try {
+          const result = await throttledProfilePicture(() =>
+            supabase.functions.invoke('get-profile-picture', {
+              body: { number: phone, company_id: userCompanyId, channel: conv.channel },
+            }).then(r => r.data as { profilePictureUrl?: string } | null)
+          );
+          const newUrl = result?.profilePictureUrl;
+          if (newUrl && newUrl.startsWith('http') && !newUrl.includes('ui-avatars.com')) {
+            avatarCacheRef.current.set(`${userCompanyId}:${phone}`, newUrl);
+            setConversations(prev => prev.map(c =>
+              (c.phoneNumber || c.id).replace(/[^0-9]/g, '') === phone
+                ? { ...c, avatarUrl: newUrl }
+                : c
+            ));
+          }
+        } catch (e) {
+          // silencioso
+        }
+      }
+    };
+
+    // dispara após 2s para não bloquear o load inicial
+    const timer = setTimeout(refreshAvatars, 2000);
+    return () => { cancelled = true; clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userCompanyId, conversations.length]);
 
   // MELHORIA: Wrapper enviar-whatsapp com retries e mapeamento de erros → toast
   const sendWhatsAppWithRetry = async (body: {
