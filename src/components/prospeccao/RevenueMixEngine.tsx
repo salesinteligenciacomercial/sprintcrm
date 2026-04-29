@@ -15,6 +15,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useSalesMachineConfigs, useSaveSalesMachine, type SalesMachineConfig } from "@/hooks/useProspectingIntelligence";
 import { useProdutosServicos, useRevenueOffers, useUpsertOffer, useDeleteOffer, computeOffer, type RevenueOffer } from "@/hooks/useRevenueEngine";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
+import { BUSINESS_MODELS, getBusinessModel, suggestBusinessModel, type BusinessModelId } from "@/lib/businessModels";
 import { toast } from "sonner";
 
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(Math.round(n));
