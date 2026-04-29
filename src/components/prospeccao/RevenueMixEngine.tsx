@@ -608,50 +608,54 @@ export function RevenueMixEngine() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className={`grid ${model.hasSDR ? "md:grid-cols-2" : "md:grid-cols-1"} gap-3`}>
+            {model.hasSDR && (
+              <div>
+                <Label className="text-xs">
+                  <HLabel label={`Capacidade ${T.sdr} (${T.leadPlural}/dia)`} hint={`Quantos ${T.leadPlural} cada ${T.sdr} consegue trabalhar por dia útil.`} />
+                </Label>
+                <Input className="h-8 mt-1" type="number" value={cfg.sdr_capacity_per_day}
+                  onChange={(e) => setCfg({ ...cfg, sdr_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
+              </div>
+            )}
             <div>
               <Label className="text-xs">
-                <HLabel label="Capacidade SDR (leads trabalhados/dia)" hint="Quantos leads cada SDR consegue prospectar por dia útil. Média de mercado: 25–40." />
-              </Label>
-              <Input className="h-8 mt-1" type="number" value={cfg.sdr_capacity_per_day}
-                onChange={(e) => setCfg({ ...cfg, sdr_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
-            </div>
-            <div>
-              <Label className="text-xs">
-                <HLabel label="Capacidade Closer (reuniões/dia)" hint="Quantas reuniões de vendas cada Closer consegue realizar por dia. Média: 3–5." />
+                <HLabel label={`Capacidade ${T.closer} (${model.hasMeeting ? T.reuniaoPlural : T.vendaPlural}/dia)`} hint={model.hints.closer_capacity} />
               </Label>
               <Input className="h-8 mt-1" type="number" value={cfg.closer_capacity_per_day}
                 onChange={(e) => setCfg({ ...cfg, closer_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg border bg-card">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase text-muted-foreground">SDRs necessários (ideal)</p>
-                <Badge variant={totals.utilSdr > 100 ? "destructive" : totals.utilSdr > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
-                  {totals.utilSdr.toFixed(0)}% utilização
-                </Badge>
+          <div className={`grid ${model.hasSDR ? "grid-cols-2" : "grid-cols-1"} gap-3`}>
+            {model.hasSDR && (
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase text-muted-foreground">{T.sdr}s necessários (ideal)</p>
+                  <Badge variant={totals.utilSdr > 100 ? "destructive" : totals.utilSdr > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
+                    {totals.utilSdr.toFixed(0)}% utilização
+                  </Badge>
+                </div>
+                <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.sdrs)}</p>
+                <Progress value={Math.min(totals.utilSdr, 100)} className="h-1.5 mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.sdrs.toFixed(2)} {T.sdr}</p>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.sdrs)}</p>
-              <Progress value={Math.min(totals.utilSdr, 100)} className="h-1.5 mt-1" />
-              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.sdrs.toFixed(2)} SDR</p>
-            </div>
+            )}
             <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase text-muted-foreground">Closers necessários (ideal)</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{T.closer} necessários (ideal)</p>
                 <Badge variant={totals.utilCloser > 100 ? "destructive" : totals.utilCloser > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
                   {totals.utilCloser.toFixed(0)}% utilização
                 </Badge>
               </div>
               <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.closers)}</p>
               <Progress value={Math.min(totals.utilCloser, 100)} className="h-1.5 mt-1" />
-              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.closers.toFixed(2)} Closer</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.closers.toFixed(2)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t">
-            <Mini icon={Phone} label="Custo/lead" value={money(totals.custoPorLead)} />
-            <Mini icon={CalendarCheck} label="Custo/reunião" value={money(totals.custoPorReuniao)} />
-            <Mini icon={Trophy} label="Custo/venda (CAC)" value={money(totals.cacUnit)} />
+          <div className={`grid ${model.hasMeeting ? "grid-cols-3" : "grid-cols-2"} gap-2 pt-2 border-t`}>
+            <Mini icon={Phone} label={`Custo/${T.lead}`} value={money(totals.custoPorLead)} />
+            {model.hasMeeting && <Mini icon={CalendarCheck} label={`Custo/${T.reuniao}`} value={money(totals.custoPorReuniao)} />}
+            <Mini icon={Trophy} label={`Custo/${T.venda} (CAC)`} value={money(totals.cacUnit)} />
           </div>
         </CardContent>
       </Card>
