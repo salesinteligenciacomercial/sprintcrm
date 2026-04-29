@@ -15,6 +15,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { useSalesMachineConfigs, useSaveSalesMachine, type SalesMachineConfig } from "@/hooks/useProspectingIntelligence";
 import { useProdutosServicos, useRevenueOffers, useUpsertOffer, useDeleteOffer, computeOffer, type RevenueOffer } from "@/hooks/useRevenueEngine";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
+import { BUSINESS_MODELS, getBusinessModel, suggestBusinessModel, type BusinessModelId } from "@/lib/businessModels";
 import { toast } from "sonner";
 
 const fmt = (n: number) => new Intl.NumberFormat("pt-BR").format(Math.round(n));
@@ -65,7 +67,22 @@ function HLabel({ label, hint }: { label: string; hint: string }) {
 export function RevenueMixEngine() {
   const { data: configs } = useSalesMachineConfigs();
   const saveCfg = useSaveSalesMachine();
+  const { segmento } = useCompanySegmento();
   const [cfg, setCfg] = useState<SalesMachineConfig>(DEFAULT_CFG);
+
+  // Modelo de negócio (auto-sugerido pelo segmento, customizável)
+  const [modelId, setModelId] = useState<BusinessModelId>("b2b_consultivo");
+  const model = getBusinessModel(modelId);
+  const T = model.terms;
+
+  // Quando segmento carrega, sugere o modelo (apenas na primeira vez)
+  const [modelInitialized, setModelInitialized] = useState(false);
+  useEffect(() => {
+    if (segmento && !modelInitialized) {
+      setModelId(suggestBusinessModel(segmento));
+      setModelInitialized(true);
+    }
+  }, [segmento, modelInitialized]);
 
   // Metas locais (não persistem ainda) — número de pessoas e período
   const [sdrsTeam, setSdrsTeam] = useState(1);
@@ -77,6 +94,21 @@ export function RevenueMixEngine() {
       setCfg(configs[0]);
     }
   }, [configs]);
+
+  // Aplicar template do modelo selecionado nas capacidades padrão
+  const applyModelDefaults = () => {
+    setCfg(prev => ({
+      ...prev,
+      sdr_capacity_per_day: model.defaults.sdr_capacity_per_day,
+      closer_capacity_per_day: model.defaults.closer_capacity_per_day,
+      cycle_days: model.defaults.cycle_days,
+      win_rate: model.defaults.win_rate,
+      meeting_show_rate: model.defaults.meeting_show_rate,
+      lead_to_meeting_rate: model.defaults.lead_to_meeting_rate,
+      ticket_medio: model.defaults.ticket,
+    }));
+    toast.success(`Padrões de "${model.label}" aplicados`);
+  };
 
   const { data: produtos } = useProdutosServicos();
   const { data: offersDb } = useRevenueOffers(cfg.id);
@@ -224,8 +256,84 @@ export function RevenueMixEngine() {
     try { await delOffer.mutateAsync(o.id); } catch (e: any) { toast.error("Erro", { description: e.message }); }
   };
 
+  const handleApplyOfferTemplates = async () => {
+    if (!cfg.id) { toast.error("Salve o plano antes"); return; }
+    if (!model.offerTemplates.length) { toast.info("Este modelo não possui templates"); return; }
+    try {
+      for (let i = 0; i < model.offerTemplates.length; i++) {
+        const t = model.offerTemplates[i];
+        await upsertOffer.mutateAsync({
+          ...newOffer(cfg.id, draftOffers.length + i),
+          name: t.name,
+          ticket: t.ticket,
+          margin_pct: t.margin_pct,
+          target_sales: t.target_sales,
+          lead_to_meeting_rate: model.defaults.lead_to_meeting_rate,
+          meeting_show_rate: model.defaults.meeting_show_rate,
+          win_rate: model.defaults.win_rate,
+          cac: model.defaults.cac,
+        });
+      }
+      toast.success(`${model.offerTemplates.length} ofertas-modelo adicionadas`);
+    } catch (e: any) { toast.error("Erro", { description: e.message }); }
+  };
+
   return (
     <div className="space-y-4">
+      {/* PASSO 0 — Modelo de Negócio */}
+      <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/5 via-transparent to-transparent">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Layers className="h-5 w-5 text-indigo-600" /> Passo 0 — Qual é o seu modelo de negócio?
+                <Badge variant="outline" className="text-[10px]">{model.emoji} {model.label}</Badge>
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Cada modelo tem uma jornada de venda diferente. Escolha o seu para que o sistema use a terminologia, métricas e templates certos.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid md:grid-cols-3 gap-3">
+            <div className="md:col-span-2">
+              <Label className="text-xs">Modelo de negócio</Label>
+              <Select value={modelId} onValueChange={(v: BusinessModelId) => setModelId(v)}>
+                <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {BUSINESS_MODELS.map(m => (
+                    <SelectItem key={m.id} value={m.id}>{m.emoji} {m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{model.description}</p>
+            </div>
+            <div className="flex flex-col gap-2 justify-end">
+              <Button variant="outline" size="sm" className="gap-1" onClick={applyModelDefaults}>
+                <Sparkles className="h-3.5 w-3.5" /> Aplicar padrões do modelo
+              </Button>
+              {model.offerTemplates.length > 0 && (
+                <Button variant="outline" size="sm" className="gap-1" onClick={handleApplyOfferTemplates} disabled={!cfg.id}>
+                  <Plus className="h-3.5 w-3.5" /> Adicionar ofertas-modelo
+                </Button>
+              )}
+            </div>
+          </div>
+          {/* Indicadores da jornada deste modelo */}
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <Badge variant={model.hasSDR ? "default" : "secondary"} className="text-[10px]">
+              {model.hasSDR ? "✓ Tem prospecção (SDR)" : "✗ Sem SDR"}
+            </Badge>
+            <Badge variant={model.hasMeeting ? "default" : "secondary"} className="text-[10px]">
+              {model.hasMeeting ? `✓ Tem ${T.reuniao} agendada` : `✗ Sem ${T.reuniao}`}
+            </Badge>
+            <Badge variant="outline" className="text-[10px]">Vendedor = {T.closer}</Badge>
+            <Badge variant="outline" className="text-[10px]">Venda = {T.venda}</Badge>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* PASSO 1 — Defina sua meta de faturamento */}
       <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
         <CardHeader className="pb-3">
@@ -302,9 +410,13 @@ export function RevenueMixEngine() {
         </CardHeader>
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <BigGoal icon={DollarSign} label="Faturamento" value={money(metasPorPeriodo.receita)} accent="text-emerald-600" />
-          <BigGoal icon={Trophy} label="Vendas fechadas" value={fmt(metasPorPeriodo.vendas)} accent="text-primary" />
-          <BigGoal icon={CalendarCheck} label="Reuniões agendadas" value={fmt(metasPorPeriodo.reunioes)} />
-          <BigGoal icon={Users} label="Leads gerados" value={fmt(metasPorPeriodo.leads)} accent="text-violet-600" />
+          <BigGoal icon={Trophy} label={T.vendaPlural.charAt(0).toUpperCase() + T.vendaPlural.slice(1) + " fechadas"} value={fmt(metasPorPeriodo.vendas)} accent="text-primary" />
+          {model.hasMeeting ? (
+            <BigGoal icon={CalendarCheck} label={`${T.reuniaoPlural.charAt(0).toUpperCase() + T.reuniaoPlural.slice(1)} agendadas`} value={fmt(metasPorPeriodo.reunioes)} />
+          ) : (
+            <BigGoal icon={CalendarCheck} label={`${T.reuniaoPlural.charAt(0).toUpperCase() + T.reuniaoPlural.slice(1)} (volume)`} value={fmt(metasPorPeriodo.reunioes)} />
+          )}
+          <BigGoal icon={Users} label={`${T.leadPlural.charAt(0).toUpperCase() + T.leadPlural.slice(1)}`} value={fmt(metasPorPeriodo.leads)} accent="text-violet-600" />
         </CardContent>
       </Card>
 
@@ -336,20 +448,30 @@ export function RevenueMixEngine() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Legenda */}
+          {/* Legenda — adaptada ao modelo */}
           <div className="mb-3 p-2.5 rounded-md border bg-muted/30 text-[11px] text-muted-foreground flex items-start gap-2">
             <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-primary" />
             <div className="space-y-0.5">
-              <div><strong>Lead → Reunião %</strong>: de cada 100 leads, quantos viram reunião agendada.</div>
-              <div><strong>Show %</strong>: dos que agendaram, quantos comparecem (taxa de comparecimento).</div>
-              <div><strong>Win %</strong>: das reuniões realizadas, quantas viram venda fechada.</div>
-              <div><strong>CAC</strong>: custo de aquisição por cliente (marketing + vendas ÷ vendas).</div>
+              {model.hasMeeting ? (
+                <>
+                  <div><strong>{T.lead.charAt(0).toUpperCase() + T.lead.slice(1)} → {T.reuniao} %</strong>: de cada 100 {T.leadPlural}, quantos viram {T.reuniao} agendada.</div>
+                  <div><strong>Show %</strong>: dos que agendaram, quantos comparecem.</div>
+                  <div><strong>Win %</strong>: das {T.reuniaoPlural} realizadas, quantas viram {T.venda} fechada.</div>
+                </>
+              ) : (
+                <>
+                  <div><strong>{T.lead.charAt(0).toUpperCase() + T.lead.slice(1)} → Atendimento %</strong>: dos {T.leadPlural}, quantos foram efetivamente atendidos/abordados.</div>
+                  <div><strong>Conversão %</strong>: dos atendidos, quantos compraram (deixe 100 se já considera só fechamento).</div>
+                  <div><strong>Win %</strong>: taxa final de conversão {T.lead} → {T.venda}.</div>
+                </>
+              )}
+              <div><strong>CAC</strong>: custo médio para conquistar 1 cliente (marketing + vendas ÷ {T.vendaPlural}).</div>
             </div>
           </div>
 
           {offers.length === 0 ? (
             <div className="text-center py-10 text-sm text-muted-foreground">
-              Nenhuma oferta cadastrada. Adicione manualmente ou importe de Produtos.
+              Nenhuma oferta cadastrada. Adicione manualmente, importe de Produtos ou use o template do modelo.
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -357,12 +479,12 @@ export function RevenueMixEngine() {
                 <thead className="text-muted-foreground border-b">
                   <tr className="text-left">
                     <th className="py-2 pr-2">Oferta</th>
-                    <th className="py-2 px-1"><HLabel label="Ticket" hint="Preço médio cobrado por venda dessa oferta." /></th>
+                    <th className="py-2 px-1"><HLabel label={T.ticket.charAt(0).toUpperCase() + T.ticket.slice(1)} hint={model.hints.ticket} /></th>
                     <th className="py-2 px-1"><HLabel label="Margem %" hint="Margem bruta após custos diretos do produto/serviço (sem vendas)." /></th>
-                    <th className="py-2 px-1"><HLabel label="Meta vendas" hint="Quantas vendas dessa oferta você quer fechar no mês." /></th>
-                    <th className="py-2 px-1"><HLabel label="Lead→Reun %" hint="De cada 100 leads, quantos viram reunião agendada." /></th>
-                    <th className="py-2 px-1"><HLabel label="Show %" hint="Quantos % dos agendados comparecem na reunião." /></th>
-                    <th className="py-2 px-1"><HLabel label="Win %" hint="Taxa de fechamento sobre as reuniões realizadas." /></th>
+                    <th className="py-2 px-1"><HLabel label={`Meta ${T.vendaPlural}`} hint={`Quantas ${T.vendaPlural} dessa oferta você quer fechar no período.`} /></th>
+                    <th className="py-2 px-1"><HLabel label={model.hasMeeting ? `${T.lead.charAt(0).toUpperCase()+T.lead.slice(1)}→${T.reuniao.charAt(0).toUpperCase()+T.reuniao.slice(1).slice(0,4)} %` : `${T.lead.charAt(0).toUpperCase()+T.lead.slice(1)}→Atend. %`} hint={model.hasMeeting ? `De cada 100 ${T.leadPlural}, quantos viram ${T.reuniao} agendada.` : `Dos ${T.leadPlural}, quantos foram efetivamente atendidos.`} /></th>
+                    <th className="py-2 px-1"><HLabel label={model.hasMeeting ? "Show %" : "Conv. %"} hint={model.hasMeeting ? "Quantos % dos agendados comparecem." : "Quantos % dos atendidos efetivam compra."} /></th>
+                    <th className="py-2 px-1"><HLabel label="Win %" hint={model.hints.win_rate} /></th>
                     <th className="py-2 px-1"><HLabel label="CAC" hint="Custo médio para conquistar 1 cliente nessa oferta." /></th>
                     <th className="py-2 px-1 text-right">Receita</th>
                     <th className="py-2 px-1 text-right">Leads</th>
@@ -413,53 +535,63 @@ export function RevenueMixEngine() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className={`grid ${model.hasSDR ? "md:grid-cols-2" : "md:grid-cols-1"} gap-3`}>
+            {model.hasSDR && (
+              <div className="p-2 rounded border bg-card/50">
+                <Label className="text-xs">
+                  <HLabel label={`Quantos ${T.sdr}s no time?`} hint={`${T.sdr} = quem prospecta, qualifica ${T.leadPlural} e agenda ${T.reuniaoPlural}.`} />
+                </Label>
+                <Input type="number" min={1} className="h-9 mt-1" value={sdrsTeam}
+                  onChange={(e) => setSdrsTeam(Math.max(1, Number(e.target.value)))} />
+              </div>
+            )}
             <div className="p-2 rounded border bg-card/50">
               <Label className="text-xs">
-                <HLabel label="Quantos SDRs no time?" hint="SDR = Sales Development Rep. Quem prospecta, qualifica leads e agenda reuniões." />
-              </Label>
-              <Input type="number" min={1} className="h-9 mt-1" value={sdrsTeam}
-                onChange={(e) => setSdrsTeam(Math.max(1, Number(e.target.value)))} />
-            </div>
-            <div className="p-2 rounded border bg-card/50">
-              <Label className="text-xs">
-                <HLabel label="Quantos Closers/Vendedores?" hint="Closer = quem realiza a reunião, faz a proposta e fecha a venda." />
+                <HLabel label={`Quantos ${T.closer}?`} hint={`${T.closer} = quem realiza a ${T.venda} e fecha o atendimento.`} />
               </Label>
               <Input type="number" min={1} className="h-9 mt-1" value={closersTeam}
                 onChange={(e) => setClosersTeam(Math.max(1, Number(e.target.value)))} />
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-3">
-            {/* SDR */}
-            <div className="rounded-lg border bg-card p-3 space-y-2">
-              <div className="flex items-center gap-2 pb-2 border-b">
-                <Phone className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-semibold">Meta por SDR</span>
-                <Badge variant="outline" className="ml-auto text-[10px]">{sdrsTeam} pessoa(s)</Badge>
+          <div className={`grid ${model.hasSDR ? "md:grid-cols-2" : "md:grid-cols-1"} gap-3`}>
+            {/* SDR (somente se modelo tem SDR) */}
+            {model.hasSDR && (
+              <div className="rounded-lg border bg-card p-3 space-y-2">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <Phone className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-semibold">Meta por {T.sdr}</span>
+                  <Badge variant="outline" className="ml-auto text-[10px]">{sdrsTeam} pessoa(s)</Badge>
+                </div>
+                <Row k={`${T.leadPlural.charAt(0).toUpperCase()+T.leadPlural.slice(1)} / dia`} v={metasPorPessoa.sdr.leadsDia.toFixed(1)} accent />
+                <Row k={`${T.leadPlural.charAt(0).toUpperCase()+T.leadPlural.slice(1)} / semana`} v={fmt(metasPorPessoa.sdr.leadsSemana)} />
+                <Row k={`${T.leadPlural.charAt(0).toUpperCase()+T.leadPlural.slice(1)} / mês`} v={fmt(metasPorPessoa.sdr.leadsMes)} />
+                {model.hasMeeting && (
+                  <>
+                    <div className="pt-2 border-t" />
+                    <Row k={`${T.reuniaoPlural.charAt(0).toUpperCase()+T.reuniaoPlural.slice(1)} agendadas / dia`} v={metasPorPessoa.sdr.reunioesDia.toFixed(1)} />
+                    <Row k={`${T.reuniaoPlural.charAt(0).toUpperCase()+T.reuniaoPlural.slice(1)} agendadas / mês`} v={fmt(metasPorPessoa.sdr.reunioesMes)} accent />
+                  </>
+                )}
               </div>
-              <Row k="Leads / dia" v={metasPorPessoa.sdr.leadsDia.toFixed(1)} accent />
-              <Row k="Leads / semana" v={fmt(metasPorPessoa.sdr.leadsSemana)} />
-              <Row k="Leads / mês" v={fmt(metasPorPessoa.sdr.leadsMes)} />
-              <div className="pt-2 border-t" />
-              <Row k="Reuniões agendadas / dia" v={metasPorPessoa.sdr.reunioesDia.toFixed(1)} />
-              <Row k="Reuniões agendadas / mês" v={fmt(metasPorPessoa.sdr.reunioesMes)} accent />
-            </div>
+            )}
 
             {/* Closer */}
             <div className="rounded-lg border bg-card p-3 space-y-2">
               <div className="flex items-center gap-2 pb-2 border-b">
                 <Trophy className="h-4 w-4 text-emerald-600" />
-                <span className="text-sm font-semibold">Meta por Closer/Vendedor</span>
+                <span className="text-sm font-semibold">Meta por {T.closer}</span>
                 <Badge variant="outline" className="ml-auto text-[10px]">{closersTeam} pessoa(s)</Badge>
               </div>
-              <Row k="Vendas / dia" v={metasPorPessoa.closer.vendasDia.toFixed(2)} accent />
-              <Row k="Vendas / semana" v={metasPorPessoa.closer.vendasSemana.toFixed(1)} />
-              <Row k="Vendas / mês" v={fmt(metasPorPessoa.closer.vendasMes)} />
+              <Row k={`${T.vendaPlural.charAt(0).toUpperCase()+T.vendaPlural.slice(1)} / dia`} v={metasPorPessoa.closer.vendasDia.toFixed(2)} accent />
+              <Row k={`${T.vendaPlural.charAt(0).toUpperCase()+T.vendaPlural.slice(1)} / semana`} v={metasPorPessoa.closer.vendasSemana.toFixed(1)} />
+              <Row k={`${T.vendaPlural.charAt(0).toUpperCase()+T.vendaPlural.slice(1)} / mês`} v={fmt(metasPorPessoa.closer.vendasMes)} />
               <div className="pt-2 border-t" />
               <Row k="Faturamento / mês" v={money(metasPorPessoa.closer.receitaMes)} accent />
               <Row k="Faturamento / dia" v={money(metasPorPessoa.closer.receitaDia)} />
-              <Row k="Reuniões realizadas / mês" v={fmt(metasPorPessoa.closer.reunioesMes)} />
+              {model.hasMeeting && (
+                <Row k={`${T.reuniaoPlural.charAt(0).toUpperCase()+T.reuniaoPlural.slice(1)} realizadas / mês`} v={fmt(metasPorPessoa.closer.reunioesMes)} />
+              )}
             </div>
           </div>
         </CardContent>
@@ -476,50 +608,54 @@ export function RevenueMixEngine() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="grid md:grid-cols-2 gap-3">
+          <div className={`grid ${model.hasSDR ? "md:grid-cols-2" : "md:grid-cols-1"} gap-3`}>
+            {model.hasSDR && (
+              <div>
+                <Label className="text-xs">
+                  <HLabel label={`Capacidade ${T.sdr} (${T.leadPlural}/dia)`} hint={`Quantos ${T.leadPlural} cada ${T.sdr} consegue trabalhar por dia útil.`} />
+                </Label>
+                <Input className="h-8 mt-1" type="number" value={cfg.sdr_capacity_per_day}
+                  onChange={(e) => setCfg({ ...cfg, sdr_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
+              </div>
+            )}
             <div>
               <Label className="text-xs">
-                <HLabel label="Capacidade SDR (leads trabalhados/dia)" hint="Quantos leads cada SDR consegue prospectar por dia útil. Média de mercado: 25–40." />
-              </Label>
-              <Input className="h-8 mt-1" type="number" value={cfg.sdr_capacity_per_day}
-                onChange={(e) => setCfg({ ...cfg, sdr_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
-            </div>
-            <div>
-              <Label className="text-xs">
-                <HLabel label="Capacidade Closer (reuniões/dia)" hint="Quantas reuniões de vendas cada Closer consegue realizar por dia. Média: 3–5." />
+                <HLabel label={`Capacidade ${T.closer} (${model.hasMeeting ? T.reuniaoPlural : T.vendaPlural}/dia)`} hint={model.hints.closer_capacity} />
               </Label>
               <Input className="h-8 mt-1" type="number" value={cfg.closer_capacity_per_day}
                 onChange={(e) => setCfg({ ...cfg, closer_capacity_per_day: Number(e.target.value) })} onBlur={handleSaveCfg} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg border bg-card">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase text-muted-foreground">SDRs necessários (ideal)</p>
-                <Badge variant={totals.utilSdr > 100 ? "destructive" : totals.utilSdr > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
-                  {totals.utilSdr.toFixed(0)}% utilização
-                </Badge>
+          <div className={`grid ${model.hasSDR ? "grid-cols-2" : "grid-cols-1"} gap-3`}>
+            {model.hasSDR && (
+              <div className="p-3 rounded-lg border bg-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] uppercase text-muted-foreground">{T.sdr}s necessários (ideal)</p>
+                  <Badge variant={totals.utilSdr > 100 ? "destructive" : totals.utilSdr > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
+                    {totals.utilSdr.toFixed(0)}% utilização
+                  </Badge>
+                </div>
+                <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.sdrs)}</p>
+                <Progress value={Math.min(totals.utilSdr, 100)} className="h-1.5 mt-1" />
+                <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.sdrs.toFixed(2)} {T.sdr}</p>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.sdrs)}</p>
-              <Progress value={Math.min(totals.utilSdr, 100)} className="h-1.5 mt-1" />
-              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.sdrs.toFixed(2)} SDR</p>
-            </div>
+            )}
             <div className="p-3 rounded-lg border bg-card">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] uppercase text-muted-foreground">Closers necessários (ideal)</p>
+                <p className="text-[10px] uppercase text-muted-foreground">{T.closer} necessários (ideal)</p>
                 <Badge variant={totals.utilCloser > 100 ? "destructive" : totals.utilCloser > 80 ? "secondary" : "outline"} className="text-[9px] h-4">
                   {totals.utilCloser.toFixed(0)}% utilização
                 </Badge>
               </div>
               <p className="text-2xl font-bold text-emerald-600">{Math.ceil(totals.closers)}</p>
               <Progress value={Math.min(totals.utilCloser, 100)} className="h-1.5 mt-1" />
-              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.closers.toFixed(2)} Closer</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Cálculo exato: {totals.closers.toFixed(2)}</p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t">
-            <Mini icon={Phone} label="Custo/lead" value={money(totals.custoPorLead)} />
-            <Mini icon={CalendarCheck} label="Custo/reunião" value={money(totals.custoPorReuniao)} />
-            <Mini icon={Trophy} label="Custo/venda (CAC)" value={money(totals.cacUnit)} />
+          <div className={`grid ${model.hasMeeting ? "grid-cols-3" : "grid-cols-2"} gap-2 pt-2 border-t`}>
+            <Mini icon={Phone} label={`Custo/${T.lead}`} value={money(totals.custoPorLead)} />
+            {model.hasMeeting && <Mini icon={CalendarCheck} label={`Custo/${T.reuniao}`} value={money(totals.custoPorReuniao)} />}
+            <Mini icon={Trophy} label={`Custo/${T.venda} (CAC)`} value={money(totals.cacUnit)} />
           </div>
         </CardContent>
       </Card>
