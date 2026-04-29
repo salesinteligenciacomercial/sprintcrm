@@ -67,7 +67,22 @@ function HLabel({ label, hint }: { label: string; hint: string }) {
 export function RevenueMixEngine() {
   const { data: configs } = useSalesMachineConfigs();
   const saveCfg = useSaveSalesMachine();
+  const { segmento } = useCompanySegmento();
   const [cfg, setCfg] = useState<SalesMachineConfig>(DEFAULT_CFG);
+
+  // Modelo de negócio (auto-sugerido pelo segmento, customizável)
+  const [modelId, setModelId] = useState<BusinessModelId>("b2b_consultivo");
+  const model = getBusinessModel(modelId);
+  const T = model.terms;
+
+  // Quando segmento carrega, sugere o modelo (apenas na primeira vez)
+  const [modelInitialized, setModelInitialized] = useState(false);
+  useEffect(() => {
+    if (segmento && !modelInitialized) {
+      setModelId(suggestBusinessModel(segmento));
+      setModelInitialized(true);
+    }
+  }, [segmento, modelInitialized]);
 
   // Metas locais (não persistem ainda) — número de pessoas e período
   const [sdrsTeam, setSdrsTeam] = useState(1);
@@ -79,6 +94,21 @@ export function RevenueMixEngine() {
       setCfg(configs[0]);
     }
   }, [configs]);
+
+  // Aplicar template do modelo selecionado nas capacidades padrão
+  const applyModelDefaults = () => {
+    setCfg(prev => ({
+      ...prev,
+      sdr_capacity_per_day: model.defaults.sdr_capacity_per_day,
+      closer_capacity_per_day: model.defaults.closer_capacity_per_day,
+      cycle_days: model.defaults.cycle_days,
+      win_rate: model.defaults.win_rate,
+      meeting_show_rate: model.defaults.meeting_show_rate,
+      lead_to_meeting_rate: model.defaults.lead_to_meeting_rate,
+      ticket_medio: model.defaults.ticket,
+    }));
+    toast.success(`Padrões de "${model.label}" aplicados`);
+  };
 
   const { data: produtos } = useProdutosServicos();
   const { data: offersDb } = useRevenueOffers(cfg.id);
