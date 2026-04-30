@@ -53,10 +53,12 @@ serve(async (req) => {
     let companyName: string = 'EAZE';
     let ownerId: string | null = null;
 
+    let companySegmento: string | null = null;
+
     if (companySlug) {
       const { data: company } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id')
+        .select('id, name, owner_user_id, segmento')
         .or(`domain.eq.${companySlug},name.ilike.%${companySlug}%`)
         .limit(1)
         .single();
@@ -65,6 +67,7 @@ serve(async (req) => {
         companyId = company.id;
         companyName = company.name;
         ownerId = company.owner_user_id;
+        companySegmento = (company as any).segmento || null;
       }
     }
 
@@ -72,7 +75,7 @@ serve(async (req) => {
     if (!companyId) {
       const { data: masterCompany } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id')
+        .select('id, name, owner_user_id, segmento')
         .eq('is_master_account', true)
         .limit(1)
         .single();
@@ -81,6 +84,7 @@ serve(async (req) => {
         companyId = masterCompany.id;
         companyName = masterCompany.name;
         ownerId = masterCompany.owner_user_id;
+        companySegmento = (masterCompany as any).segmento || null;
       }
     }
 
@@ -179,6 +183,132 @@ Para agendar, o visitante precisa informar:
       }
 
       // Construir system prompt
+      // ============================================
+      // QUALIFICAÇÃO POR SEGMENTO
+      // ============================================
+      const QUALIFICACAO_POR_SEGMENTO: Record<string, { contexto: string; perguntas: string[]; criterios: string }> = {
+        clinica_medica: {
+          contexto: 'Você atende uma clínica médica. Sua função é triar pacientes, identificar urgência e qualificar interesse real.',
+          perguntas: [
+            'Qual especialidade médica você procura?',
+            'É a primeira consulta ou já é paciente?',
+            'Qual o sintoma ou motivo da consulta? (sem entrar em detalhes pessoais)',
+            'Tem convênio ou seria particular?',
+            'Quando gostaria de ser atendido?',
+          ],
+          criterios: 'QUALIFICADO: descreve sintoma específico, indica urgência, informa convênio/forma de pagamento e prazo. CURIOSO: só quer saber preços/horários sem motivo concreto.',
+        },
+        clinica_odontologica: {
+          contexto: 'Você atende uma clínica odontológica. Triagem por procedimento e urgência.',
+          perguntas: [
+            'Qual procedimento você procura? (limpeza, ortodontia, implante, estética, urgência)',
+            'É um problema agudo (dor) ou tratamento planejado?',
+            'Tem convênio ou seria particular?',
+            'Já fez avaliação anterior?',
+          ],
+          criterios: 'QUALIFICADO: procedimento claro + prazo + forma de pagamento. CURIOSO: pesquisa de preço genérica.',
+        },
+        clinica_estetica: {
+          contexto: 'Clínica de estética. Triar interesse em procedimentos.',
+          perguntas: [
+            'Qual procedimento te interessa? (botox, preenchimento, harmonização, corporal)',
+            'Já realizou esse procedimento antes?',
+            'Tem prazo definido (evento, viagem)?',
+            'Qual sua faixa de investimento?',
+          ],
+          criterios: 'QUALIFICADO: procedimento específico + prazo + orçamento. CURIOSO: só pede tabela.',
+        },
+        advocacia: {
+          contexto: 'Você atende um escritório de advocacia. Faça triagem jurídica preliminar SEM dar parecer legal.',
+          perguntas: [
+            'Em qual área do direito você precisa de ajuda? (trabalhista, cível, família, criminal, previdenciário, empresarial)',
+            'O caso é urgente ou já tem processo aberto?',
+            'Pode descrever brevemente a situação? (sem dados sensíveis)',
+            'Você é a parte interessada ou está consultando para terceiros?',
+            'Tem prazo legal correndo (audiência, intimação)?',
+          ],
+          criterios: 'QUALIFICADO: descreve caso concreto + área específica + tem prazo/processo + é a parte. CURIOSO: pergunta abstrata sobre lei sem caso real.',
+        },
+        contabilidade: {
+          contexto: 'Escritório de contabilidade. Triagem por porte e necessidade.',
+          perguntas: [
+            'É pessoa física, MEI, ME ou empresa de maior porte?',
+            'Qual serviço busca? (abertura, troca de contador, declarações, consultoria fiscal)',
+            'Quantos funcionários e qual faturamento aproximado?',
+            'Tem urgência ou prazo fiscal correndo?',
+          ],
+          criterios: 'QUALIFICADO: porte definido + serviço específico + prazo. CURIOSO: só compara honorários.',
+        },
+        imobiliaria: {
+          contexto: 'Imobiliária. Triagem por intenção (comprar/alugar/vender) e capacidade.',
+          perguntas: [
+            'Você quer comprar, alugar ou vender?',
+            'Que tipo de imóvel? (casa, apartamento, comercial, terreno)',
+            'Qual região e faixa de valor?',
+            'Tem prazo para mudança/decisão?',
+            'Compra à vista, financiamento ou FGTS?',
+          ],
+          criterios: 'QUALIFICADO: intenção clara + região + faixa de valor + forma de pagamento + prazo. CURIOSO: só navega.',
+        },
+        correspondente_bancario: {
+          contexto: 'Correspondente bancário. Qualificar por crédito buscado e perfil financeiro.',
+          perguntas: [
+            'Qual tipo de crédito busca? (consignado, FGTS, pessoal, imobiliário, veicular)',
+            'É aposentado/pensionista, servidor, CLT ou autônomo?',
+            'Qual valor aproximado precisa?',
+            'Já tem outros empréstimos ativos?',
+            'Tem alguma restrição no nome?',
+          ],
+          criterios: 'QUALIFICADO: tipo de crédito + perfil + valor + sem restrição grave. CURIOSO: só simula sem dar dados.',
+        },
+        consorcio: {
+          contexto: 'Consórcio. Qualificar por bem desejado e capacidade de parcela.',
+          perguntas: [
+            'Você quer consórcio de imóvel, veículo, serviços ou outros?',
+            'Qual valor da carta de crédito desejada?',
+            'Quanto pode pagar por mês de parcela?',
+            'Tem urgência em ter o bem ou pode aguardar contemplação?',
+          ],
+          criterios: 'QUALIFICADO: bem definido + valor + parcela cabível + entende prazo. CURIOSO: confunde com financiamento.',
+        },
+        corretora_seguros: {
+          contexto: 'Corretora de seguros. Qualificar por tipo de seguro e perfil.',
+          perguntas: [
+            'Que tipo de seguro? (auto, vida, residencial, empresarial, saúde)',
+            'É renovação ou primeiro seguro?',
+            'Pode informar dados básicos do bem ou perfil a ser segurado?',
+            'Quando precisa da apólice ativa?',
+          ],
+          criterios: 'QUALIFICADO: tipo definido + dados do bem/perfil + prazo. CURIOSO: só cota genérica.',
+        },
+        educacao: {
+          contexto: 'Instituição de educação/cursos. Qualificar por curso e intenção.',
+          perguntas: [
+            'Qual curso te interessa?',
+            'É para você ou outra pessoa?',
+            'Tem objetivo específico (carreira, certificação, hobby)?',
+            'Quando pretende começar?',
+          ],
+          criterios: 'QUALIFICADO: curso específico + objetivo + prazo. CURIOSO: só pesquisa preço.',
+        },
+        tecnologia: {
+          contexto: 'Empresa de tecnologia/SaaS. Qualificar B2B.',
+          perguntas: [
+            'Qual o tamanho da sua empresa (funcionários)?',
+            'Qual problema/dor está tentando resolver?',
+            'Já usa alguma solução hoje?',
+            'Você é o decisor ou ajuda a decidir?',
+            'Tem prazo para implementação?',
+          ],
+          criterios: 'QUALIFICADO: empresa definida + dor clara + decisor/influenciador + prazo. CURIOSO: estudante/pesquisador.',
+        },
+      };
+
+      const qualifConfig = companySegmento ? QUALIFICACAO_POR_SEGMENTO[companySegmento] : null;
+      const blocoQualificacao = qualifConfig
+        ? `\n\n=== TRIAGEM E QUALIFICAÇÃO INTELIGENTE ===\n${qualifConfig.contexto}\n\nPERGUNTAS DE QUALIFICAÇÃO (faça 1 por mensagem, naturalmente, na ordem que fizer mais sentido pela conversa):\n${qualifConfig.perguntas.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nCRITÉRIOS:\n${qualifConfig.criterios}\n\nREGRA: Não dispare todas as perguntas de uma vez. Faça uma, escute, e a próxima conforme o contexto. Sempre peça nome e WhatsApp em algum momento (não no início — depois de criar conexão).`
+        : '\n\n=== QUALIFICAÇÃO ===\nFaça perguntas naturais para entender: o que a pessoa busca, urgência, capacidade de decisão, prazo. Colete nome e WhatsApp em momento oportuno (não logo no início).';
+
       let systemPrompt = '';
 
       if (promptPersonalizado) {
@@ -186,19 +316,21 @@ Para agendar, o visitante precisa informar:
 
 ${visitorContext}
 ${horariosContext}
+${blocoQualificacao}
 
 REGRAS:
 - Você está no site institucional da ${companyName}
 - Seja cordial, profissional e objetivo
 - Se o visitante quiser agendar, colete os dados necessários
 - Se não souber algo, ofereça contato com um atendente humano
-- Mantenha respostas curtas e claras (máximo 3 parágrafos)`;
+- Mantenha respostas curtas e claras (1-2 parágrafos curtos)`;
       } else {
         // Prompt padrão
-        systemPrompt = `Você é a assistente virtual da ${companyName}, presente no site institucional.
+        systemPrompt = `Você é a assistente virtual da ${companyName}${companySegmento ? ` (segmento: ${companySegmento})` : ''}, presente no site institucional.
 
 ${visitorContext}
 ${horariosContext}
+${blocoQualificacao}
 
 SUAS CAPACIDADES:
 1. Responder dúvidas sobre a empresa e serviços
@@ -214,12 +346,17 @@ REGRAS:
 - Não invente informações sobre preços ou serviços específicos
 
 AÇÕES (inclua no final da resposta se aplicável):
-- [COLETAR_LEAD:nome=X,telefone=Y,email=Z] - quando coletar dados do visitante
+- [COLETAR_LEAD:nome=X,telefone=Y,email=Z,interesse=descrição] - quando coletar dados do visitante
 - [MOSTRAR_HORARIOS:data=YYYY-MM-DD] - mostrar slots de horário disponíveis em cards clicáveis
 - [AGENDAR:data=YYYY-MM-DD,horario=HH:MM,servico=X] - confirmar agendamento (cria lead + compromisso + envia WhatsApp)
-- [TRANSFERIR_HUMANO] - quando precisar de atendente humano
+- [TRANSFERIR_HUMANO:motivo=X] - quando o lead estiver QUALIFICADO e pronto para o time comercial
+- [QUALIFICAR_LEAD:score=0-100,classificacao=quente|morno|frio|curioso,resumo=texto curto,interesse=produto/serviço] - SEMPRE inclua isso quando tiver coletado informações suficientes para julgar (após 3-5 trocas). Use score:
+   * 80-100 = QUENTE (decisor, prazo curto, dor clara, dados completos)
+   * 50-79 = MORNO (interesse real mas algo falta — prazo longo, sem urgência ou sem todos dados)
+   * 20-49 = FRIO (curioso interessado mas sem prazo nem decisão)
+   * 0-19 = CURIOSO (só pesquisa, estudante, concorrente, sem dor real)
 
-IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mostrar slots, ou colete nome+telefone+data+serviço e use AGENDAR diretamente.`;
+IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mostrar slots, ou colete nome+telefone+data+serviço e use AGENDAR diretamente. Quando classificar como QUENTE, também emita TRANSFERIR_HUMANO.`;
       }
 
       // Construir histórico de mensagens
@@ -279,32 +416,62 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
       const aiResponse = data.choices[0].message.content;
 
       // Extrair ações da resposta
-      const actionPattern = /\[(COLETAR_LEAD|AGENDAR|TRANSFERIR_HUMANO)(:([^\]]+))?\]/g;
+      const actionPattern = /\[(COLETAR_LEAD|AGENDAR|TRANSFERIR_HUMANO|MOSTRAR_HORARIOS|QUALIFICAR_LEAD)(:([^\]]+))?\]/g;
       const actions: any[] = [];
       let match;
-      
+
+      // Estado de qualificação acumulado nesta resposta
+      let qualificacaoAtual: { score?: number; classificacao?: string; resumo?: string; interesse?: string } | null = null;
+      let transferirHumano = false;
+      let motivoTransferencia: string | undefined;
+
       while ((match = actionPattern.exec(aiResponse)) !== null) {
         const actionType = match[1];
         const actionParams = match[3];
-        
-        actions.push({
-          type: actionType,
-          params: actionParams
-        });
+
+        const parseParams = (raw?: string): Record<string, string> => {
+          const p: Record<string, string> = {};
+          if (!raw) return p;
+          raw.split(',').forEach((piece: string) => {
+            const idx = piece.indexOf('=');
+            if (idx > -1) {
+              const k = piece.slice(0, idx).trim();
+              const v = piece.slice(idx + 1).trim();
+              if (k) p[k] = v;
+            }
+          });
+          return p;
+        };
+
+        actions.push({ type: actionType, params: actionParams });
+
+        // QUALIFICAR_LEAD: armazena estado para aplicar no lead
+        if (actionType === 'QUALIFICAR_LEAD' && actionParams) {
+          const p = parseParams(actionParams);
+          const scoreNum = p.score ? parseInt(p.score, 10) : undefined;
+          qualificacaoAtual = {
+            score: Number.isFinite(scoreNum) ? scoreNum : undefined,
+            classificacao: p.classificacao?.toLowerCase(),
+            resumo: p.resumo,
+            interesse: p.interesse,
+          };
+          actions[actions.length - 1].qualificacao = qualificacaoAtual;
+        }
+
+        if (actionType === 'TRANSFERIR_HUMANO') {
+          transferirHumano = true;
+          motivoTransferencia = actionParams ? parseParams(actionParams).motivo : undefined;
+        }
 
         // Executar ação de coleta de lead
         if (actionType === 'COLETAR_LEAD' && actionParams && companyId) {
           try {
-            const params: Record<string, string> = {};
-            actionParams.split(',').forEach((p: string) => {
-              const [key, value] = p.split('=');
-              if (key && value) params[key.trim()] = value.trim();
-            });
+            const params = parseParams(actionParams);
 
             if (params.nome || params.telefone || params.email) {
               // Verificar se já existe
               const telefoneNorm = params.telefone?.replace(/\D/g, '');
-              let leadExiste = false;
+              let leadExisteId: string | null = null;
 
               if (telefoneNorm) {
                 const { data: existe } = await supabase
@@ -314,10 +481,10 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
                   .or(`telefone.eq.${telefoneNorm},phone.eq.${telefoneNorm}`)
                   .limit(1)
                   .single();
-                leadExiste = !!existe;
+                if (existe) leadExisteId = (existe as any).id;
               }
 
-              if (!leadExiste && params.email) {
+              if (!leadExisteId && params.email) {
                 const { data: existe } = await supabase
                   .from('leads')
                   .select('id')
@@ -325,11 +492,29 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
                   .eq('email', params.email.toLowerCase())
                   .limit(1)
                   .single();
-                leadExiste = !!existe;
+                if (existe) leadExisteId = (existe as any).id;
               }
 
-              if (!leadExiste) {
-                await supabase.from('leads').insert({
+              // Tags + status baseados na qualificação atual
+              const classif = qualificacaoAtual?.classificacao;
+              const tags = ['chat-ia', 'site-institucional'];
+              if (classif) tags.push(`lead-${classif}`);
+              if (companySegmento) tags.push(`segmento-${companySegmento}`);
+
+              const status = classif === 'quente' ? 'qualificado'
+                : classif === 'morno' ? 'em_qualificacao'
+                : classif === 'curioso' ? 'descartado'
+                : 'novo';
+
+              const notesParts = [
+                `Lead captado via chat IA do site em ${new Date().toLocaleString('pt-BR')}`,
+                params.interesse ? `Interesse: ${params.interesse}` : '',
+                qualificacaoAtual?.resumo ? `Resumo IA: ${qualificacaoAtual.resumo}` : '',
+                qualificacaoAtual?.score != null ? `Score: ${qualificacaoAtual.score}/100 (${classif || 'n/a'})` : '',
+              ].filter(Boolean).join('\n');
+
+              if (!leadExisteId) {
+                const { data: novoLead } = await supabase.from('leads').insert({
                   name: params.nome || 'Visitante Site',
                   telefone: telefoneNorm,
                   phone: telefoneNorm,
@@ -337,12 +522,24 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
                   company_id: companyId,
                   owner_id: ownerId,
                   source: 'chat-ia-site',
-                  status: 'novo',
-                  tags: ['chat-ia', 'site-institucional'],
-                  notes: `Lead captado via chat IA do site em ${new Date().toLocaleString('pt-BR')}`
-                });
-                console.log('[api-public-ia] Lead criado via chat:', params.nome);
+                  status,
+                  tags,
+                  notes: notesParts,
+                }).select('id').single();
+                if (novoLead) leadExisteId = (novoLead as any).id;
+                console.log('[api-public-ia] Lead criado via chat:', params.nome, 'classif:', classif);
+              } else {
+                // Atualizar lead existente com nova qualificação
+                await supabase.from('leads').update({
+                  status,
+                  tags,
+                  notes: notesParts,
+                  updated_at: new Date().toISOString(),
+                }).eq('id', leadExisteId);
               }
+
+              actions[actions.length - 1].lead_id = leadExisteId;
+              actions[actions.length - 1].classificacao = classif;
             }
           } catch (e) {
             console.warn('[api-public-ia] Erro ao criar lead:', e);
@@ -425,6 +622,10 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
           response: cleanResponse,
           context,
           actions: actions.length > 0 ? actions : undefined,
+          qualificacao: qualificacaoAtual,
+          transferir_humano: transferirHumano,
+          motivo_transferencia: motivoTransferencia,
+          segmento: companySegmento,
           session_id: body.session_id || crypto.randomUUID(),
           execution_time: executionTime
         }),
