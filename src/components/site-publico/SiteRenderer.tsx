@@ -728,7 +728,7 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
           onClose={() => setChatOpen(false)}
           companyId={companyId}
           companyName={isLanding ? especialistaName : companyName}
-          config={config as any}
+          config={{ ...(config as any), company_slug: slug }}
           theme={theme}
         />
       )}
