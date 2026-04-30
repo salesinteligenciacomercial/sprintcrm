@@ -153,6 +153,15 @@ const EMPTY_FORM = {
   parte_contraria: "",
   valor_causa: "",
   data_audiencia: "",
+  audiencia_modalidade: "presencial",
+  audiencia_local: "",
+  audiencia_sala: "",
+  audiencia_link: "",
+  audiencia_observacoes: "",
+  juiz: "",
+  forum_tribunal: "",
+  advogado_adversario: "",
+  oab_adversario: "",
 };
 
 export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, nomeContato }: ProcessosJuridicosPanelProps) {
@@ -162,6 +171,11 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
   const [loading, setLoading] = useState(false);
   const [editingProcess, setEditingProcess] = useState<LegalProcess | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [documents, setDocuments] = useState<ProcessDocument[]>([]);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+  const [docType, setDocType] = useState<string>("peticao_inicial");
+  const [docDescription, setDocDescription] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (leadId) fetchProcesses();
@@ -170,15 +184,25 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
   const fetchProcesses = async () => {
     const { data } = await supabase
       .from("legal_processes")
-      .select("id, numero_processo, tipo, status, parte_contraria, vara, comarca, valor_causa, data_audiencia, data_distribuicao")
+      .select("id, numero_processo, tipo, status, parte_contraria, vara, comarca, valor_causa, data_audiencia, data_distribuicao, audiencia_modalidade, audiencia_local, audiencia_sala, audiencia_link, audiencia_observacoes, juiz, forum_tribunal, advogado_adversario, oab_adversario")
       .eq("lead_id", leadId)
       .order("created_at", { ascending: false });
     setProcesses((data as LegalProcess[]) || []);
   };
 
+  const fetchDocuments = async (processId: string) => {
+    const { data } = await supabase
+      .from("legal_process_documents")
+      .select("id, file_name, file_path, file_size, mime_type, document_type, description, created_at")
+      .eq("legal_process_id", processId)
+      .order("created_at", { ascending: false });
+    setDocuments((data as ProcessDocument[]) || []);
+  };
+
   const openCreateDialog = () => {
     setEditingProcess(null);
     setForm({ ...EMPTY_FORM });
+    setDocuments([]);
     setDialogOpen(true);
   };
 
@@ -193,8 +217,87 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
       parte_contraria: p.parte_contraria || "",
       valor_causa: p.valor_causa ? String(p.valor_causa) : "",
       data_audiencia: p.data_audiencia ? p.data_audiencia.slice(0, 16) : "",
+      audiencia_modalidade: p.audiencia_modalidade || "presencial",
+      audiencia_local: p.audiencia_local || "",
+      audiencia_sala: p.audiencia_sala || "",
+      audiencia_link: p.audiencia_link || "",
+      audiencia_observacoes: p.audiencia_observacoes || "",
+      juiz: p.juiz || "",
+      forum_tribunal: p.forum_tribunal || "",
+      advogado_adversario: p.advogado_adversario || "",
+      oab_adversario: p.oab_adversario || "",
     });
+    fetchDocuments(p.id);
     setDialogOpen(true);
+  };
+
+  const handleUploadDocument = async (file: File, processId: string) => {
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 25MB.");
+      return;
+    }
+    setUploadingDoc(true);
+    try {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `${companyId}/${processId}/${Date.now()}_${safeName}`;
+
+      const { error: upErr } = await supabase.storage
+        .from('legal-documents')
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+
+      const { error: dbErr } = await supabase.from('legal_process_documents').insert({
+        legal_process_id: processId,
+        company_id: companyId,
+        file_name: file.name,
+        file_path: path,
+        file_size: file.size,
+        mime_type: file.type,
+        document_type: docType,
+        description: docDescription || null,
+      });
+      if (dbErr) throw dbErr;
+
+      toast.success("Documento anexado!");
+      setDocDescription("");
+      fetchDocuments(processId);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || "Erro ao enviar documento");
+    } finally {
+      setUploadingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDownloadDocument = async (doc: ProcessDocument) => {
+    const { data, error } = await supabase.storage
+      .from('legal-documents')
+      .createSignedUrl(doc.file_path, 60);
+    if (error || !data?.signedUrl) {
+      toast.error("Erro ao gerar link de download");
+      return;
+    }
+    window.open(data.signedUrl, '_blank');
+  };
+
+  const handleDeleteDocument = async (doc: ProcessDocument) => {
+    if (!confirm(`Remover o documento "${doc.file_name}"?`)) return;
+    try {
+      await supabase.storage.from('legal-documents').remove([doc.file_path]);
+      await supabase.from('legal_process_documents').delete().eq('id', doc.id);
+      toast.success("Documento removido");
+      if (editingProcess) fetchDocuments(editingProcess.id);
+    } catch {
+      toast.error("Erro ao remover documento");
+    }
+  };
+
+  const formatFileSize = (bytes: number | null) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const criarCompromissoAgenda = async (processId: string, dataAudiencia: string, userId: string) => {
