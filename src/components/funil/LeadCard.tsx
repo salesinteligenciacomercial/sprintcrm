@@ -721,6 +721,13 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                     Perdido
                   </Badge>
                 )}
+                {/* ✅ Origem (source) sempre visível ao lado do nome */}
+                {lead.source && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium border-primary/30 text-primary bg-primary/5">
+                    <Tag className="h-2.5 w-2.5 mr-0.5" />
+                    {lead.source}
+                  </Badge>
+                )}
               </div>
               
               {/* Título da negociação - editável inline */}
@@ -1242,12 +1249,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
               </div>
             )}
 
-            {lead.source && (
-              <Badge variant="outline" className="text-xs font-medium border-primary/20 text-primary">
-                <Tag className="h-3 w-3 mr-1" />
-                {lead.source}
-              </Badge>
-            )}
+            {/* Origem do lead já é exibida permanentemente no cabeçalho */}
 
             {/* ✅ CRÍTICO: Passa notes do lead ao LeadComments - Se retroceder, verificar se passa initialNotes */}
             <LeadComments
