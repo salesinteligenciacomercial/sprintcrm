@@ -76,7 +76,7 @@ serve(async (req) => {
     if (!companyId) {
       const { data: masterCompany } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id, segmento')
+        .select('id, name, owner_user_id, segmento, capture_page_config')
         .eq('is_master_account', true)
         .limit(1)
         .single();
@@ -86,6 +86,7 @@ serve(async (req) => {
         companyName = masterCompany.name;
         ownerId = masterCompany.owner_user_id;
         companySegmento = (masterCompany as any).segmento || null;
+        (globalThis as any).__captureCfg = (masterCompany as any).capture_page_config || {};
       }
     }
 
