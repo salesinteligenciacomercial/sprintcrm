@@ -14,6 +14,49 @@ export default {
     },
     extend: {
       colors: {
+        // Brand override: remap Tailwind "blue" palette to Waze brand green
+        // so legacy `bg-blue-*`, `text-blue-*`, `border-blue-*` classes render
+        // in the brand color without touching every component.
+        blue: {
+          50: "hsl(142 70% 96%)",
+          100: "hsl(142 70% 90%)",
+          200: "hsl(142 65% 80%)",
+          300: "hsl(142 65% 65%)",
+          400: "hsl(142 68% 55%)",
+          500: "hsl(142 71% 45%)",
+          600: "hsl(142 72% 38%)",
+          700: "hsl(142 74% 30%)",
+          800: "hsl(142 75% 22%)",
+          900: "hsl(150 70% 14%)",
+          950: "hsl(155 70% 8%)",
+        },
+        // Same for `sky` & `indigo` which are sometimes used as accents
+        sky: {
+          50: "hsl(150 60% 96%)",
+          100: "hsl(150 60% 90%)",
+          200: "hsl(150 55% 80%)",
+          300: "hsl(150 55% 65%)",
+          400: "hsl(148 60% 55%)",
+          500: "hsl(146 65% 48%)",
+          600: "hsl(144 70% 40%)",
+          700: "hsl(144 72% 32%)",
+          800: "hsl(146 74% 24%)",
+          900: "hsl(150 70% 14%)",
+          950: "hsl(155 70% 8%)",
+        },
+        indigo: {
+          50: "hsl(160 50% 96%)",
+          100: "hsl(160 50% 90%)",
+          200: "hsl(155 50% 80%)",
+          300: "hsl(150 55% 65%)",
+          400: "hsl(146 60% 52%)",
+          500: "hsl(142 71% 45%)",
+          600: "hsl(142 74% 36%)",
+          700: "hsl(144 76% 28%)",
+          800: "hsl(148 76% 20%)",
+          900: "hsl(155 72% 12%)",
+          950: "hsl(160 70% 6%)",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
