@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Brain, Calculator, Target, Sparkles, DollarSign, Lock } from "lucide-react";
 import { ICPDualBuilder } from "./ICPDualBuilder";
-import { RevenueMixEngine } from "./RevenueMixEngine";
+import { SalesMachineWizard } from "./SalesMachineWizard";
 import { LeadScorePanel } from "./LeadScorePanel";
 import { CommissionCalculator } from "@/components/processos/CommissionCalculator";
 import { Badge } from "@/components/ui/badge";
