@@ -58,7 +58,7 @@ serve(async (req) => {
     if (companySlug) {
       const { data: company } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id, segmento')
+        .select('id, name, owner_user_id, segmento, capture_page_config')
         .or(`domain.eq.${companySlug},name.ilike.%${companySlug}%`)
         .limit(1)
         .single();
@@ -68,6 +68,7 @@ serve(async (req) => {
         companyName = company.name;
         ownerId = company.owner_user_id;
         companySegmento = (company as any).segmento || null;
+        (globalThis as any).__captureCfg = (company as any).capture_page_config || {};
       }
     }
 
