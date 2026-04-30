@@ -287,7 +287,8 @@ async function createTools(supabase: any): Promise<IATools> {
           usuario_responsavel_id: owner_id,
           paciente: nomePaciente,
           telefone: telefonePaciente,
-          duracao: duracao_minutos
+          duracao: duracaoFinal,
+          custo_estimado: valorConsulta
         })
         .select()
         .single();
