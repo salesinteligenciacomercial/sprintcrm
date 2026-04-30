@@ -469,6 +469,7 @@ function AccompanyPanel({ meta }: { meta: number }) {
   const { members } = useTeamMembers();
   const [log, setLog] = useState<DailyLog>(EMPTY_LOG);
   const [periodView, setPeriodView] = useState<"dia" | "semana" | "mes" | "trimestre">("semana");
+  const [dataEspecifica, setDataEspecifica] = useState<string>("");
 
   useEffect(() => {
     if (todayLog) setLog(todayLog);
@@ -485,16 +486,28 @@ function AccompanyPanel({ meta }: { meta: number }) {
     }
   };
 
-  // Agrega o time
-  const agg = useMemo(() => {
+  const memberName = (uid?: string) => {
+    if (!uid) return "Sem usuário";
+    const m = members.find(x => x.id === uid);
+    return m?.full_name || m?.email || `Usuário ${uid.slice(0, 6)}`;
+  };
+
+  // Filtro por período OU data específica
+  const logsFiltrados = useMemo(() => {
     const logs = teamLogs || [];
+    if (dataEspecifica) {
+      return logs.filter(l => l.log_date === dataEspecifica);
+    }
     const now = new Date();
     const filterDays = periodView === "dia" ? 1 : periodView === "semana" ? 7 : periodView === "mes" ? 30 : 90;
     const cutoff = new Date(now);
     cutoff.setDate(cutoff.getDate() - filterDays);
+    return logs.filter(l => new Date(l.log_date) >= cutoff);
+  }, [teamLogs, periodView, dataEspecifica]);
 
-    const filt = logs.filter(l => new Date(l.log_date) >= cutoff);
-    return filt.reduce(
+  // Agrega o time
+  const agg = useMemo(() => {
+    return logsFiltrados.reduce(
       (acc, l) => ({
         leads: acc.leads + (l.leads_prospectados || 0),
         ligacoes: acc.ligacoes + (l.ligacoes_feitas || 0),
@@ -507,15 +520,81 @@ function AccompanyPanel({ meta }: { meta: number }) {
       }),
       { leads: 0, ligacoes: 0, reunioesAg: 0, reunioesReal: 0, oportunidades: 0, propostas: 0, vendas: 0, faturamento: 0 }
     );
-  }, [teamLogs, periodView]);
+  }, [logsFiltrados]);
+
+  // Série temporal por dia (faturamento + vendas) — sempre últimos 30 dias para o gráfico
+  const serieDiaria = useMemo(() => {
+    const logs = teamLogs || [];
+    const now = new Date();
+    const dias = 30;
+    const map = new Map<string, { faturamento: number; vendas: number; leads: number }>();
+    for (let i = dias - 1; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      map.set(key, { faturamento: 0, vendas: 0, leads: 0 });
+    }
+    logs.forEach(l => {
+      const cur = map.get(l.log_date);
+      if (cur) {
+        cur.faturamento += Number(l.faturamento_gerado || 0);
+        cur.vendas += l.vendas_fechadas || 0;
+        cur.leads += l.leads_prospectados || 0;
+      }
+    });
+    return Array.from(map.entries()).map(([date, v]) => ({
+      date,
+      label: new Date(date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+      ...v,
+    }));
+  }, [teamLogs]);
+
+  const picoFaturamento = useMemo(() => {
+    if (!serieDiaria.length) return null;
+    return serieDiaria.reduce((max, d) => (d.faturamento > max.faturamento ? d : max), serieDiaria[0]);
+  }, [serieDiaria]);
+
+  // Ranking por usuário (com base no período/data filtrado)
+  const ranking = useMemo(() => {
+    const map = new Map<string, {
+      user_id: string; role: string;
+      leads: number; ligacoes: number; reunioes: number; vendas: number; faturamento: number;
+    }>();
+    logsFiltrados.forEach(l => {
+      const uid = (l as any).user_id || "—";
+      const cur = map.get(uid) || {
+        user_id: uid, role: l.role_type,
+        leads: 0, ligacoes: 0, reunioes: 0, vendas: 0, faturamento: 0,
+      };
+      cur.leads += l.leads_prospectados || 0;
+      cur.ligacoes += l.ligacoes_feitas || 0;
+      cur.reunioes += l.reunioes_realizadas || 0;
+      cur.vendas += l.vendas_fechadas || 0;
+      cur.faturamento += Number(l.faturamento_gerado || 0);
+      cur.role = l.role_type;
+      map.set(uid, cur);
+    });
+    return Array.from(map.values()).sort((a, b) => b.faturamento - a.faturamento);
+  }, [logsFiltrados]);
+
+  const topSDR = useMemo(
+    () => [...ranking].filter(r => r.role === "sdr" || r.role === "hibrido")
+      .sort((a, b) => (b.reunioes - a.reunioes) || (b.leads - a.leads))[0],
+    [ranking]
+  );
+  const topCloser = useMemo(
+    () => [...ranking].filter(r => r.role === "closer" || r.role === "hibrido")
+      .sort((a, b) => b.faturamento - a.faturamento)[0],
+    [ranking]
+  );
 
   const metaPeriodo = useMemo(() => {
     if (!meta) return 0;
-    if (periodView === "dia") return meta / 22;
+    if (dataEspecifica || periodView === "dia") return meta / 22;
     if (periodView === "semana") return meta / 4.33;
     if (periodView === "mes") return meta;
     return meta * 3;
-  }, [meta, periodView]);
+  }, [meta, periodView, dataEspecifica]);
 
   const progressoMeta = metaPeriodo > 0 ? (agg.faturamento / metaPeriodo) * 100 : 0;
 
