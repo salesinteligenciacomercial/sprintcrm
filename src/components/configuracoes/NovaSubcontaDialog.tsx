@@ -117,28 +117,50 @@ export function NovaSubcontaDialog({ open, onOpenChange, onSuccess }: NovaSubcon
         
         // Tentar extrair mensagem do corpo da resposta de erro
         let errorMsg = '';
+        let errorCode = '';
         
-        // O error.context pode conter a resposta da edge function
-        if (error?.context?.body) {
+        // No Supabase JS v2, error.context é um objeto Response — precisamos ler .json()
+        if (error?.context && typeof error.context.json === 'function') {
+          try {
+            const errorBody = await error.context.json();
+            errorMsg = errorBody?.error || errorBody?.message || '';
+            errorCode = errorBody?.code || '';
+          } catch (e) {
+            console.warn('Não foi possível ler json do error.context:', e);
+          }
+        } else if (error?.context?.body) {
           try {
             const errorBody = typeof error.context.body === 'string' 
               ? JSON.parse(error.context.body) 
               : error.context.body;
             errorMsg = errorBody?.error || errorBody?.message || '';
+            errorCode = errorBody?.code || '';
           } catch (e) {
             console.warn('Não foi possível parsear body do erro:', e);
           }
         }
         
-        // Fallback para outras propriedades
-        if (!errorMsg) {
-          errorMsg = error?.message || error?.error || JSON.stringify(error);
+        // Fallback adicional: data pode conter a resposta de erro mesmo com erro
+        if (!errorMsg && (data as any)?.error) {
+          errorMsg = (data as any).error;
+          errorCode = (data as any).code || '';
         }
         
-        console.log('📝 [NOVA-SUBCONTA] Mensagem de erro extraída:', errorMsg);
+        // Fallback para outras propriedades
+        if (!errorMsg) {
+          errorMsg = error?.message || error?.error || 'Erro desconhecido';
+        }
         
-        // Verificar se é erro de email duplicado
-        if (errorMsg?.includes('EMAIL_JA_CADASTRADO') || 
+        console.log('📝 [NOVA-SUBCONTA] Mensagem de erro extraída:', errorMsg, 'code:', errorCode);
+        
+        // CNPJ duplicado
+        if (errorCode === 'CNPJ_JA_CADASTRADO' || errorMsg?.includes('CNPJ já')) {
+          throw new Error(errorMsg || `O CNPJ ${formData.cnpj} já está cadastrado no sistema.`);
+        }
+        
+        // Email duplicado
+        if (errorCode === 'EMAIL_JA_CADASTRADO' ||
+            errorMsg?.includes('EMAIL_JA_CADASTRADO') || 
             errorMsg?.includes('já está cadastrado') ||
             errorMsg?.includes('already registered')) {
           throw new Error(`O email ${formData.email} já está cadastrado no sistema. Por favor, use outro email ou remova o usuário existente primeiro.`);
