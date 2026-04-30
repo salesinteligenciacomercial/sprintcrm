@@ -251,89 +251,89 @@ button[data-conversation-menu="true"] * {
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
-  /* Dark Theme - Black Mode */
+  /* Dark Theme - Waze Sales OS (deep green-black) */
   .dark {
-    /* Base colors - Pure Black */
-    --background: 0 0% 4%;
-    --foreground: 0 0% 95%;
-    
-    /* Brand colors - Keep primary vibrant */
-    --primary: 217 91% 60%;
+    /* Base colors - very dark green-black like the proposal */
+    --background: 160 35% 5%;
+    --foreground: 150 20% 95%;
+
+    /* Brand colors - Waze Green */
+    --primary: 142 71% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 217 91% 65%;
-    --primary-glow: 217 91% 50%;
-    
+    --primary-hover: 142 76% 52%;
+    --primary-glow: 142 76% 40%;
+
     /* Secondary */
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
-    --secondary-hover: 0 0% 20%;
-    
+    --secondary: 160 25% 12%;
+    --secondary-foreground: 150 20% 95%;
+    --secondary-hover: 160 25% 18%;
+
     /* Accent */
-    --accent: 217 91% 55%;
+    --accent: 142 71% 40%;
     --accent-foreground: 0 0% 100%;
-    --accent-light: 217 91% 25%;
-    
+    --accent-light: 142 60% 22%;
+
     /* Muted */
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 60%;
-    
+    --muted: 160 20% 11%;
+    --muted-foreground: 150 12% 62%;
+
     /* Card */
-    --card: 0 0% 6%;
-    --card-foreground: 0 0% 95%;
-    --card-hover: 0 0% 10%;
-    
+    --card: 160 30% 7%;
+    --card-foreground: 150 20% 95%;
+    --card-hover: 160 28% 10%;
+
     /* Popover */
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 95%;
-    
+    --popover: 160 30% 8%;
+    --popover-foreground: 150 20% 95%;
+
     /* Destructive */
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
-    
+
     /* Success */
-    --success: 142 70% 45%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 70% 20%;
-    
+    --success-light: 142 60% 18%;
+
     /* Warning */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
     --warning-light: 38 92% 20%;
-    
+
     /* Info */
-    --info: 213 94% 60%;
+    --info: 142 76% 55%;
     --info-foreground: 0 0% 100%;
-    --info-light: 213 94% 20%;
-    
+    --info-light: 142 60% 20%;
+
     /* Border & Input */
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 217 91% 60%;
-    
-    /* Sidebar - Deep Black */
-    --sidebar-background: 0 0% 3%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 217 91% 60%;
+    --border: 160 20% 16%;
+    --input: 160 20% 16%;
+    --ring: 142 71% 45%;
+
+    /* Sidebar - Deep green-black */
+    --sidebar-background: 160 35% 4%;
+    --sidebar-foreground: 150 20% 95%;
+    --sidebar-primary: 142 71% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 217 91% 60%;
-    
+    --sidebar-accent: 160 25% 11%;
+    --sidebar-accent-foreground: 150 20% 95%;
+    --sidebar-border: 160 20% 14%;
+    --sidebar-ring: 142 71% 45%;
+
     /* Gradients - Dark versions */
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 50%) 0%, hsl(213 94% 55%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 12%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 6%) 0%, hsl(0 0% 4%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 6%) 100%);
-    --gradient-success: linear-gradient(135deg, hsl(142 70% 40%) 0%, hsl(142 70% 50%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(142 71% 38%) 0%, hsl(142 76% 50%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(160 30% 7%) 0%, hsl(160 25% 12%) 100%);
+    --gradient-subtle: linear-gradient(180deg, hsl(160 30% 7%) 0%, hsl(160 35% 5%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(160 30% 8%) 0%, hsl(160 30% 6%) 100%);
+    --gradient-success: linear-gradient(135deg, hsl(142 71% 40%) 0%, hsl(142 76% 50%) 100%);
     --gradient-warning: linear-gradient(135deg, hsl(38 92% 45%) 0%, hsl(38 92% 55%) 100%);
-    
+
     /* Shadows - Subtle for dark */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.4);
-    --shadow-glow: 0 0 20px hsl(217 91% 60% / 0.2);
+    --shadow-glow: 0 0 24px hsl(142 71% 45% / 0.3);
     --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.4);
   }
 }
