@@ -10,10 +10,31 @@ interface Props {
   currentMetrics?: Record<string, number>;
 }
 
+// Mapeia segmento da empresa para a chave de benchmark (fallback para "geral")
+const SEG_MAP: Record<string, string> = {
+  clinica_medica: "clinica_medica",
+  clinica_odontologica: "clinica_odontologica",
+  clinica_estetica: "clinica_estetica",
+  advocacia: "advocacia",
+  correspondente_bancario: "correspondente_bancario",
+  consorcio: "consorcio",
+  corretora_seguros: "corretora_seguros",
+  imobiliaria: "imobiliaria",
+  educacao: "educacao",
+  tecnologia: "saas",
+  saude: "saude",
+  servicos_gerais: "servicos",
+  consultoria: "servicos",
+};
+
 export function SegmentBenchmarkCard({ currentMetrics = {} }: Props) {
   const { segmento } = useCompanySegmento();
-  const seg = segmento || "geral";
-  const { data, isLoading } = useWMIBenchmarkBySegment(seg);
+  const segKey = (segmento && SEG_MAP[segmento]) || "geral";
+  const { data, isLoading } = useWMIBenchmarkBySegment(segKey);
+  // Fallback: se não há dados específicos, busca "geral"
+  const { data: dataGeral } = useWMIBenchmarkBySegment(segKey === "geral" ? "" : "geral");
+  const rows = (data && data.length > 0) ? data : (dataGeral || []);
+  const seg = segKey;
 
   return (
     <Card>
