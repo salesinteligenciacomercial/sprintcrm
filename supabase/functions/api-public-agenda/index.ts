@@ -364,6 +364,9 @@ serve(async (req) => {
 
       const dataFmt = dataHoraInicio.toLocaleDateString('pt-BR');
       const horaFmt = dataHoraInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const valorFmt = valorConsulta != null
+        ? valorConsulta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+        : null;
 
       // 1. WhatsApp para o cliente
       try {
@@ -371,8 +374,10 @@ serve(async (req) => {
           `Olá ${body.nome}!\n\n` +
           `📅 *Data:* ${dataFmt}\n` +
           `⏰ *Horário:* ${horaFmt}\n` +
+          `⏱ *Duração:* ${tempoServico} minutos\n` +
           `📋 *Serviço:* ${body.tipo_servico}\n` +
           (profissionalNome ? `👤 *Profissional:* ${profissionalNome}\n` : '') +
+          (valorFmt ? `💰 *Valor:* ${valorFmt}\n` : '') +
           `\nAguardamos você! 😊`;
 
         await supabase.functions.invoke('enviar-whatsapp', {
@@ -412,6 +417,8 @@ serve(async (req) => {
             horario: body.horario,
             tipo_servico: compromisso?.tipo_servico,
             profissional: profissionalNome || null,
+            duracao_minutos: tempoServico,
+            valor: valorConsulta,
             data_hora_formatada: `${dataFmt} às ${horaFmt}`,
           }
         }),
