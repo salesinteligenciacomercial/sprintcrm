@@ -550,6 +550,15 @@ export function SiteInstitucionalConfig({ companyId }: Props) {
           </Card>
         </TabsContent>
 
+        {/* BOT IA DO SITE */}
+        <TabsContent value="bot-ia">
+          <BotIASiteTab
+            config={cfg.bot_ia_site || { ativo: true }}
+            onChange={(next) => setCfg(prev => ({ ...prev, bot_ia_site: next }))}
+            segmento={companySegmento}
+          />
+        </TabsContent>
+
         {/* PREVIEW */}
         <TabsContent value="preview">
           <Card>
