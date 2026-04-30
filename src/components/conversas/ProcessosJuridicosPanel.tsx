@@ -305,7 +305,23 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
     const dataHoraFim = new Date(dataHora.getTime() + 2 * 60 * 60 * 1000);
 
     const tipoLabel = TIPO_LABELS[form.tipo] || form.tipo;
+    const modalidadeLabel = AUDIENCIA_MODALIDADES[form.audiencia_modalidade] || form.audiencia_modalidade;
     const titulo = `⚖️ Audiência - ${tipoLabel} - ${form.numero_processo}`;
+
+    const obsLinhas = [
+      `Processo: ${form.numero_processo}`,
+      `Tipo: ${tipoLabel}`,
+      form.audiencia_modalidade && `Modalidade: ${modalidadeLabel}`,
+      form.audiencia_local && `Local: ${form.audiencia_local}`,
+      form.audiencia_sala && `Sala: ${form.audiencia_sala}`,
+      form.audiencia_link && `Link: ${form.audiencia_link}`,
+      `Vara: ${form.vara || "N/A"}`,
+      `Comarca: ${form.comarca || "N/A"}`,
+      form.juiz && `Juiz(a): ${form.juiz}`,
+      `Parte Contrária: ${form.parte_contraria || "N/A"}`,
+      form.advogado_adversario && `Advogado Adversário: ${form.advogado_adversario}${form.oab_adversario ? ` (OAB ${form.oab_adversario})` : ''}`,
+      form.audiencia_observacoes && `Obs: ${form.audiencia_observacoes}`,
+    ].filter(Boolean).join('\n');
 
     const { data: compromisso, error } = await supabase.from("compromissos").insert({
       lead_id: leadId,
@@ -316,7 +332,7 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
       data_hora_fim: dataHoraFim.toISOString(),
       tipo_servico: "Audiência",
       titulo: titulo,
-      observacoes: `Processo: ${form.numero_processo}\nTipo: ${tipoLabel}\nVara: ${form.vara || "N/A"}\nComarca: ${form.comarca || "N/A"}\nParte Contrária: ${form.parte_contraria || "N/A"}`,
+      observacoes: obsLinhas,
       status: "agendado",
       legal_process_id: processId,
     }).select().single();
@@ -340,9 +356,14 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
       `Informamos que sua audiência está agendada:\n\n` +
       `📋 *Processo:* ${form.numero_processo}\n` +
       `📌 *Tipo:* ${tipoLabel}\n` +
+      (form.audiencia_modalidade ? `${form.audiencia_modalidade === 'virtual' ? '💻' : form.audiencia_modalidade === 'hibrida' ? '🔀' : '🏢'} *Modalidade:* ${AUDIENCIA_MODALIDADES[form.audiencia_modalidade] || form.audiencia_modalidade}\n` : '') +
       `🏛️ *Vara:* ${form.vara || "A definir"}\n` +
       `📍 *Comarca:* ${form.comarca || "A definir"}\n` +
+      (form.audiencia_local ? `📌 *Local:* ${form.audiencia_local}\n` : '') +
+      (form.audiencia_sala ? `🚪 *Sala:* ${form.audiencia_sala}\n` : '') +
+      (form.audiencia_link ? `🔗 *Link da videoconferência:* ${form.audiencia_link}\n` : '') +
       `📅 *Data:* ${dataFormatada}\n` +
+      (form.juiz ? `👨‍⚖️ *Juiz(a):* ${form.juiz}\n` : '') +
       (form.parte_contraria ? `👤 *Parte Contrária:* ${form.parte_contraria}\n` : "") +
       `\nPor favor, confirme sua presença. Qualquer dúvida, estamos à disposição.`;
 
