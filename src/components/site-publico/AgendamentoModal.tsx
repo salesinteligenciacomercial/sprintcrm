@@ -184,6 +184,18 @@ export function AgendamentoFlow({ slug, companyName, primary, onSuccess }: { slu
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{p.nome}</div>
                       {p.especialidade && <div className="text-xs text-muted-foreground truncate">{p.especialidade}</div>}
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {p.valor_consulta != null && (
+                          <Badge variant="secondary" className="text-[10px] font-semibold" style={{ background: `${primary}15`, color: primary }}>
+                            {Number(p.valor_consulta).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </Badge>
+                        )}
+                        {p.duracao_consulta && (
+                          <Badge variant="outline" className="text-[10px] gap-0.5">
+                            <Clock className="w-2.5 h-2.5" /> {p.duracao_consulta}min
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </Card>
                 ))}
