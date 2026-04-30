@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, MessageCircle, X } from "lucide-react";
+import { Send, MessageCircle, X, Sparkles, CheckCircle2, Loader2 } from "lucide-react";
 import { SiteTheme } from "@/lib/siteTemplates";
+import ReactMarkdown from "react-markdown";
 
-interface ChatMsg { role: 'user' | 'assistant'; content: string; }
+interface ChatMsg {
+  role: "user" | "assistant";
+  content: string;
+}
 
 interface Props {
   open: boolean;
@@ -14,82 +18,109 @@ interface Props {
   companyName: string;
   theme: SiteTheme;
   config: {
-    perguntas?: Array<{ campo: string; label: string; tipo?: string; obrigatorio?: boolean }>;
     sugestoes_chat?: string[];
     tag_automatica?: string;
     whatsapp_flutuante_mensagem?: string;
+    company_slug?: string;
   };
 }
 
-const DEFAULT_PERGUNTAS = [
-  { campo: 'nome', label: 'Qual seu nome?', obrigatorio: true },
-  { campo: 'telefone', label: 'Qual seu WhatsApp?', tipo: 'tel', obrigatorio: true },
-  { campo: 'email', label: 'Qual seu e-mail?', tipo: 'email', obrigatorio: false },
-];
+type Classificacao = "quente" | "morno" | "frio" | "curioso";
 
-export function ChatCaptureWidget({ open, onClose, companyId, companyName, theme, config }: Props) {
+export function ChatCaptureWidget({
+  open,
+  onClose,
+  companyId,
+  companyName,
+  theme,
+  config,
+}: Props) {
   const [messages, setMessages] = useState<ChatMsg[]>([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [collected, setCollected] = useState<Record<string, string>>({});
-  const [questionIdx, setQuestionIdx] = useState(0);
-  const [leadCreated, setLeadCreated] = useState(false);
+  const [sessionId] = useState<string>(() =>
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `s-${Date.now()}`
+  );
+  const [classificacao, setClassificacao] = useState<Classificacao | null>(null);
+  const [score, setScore] = useState<number | null>(null);
+  const [transferido, setTransferido] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
-  const perguntas = config.perguntas?.length ? config.perguntas : DEFAULT_PERGUNTAS;
+
+  const slug = (config as any).company_slug || companyName?.toLowerCase().replace(/\s+/g, "-");
 
   useEffect(() => {
     if (open && messages.length === 0) {
-      setMessages([
-        { role: 'assistant', content: config.whatsapp_flutuante_mensagem || `Olá! Bem-vindo à ${companyName}. Vou te ajudar.` },
-        { role: 'assistant', content: perguntas[0].label },
-      ]);
+      const greeting =
+        config.whatsapp_flutuante_mensagem ||
+        `Olá! 👋 Sou o atendimento virtual da ${companyName}. Como posso te ajudar hoje?`;
+      setMessages([{ role: "assistant", content: greeting }]);
     }
   }, [open]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendInput = async (text: string) => {
     if (!text.trim() || sending) return;
     setSending(true);
-    setMessages(p => [...p, { role: 'user', content: text }]);
-    setInput('');
+    const userMsg: ChatMsg = { role: "user", content: text };
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
+    setInput("");
 
-    if (!leadCreated && questionIdx < perguntas.length) {
-      const q = perguntas[questionIdx];
-      const newCollected = { ...collected, [q.campo]: text };
-      setCollected(newCollected);
-      const nextIdx = questionIdx + 1;
+    try {
+      const { data, error } = await supabase.functions.invoke("api-public-ia", {
+        body: {
+          message: text,
+          session_id: sessionId,
+          company_slug: slug,
+          context: "auto",
+          history: nextMessages.slice(-10),
+        },
+      });
 
-      if (nextIdx < perguntas.length) {
-        setQuestionIdx(nextIdx);
-        setMessages(p => [...p, { role: 'assistant', content: perguntas[nextIdx].label }]);
-        setSending(false);
-        return;
+      if (error) throw error;
+
+      const reply: string =
+        data?.response || "Desculpe, não consegui responder agora. Tente novamente.";
+      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
+
+      if (data?.qualificacao) {
+        if (data.qualificacao.classificacao) {
+          setClassificacao(data.qualificacao.classificacao as Classificacao);
+        }
+        if (typeof data.qualificacao.score === "number") {
+          setScore(data.qualificacao.score);
+        }
       }
 
-      // Criar lead
-      try {
-        await supabase.functions.invoke('api-public-leads', {
-          body: {
-            company_id: companyId,
-            nome: newCollected.nome || 'Visitante',
-            telefone: newCollected.telefone,
-            email: newCollected.email,
-            origem: 'site-institucional',
-            tag_automatica: config.tag_automatica || 'site-institucional',
+      if (data?.transferir_humano && !transferido) {
+        setTransferido(true);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "✅ Perfeito! Já passei suas informações para nosso time comercial. Em instantes alguém entrará em contato para dar continuidade.",
           },
-        });
-        setLeadCreated(true);
-        setMessages(p => [...p, { role: 'assistant', content: `Perfeito, ${newCollected.nome}! Recebemos seus dados. Em breve entraremos em contato. 🎉` }]);
-      } catch (e) {
-        setMessages(p => [...p, { role: 'assistant', content: 'Recebemos sua mensagem!' }]);
+        ]);
       }
+    } catch (e) {
+      console.error("Erro chat IA:", e);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Tive um problema técnico agora. Pode tentar de novo ou nos chamar pelo WhatsApp?",
+        },
+      ]);
+    } finally {
       setSending(false);
-      return;
     }
-
-    setMessages(p => [...p, { role: 'assistant', content: 'Obrigado! Em breve entraremos em contato.' }]);
-    setSending(false);
   };
 
   if (!open) {
@@ -105,44 +136,129 @@ export function ChatCaptureWidget({ open, onClose, companyId, companyName, theme
     );
   }
 
+  const classifColor: Record<Classificacao, string> = {
+    quente: "bg-red-100 text-red-700 border-red-200",
+    morno: "bg-amber-100 text-amber-700 border-amber-200",
+    frio: "bg-sky-100 text-sky-700 border-sky-200",
+    curioso: "bg-slate-100 text-slate-600 border-slate-200",
+  };
+
   return (
-    <div className="fixed bottom-6 right-6 w-full max-w-sm h-[600px] max-h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border">
-      <div className="p-4 rounded-t-2xl text-white flex items-center justify-between" style={{ background: theme.primary }}>
-        <div>
-          <div className="font-bold">{companyName}</div>
-          <div className="text-xs opacity-90">Online agora</div>
+    <div className="fixed bottom-6 right-6 w-full max-w-sm h-[620px] max-h-[85vh] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border overflow-hidden">
+      {/* Header */}
+      <div
+        className="p-4 text-white flex items-center justify-between"
+        style={{ background: theme.primary }}
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="font-bold leading-tight">{companyName}</div>
+            <div className="text-xs opacity-90 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+              Assistente IA online
+            </div>
+          </div>
         </div>
-        <button onClick={onClose} className="hover:opacity-70"><X className="w-5 h-5" /></button>
+        <button onClick={onClose} className="hover:opacity-70" aria-label="Fechar">
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
+      {/* Status de qualificação */}
+      {(classificacao || transferido) && (
+        <div className="px-3 py-2 border-b bg-slate-50 flex items-center gap-2 text-xs">
+          {classificacao && (
+            <span
+              className={`px-2 py-0.5 rounded-full border font-medium ${classifColor[classificacao]}`}
+            >
+              Lead {classificacao}
+              {score != null ? ` · ${score}/100` : ""}
+            </span>
+          )}
+          {transferido && (
+            <span className="px-2 py-0.5 rounded-full border bg-green-100 text-green-700 border-green-200 font-medium flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Encaminhado ao time
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Mensagens */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div
+            key={i}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
             <div
-              className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${m.role === 'user' ? 'text-white' : 'bg-white border'}`}
-              style={m.role === 'user' ? { background: theme.primary } : {}}
+              className={`max-w-[85%] px-3 py-2 rounded-2xl text-sm ${
+                m.role === "user" ? "text-white" : "bg-white border text-slate-800"
+              }`}
+              style={m.role === "user" ? { background: theme.primary } : {}}
             >
-              {m.content}
+              {m.role === "assistant" ? (
+                <div className="prose prose-sm max-w-none [&>*]:my-1 [&>p]:leading-snug">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
+              ) : (
+                m.content
+              )}
             </div>
           </div>
         ))}
+        {sending && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            digitando...
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
-      {leadCreated && config.sugestoes_chat && config.sugestoes_chat.length > 0 && (
-        <div className="px-3 pt-2 flex flex-wrap gap-1 border-t">
+      {/* Sugestões iniciais */}
+      {messages.length <= 1 && config.sugestoes_chat && config.sugestoes_chat.length > 0 && (
+        <div className="px-3 pt-2 flex flex-wrap gap-1 border-t bg-white">
           {config.sugestoes_chat.map((s, i) => (
-            <button key={i} onClick={() => sendInput(s)} className="text-xs px-2 py-1 rounded-full border hover:bg-slate-100">{s}</button>
+            <button
+              key={i}
+              onClick={() => sendInput(s)}
+              className="text-xs px-2 py-1 rounded-full border hover:bg-slate-100"
+            >
+              {s}
+            </button>
           ))}
         </div>
       )}
 
-      <form onSubmit={(e) => { e.preventDefault(); sendInput(input); }} className="p-3 border-t flex gap-2">
-        <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Digite sua mensagem..." disabled={sending} />
-        <Button type="submit" size="icon" disabled={sending || !input.trim()} style={{ background: theme.primary }}>
-          <Send className="w-4 h-4" />
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          sendInput(input);
+        }}
+        className="p-3 border-t flex gap-2 bg-white"
+      >
+        <Input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Digite sua mensagem..."
+          disabled={sending}
+        />
+        <Button
+          type="submit"
+          size="icon"
+          disabled={sending || !input.trim()}
+          style={{ background: theme.primary }}
+        >
+          {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </Button>
       </form>
+      <div className="text-[10px] text-center text-slate-400 pb-2 bg-white">
+        Powered by IA · Suas informações estão seguras
+      </div>
     </div>
   );
 }
