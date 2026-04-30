@@ -346,12 +346,17 @@ REGRAS:
 - Não invente informações sobre preços ou serviços específicos
 
 AÇÕES (inclua no final da resposta se aplicável):
-- [COLETAR_LEAD:nome=X,telefone=Y,email=Z] - quando coletar dados do visitante
+- [COLETAR_LEAD:nome=X,telefone=Y,email=Z,interesse=descrição] - quando coletar dados do visitante
 - [MOSTRAR_HORARIOS:data=YYYY-MM-DD] - mostrar slots de horário disponíveis em cards clicáveis
 - [AGENDAR:data=YYYY-MM-DD,horario=HH:MM,servico=X] - confirmar agendamento (cria lead + compromisso + envia WhatsApp)
-- [TRANSFERIR_HUMANO] - quando precisar de atendente humano
+- [TRANSFERIR_HUMANO:motivo=X] - quando o lead estiver QUALIFICADO e pronto para o time comercial
+- [QUALIFICAR_LEAD:score=0-100,classificacao=quente|morno|frio|curioso,resumo=texto curto,interesse=produto/serviço] - SEMPRE inclua isso quando tiver coletado informações suficientes para julgar (após 3-5 trocas). Use score:
+   * 80-100 = QUENTE (decisor, prazo curto, dor clara, dados completos)
+   * 50-79 = MORNO (interesse real mas algo falta — prazo longo, sem urgência ou sem todos dados)
+   * 20-49 = FRIO (curioso interessado mas sem prazo nem decisão)
+   * 0-19 = CURIOSO (só pesquisa, estudante, concorrente, sem dor real)
 
-IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mostrar slots, ou colete nome+telefone+data+serviço e use AGENDAR diretamente.`;
+IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mostrar slots, ou colete nome+telefone+data+serviço e use AGENDAR diretamente. Quando classificar como QUENTE, também emita TRANSFERIR_HUMANO.`;
       }
 
       // Construir histórico de mensagens
