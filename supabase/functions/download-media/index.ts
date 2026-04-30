@@ -114,8 +114,22 @@ async function downloadEvolutionMedia(
   if (!response.ok) {
     const errorText = await response.text();
     console.error('❌ [DOWNLOAD-MEDIA] Erro Evolution API:', response.status, errorText);
-    
-    if (response.status === 400 || response.status === 404) {
+
+    // Detectar mídia expirada: 400/404, ou erros típicos do Evolution/Baileys
+    const expiredIndicators = [
+      'Failed to fetch stream',
+      'ephemeralMessage',
+      'mmg.whatsapp.net',
+      'media not found',
+      'expired',
+    ];
+    const isExpired =
+      response.status === 400 ||
+      response.status === 404 ||
+      response.status === 410 ||
+      expiredIndicators.some((s) => errorText.toLowerCase().includes(s.toLowerCase()));
+
+    if (isExpired) {
       return {
         error: 'media_expired',
         message: 'Mídia expirada ou indisponível. Mídias do WhatsApp expiram após alguns dias.'
