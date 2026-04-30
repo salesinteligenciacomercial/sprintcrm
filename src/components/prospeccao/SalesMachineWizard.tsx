@@ -123,7 +123,7 @@ export function SalesMachineWizard() {
             <Rocket className="h-4 w-4" /> 3. Plano de Ação
           </TabsTrigger>
           <TabsTrigger value="4" className="text-xs sm:text-sm gap-1.5">
-            <LineChart className="h-4 w-4" /> 4. Acompanhamento
+            <LineChartIcon className="h-4 w-4" /> 4. Acompanhamento
           </TabsTrigger>
         </TabsList>
 
