@@ -107,7 +107,7 @@ serve(async (req) => {
     if (req.method === 'GET' && action === 'profissionais') {
       const { data: profissionais } = await supabase
         .from('profissionais')
-        .select('id, nome, especialidade, email, telefone')
+        .select('id, nome, especialidade, email, telefone, valor_consulta, duracao_consulta')
         .eq('company_id', companyId);
 
       // tentar buscar avatar via user_avatars / profiles
@@ -245,11 +245,22 @@ serve(async (req) => {
       const dataHoraInicio = new Date(`${body.data}T${body.horario}:00`);
 
       let tempoServico = 30;
+      let valorConsulta: number | null = null;
+      // Profissional define a duração/valor; se não houver, usa a agenda
+      if (body.profissional_id) {
+        const { data: prof } = await supabase
+          .from('profissionais')
+          .select('duracao_consulta, valor_consulta')
+          .eq('id', body.profissional_id)
+          .maybeSingle();
+        if (prof?.duracao_consulta) tempoServico = prof.duracao_consulta;
+        if (prof?.valor_consulta != null) valorConsulta = Number(prof.valor_consulta);
+      }
       if (body.agenda_id) {
         const { data: agenda } = await supabase
           .from('agendas').select('tempo_medio_servico, permite_simultaneo, capacidade_simultanea')
           .eq('id', body.agenda_id).maybeSingle();
-        if (agenda?.tempo_medio_servico) tempoServico = agenda.tempo_medio_servico;
+        if (!body.profissional_id && agenda?.tempo_medio_servico) tempoServico = agenda.tempo_medio_servico;
       }
       const dataHoraFim = new Date(dataHoraInicio.getTime() + tempoServico * 60 * 1000);
 
@@ -331,6 +342,8 @@ serve(async (req) => {
           tipo_servico: body.tipo_servico,
           data_hora_inicio: dataHoraInicio.toISOString(),
           data_hora_fim: dataHoraFim.toISOString(),
+          duracao: tempoServico,
+          custo_estimado: valorConsulta,
           status: 'agendado',
           paciente: body.nome.trim(),
           telefone: telefoneNorm,
