@@ -53,10 +53,12 @@ serve(async (req) => {
     let companyName: string = 'EAZE';
     let ownerId: string | null = null;
 
+    let companySegmento: string | null = null;
+
     if (companySlug) {
       const { data: company } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id')
+        .select('id, name, owner_user_id, segmento')
         .or(`domain.eq.${companySlug},name.ilike.%${companySlug}%`)
         .limit(1)
         .single();
@@ -65,6 +67,7 @@ serve(async (req) => {
         companyId = company.id;
         companyName = company.name;
         ownerId = company.owner_user_id;
+        companySegmento = (company as any).segmento || null;
       }
     }
 
@@ -72,7 +75,7 @@ serve(async (req) => {
     if (!companyId) {
       const { data: masterCompany } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id')
+        .select('id, name, owner_user_id, segmento')
         .eq('is_master_account', true)
         .limit(1)
         .single();
@@ -81,6 +84,7 @@ serve(async (req) => {
         companyId = masterCompany.id;
         companyName = masterCompany.name;
         ownerId = masterCompany.owner_user_id;
+        companySegmento = (masterCompany as any).segmento || null;
       }
     }
 
