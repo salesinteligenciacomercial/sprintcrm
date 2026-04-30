@@ -14,6 +14,7 @@ import { SITE_TEMPLATES, SiteConfig, SiteTheme, getTemplateById, DEFAULT_SITE_SE
 import { SiteRenderer } from "../site-publico/SiteRenderer";
 import { ImageUploader } from "../site-publico/ImageUploader";
 import { GalleryUploader } from "../site-publico/GalleryUploader";
+import { BotIASiteTab, BotIASiteConfig } from "./BotIASiteTab";
 
 interface Props { companyId: string; }
 
@@ -34,6 +35,7 @@ interface FullCfg extends SiteConfig {
   sugestoes_chat?: string[];
   slug?: string;
   ativo?: boolean;
+  bot_ia_site?: BotIASiteConfig;
 }
 
 export function SiteInstitucionalConfig({ companyId }: Props) {
@@ -222,6 +224,7 @@ export function SiteInstitucionalConfig({ companyId }: Props) {
           <TabsTrigger value="faq">FAQ</TabsTrigger>
           <TabsTrigger value="contato">Contato</TabsTrigger>
           <TabsTrigger value="secoes">Seções</TabsTrigger>
+          <TabsTrigger value="bot-ia" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">🤖 Bot IA</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
 
@@ -545,6 +548,15 @@ export function SiteInstitucionalConfig({ companyId }: Props) {
               ))}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* BOT IA DO SITE */}
+        <TabsContent value="bot-ia">
+          <BotIASiteTab
+            config={cfg.bot_ia_site || { ativo: true }}
+            onChange={(next) => setCfg(prev => ({ ...prev, bot_ia_site: next }))}
+            segmento={companySegmento}
+          />
         </TabsContent>
 
         {/* PREVIEW */}

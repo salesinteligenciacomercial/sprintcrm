@@ -58,7 +58,7 @@ serve(async (req) => {
     if (companySlug) {
       const { data: company } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id, segmento')
+        .select('id, name, owner_user_id, segmento, capture_page_config')
         .or(`domain.eq.${companySlug},name.ilike.%${companySlug}%`)
         .limit(1)
         .single();
@@ -68,6 +68,7 @@ serve(async (req) => {
         companyName = company.name;
         ownerId = company.owner_user_id;
         companySegmento = (company as any).segmento || null;
+        (globalThis as any).__captureCfg = (company as any).capture_page_config || {};
       }
     }
 
@@ -75,7 +76,7 @@ serve(async (req) => {
     if (!companyId) {
       const { data: masterCompany } = await supabase
         .from('companies')
-        .select('id, name, owner_user_id, segmento')
+        .select('id, name, owner_user_id, segmento, capture_page_config')
         .eq('is_master_account', true)
         .limit(1)
         .single();
@@ -85,6 +86,7 @@ serve(async (req) => {
         companyName = masterCompany.name;
         ownerId = masterCompany.owner_user_id;
         companySegmento = (masterCompany as any).segmento || null;
+        (globalThis as any).__captureCfg = (masterCompany as any).capture_page_config || {};
       }
     }
 
@@ -305,58 +307,132 @@ Para agendar, o visitante precisa informar:
       };
 
       const qualifConfig = companySegmento ? QUALIFICACAO_POR_SEGMENTO[companySegmento] : null;
+
+      // ============================================
+      // Configurações personalizadas do Bot IA do Site
+      // ============================================
+      const captureCfg: any = (globalThis as any).__captureCfg || {};
+      const botCfg: any = captureCfg.bot_ia_site || {};
+
+      // Verificar se está dentro do horário de funcionamento
+      let foraDoHorario = false;
+      if (botCfg.horario_funcionamento?.ativo) {
+        const agora = new Date();
+        const diaAtual = agora.getDay();
+        const horaAtual = agora.getHours() * 60 + agora.getMinutes();
+        const dias = botCfg.horario_funcionamento.dias || [1,2,3,4,5];
+        const [hi, mi] = (botCfg.horario_funcionamento.inicio || '08:00').split(':').map(Number);
+        const [hf, mf] = (botCfg.horario_funcionamento.fim || '18:00').split(':').map(Number);
+        const inicio = hi * 60 + mi;
+        const fim = hf * 60 + mf;
+        if (!dias.includes(diaAtual) || horaAtual < inicio || horaAtual > fim) {
+          foraDoHorario = true;
+        }
+      }
+
+      const tomMap: Record<string, string> = {
+        amigavel: 'Tom AMIGÁVEL: próximo, caloroso, use "você", emojis pontuais (🙂 ✨), como uma recepcionista querida.',
+        consultivo: 'Tom CONSULTIVO: postura de especialista que orienta, traz dados, faz perguntas estratégicas. Sem emojis demais.',
+        formal: 'Tom FORMAL: profissional, respeitoso, tratamento por "senhor(a)" no início. Sem gírias nem emojis.',
+        descontraido: 'Tom DESCONTRAÍDO: leve, criativo, usa emojis (😄 🚀 💡), linguagem casual sem perder credibilidade.',
+        empatico: 'Tom EMPÁTICO: acolhedor, validando sentimentos. Ideal para saúde, jurídico, situações sensíveis.',
+      };
+
+      const personaBlock = botCfg.persona
+        ? `\n\n=== PERSONA ===\n${botCfg.persona}`
+        : '';
+
+      const tomBlock = botCfg.tom_de_voz
+        ? `\n\n=== TOM DE VOZ ===\n${tomMap[botCfg.tom_de_voz] || tomMap.amigavel}`
+        : '';
+
+      const conhecimentoBlock = botCfg.base_conhecimento
+        ? `\n\n=== BASE DE CONHECIMENTO DA EMPRESA ===\n${botCfg.base_conhecimento}\n\nUse essas informações como verdade absoluta. Se a pergunta não estiver coberta, ofereça transferir para humano.`
+        : '';
+
+      const perguntasExtrasBlock = botCfg.perguntas_extras?.length
+        ? `\n\n=== PERGUNTAS EXTRAS DESTE NEGÓCIO ===\nAlém das do segmento, encaixe naturalmente:\n${botCfg.perguntas_extras.map((p: any, i: number) => `${i + 1}. ${p.pergunta}${p.obrigatoria ? ' [OBRIGATÓRIA]' : ''}`).join('\n')}`
+        : '';
+
+      const bloqueioBlock = botCfg.bloquear_topicos?.length
+        ? `\n\n=== TÓPICOS PROIBIDOS ===\nNUNCA fale sobre: ${botCfg.bloquear_topicos.join(', ')}. Se perguntarem, redirecione gentilmente para outro assunto.`
+        : '';
+
+      const offlineBlock = foraDoHorario
+        ? `\n\n=== ATENÇÃO: FORA DO HORÁRIO ===\nO atendimento humano está fora do expediente. ${botCfg.mensagem_offline || 'Avise que retornaremos em breve e capture nome + WhatsApp para que o time entre em contato no próximo expediente.'} NÃO prometa retorno imediato.`
+        : '';
+
+      const scoreMin = botCfg.score_minimo_qualificado ?? 60;
+      const acaoQuente = botCfg.acao_lead_quente || 'criar_lead';
+      const permitirAgendamento = botCfg.permitir_agendamento !== false;
+      const permitirTransferencia = botCfg.permitir_transferencia_humana !== false;
+
+      const nomeBot = botCfg.nome_bot || 'assistente virtual';
+
       const blocoQualificacao = qualifConfig
-        ? `\n\n=== TRIAGEM E QUALIFICAÇÃO INTELIGENTE ===\n${qualifConfig.contexto}\n\nPERGUNTAS DE QUALIFICAÇÃO (faça 1 por mensagem, naturalmente, na ordem que fizer mais sentido pela conversa):\n${qualifConfig.perguntas.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nCRITÉRIOS:\n${qualifConfig.criterios}\n\nREGRA: Não dispare todas as perguntas de uma vez. Faça uma, escute, e a próxima conforme o contexto. Sempre peça nome e WhatsApp em algum momento (não no início — depois de criar conexão).`
-        : '\n\n=== QUALIFICAÇÃO ===\nFaça perguntas naturais para entender: o que a pessoa busca, urgência, capacidade de decisão, prazo. Colete nome e WhatsApp em momento oportuno (não logo no início).';
+        ? `\n\n=== TRIAGEM E QUALIFICAÇÃO INTELIGENTE ===\n${qualifConfig.contexto}\n\nPERGUNTAS-BASE DO SEGMENTO (faça 1 por mensagem, naturalmente):\n${qualifConfig.perguntas.map((p, i) => `${i + 1}. ${p}`).join('\n')}\n\nCRITÉRIOS:\n${qualifConfig.criterios}\n\nREGRA: Não dispare todas as perguntas de uma vez. Faça uma, escute, e a próxima conforme o contexto. Sempre peça nome e WhatsApp em algum momento (não no início — depois de criar conexão).${perguntasExtrasBlock}\n\nSCORE MÍNIMO PARA QUALIFICAR: ${scoreMin}. Lead com score >= ${scoreMin} = QUALIFICADO.`
+        : `\n\n=== QUALIFICAÇÃO ===\nFaça perguntas naturais para entender: o que a pessoa busca, urgência, capacidade de decisão, prazo. Colete nome e WhatsApp em momento oportuno (não logo no início).${perguntasExtrasBlock}\n\nSCORE MÍNIMO PARA QUALIFICAR: ${scoreMin}.`;
 
       let systemPrompt = '';
 
       if (promptPersonalizado) {
         systemPrompt = `${promptPersonalizado}
-
+${personaBlock}
+${tomBlock}
+${conhecimentoBlock}
+${bloqueioBlock}
+${offlineBlock}
 ${visitorContext}
 ${horariosContext}
 ${blocoQualificacao}
 
 REGRAS:
-- Você está no site institucional da ${companyName}
+- Você é ${nomeBot}, no site institucional da ${companyName}
 - Seja cordial, profissional e objetivo
-- Se o visitante quiser agendar, colete os dados necessários
-- Se não souber algo, ofereça contato com um atendente humano
+- ${permitirAgendamento ? 'Se o visitante quiser agendar, colete os dados necessários' : 'NÃO ofereça agendamento direto — direcione para o time humano'}
+- ${permitirTransferencia ? 'Quando lead estiver qualificado, transfira para humano' : 'Não transfira para humano automaticamente'}
 - Mantenha respostas curtas e claras (1-2 parágrafos curtos)`;
       } else {
-        // Prompt padrão
-        systemPrompt = `Você é a assistente virtual da ${companyName}${companySegmento ? ` (segmento: ${companySegmento})` : ''}, presente no site institucional.
-
+        // Prompt padrão (humanizado)
+        systemPrompt = `Você é ${nomeBot}, ${botCfg.persona ? '' : 'a assistente virtual humanizada'} da ${companyName}${companySegmento ? ` (segmento: ${companySegmento})` : ''}, presente no site institucional.
+${personaBlock}
+${tomBlock}
+${conhecimentoBlock}
+${bloqueioBlock}
+${offlineBlock}
 ${visitorContext}
 ${horariosContext}
 ${blocoQualificacao}
 
 SUAS CAPACIDADES:
-1. Responder dúvidas sobre a empresa e serviços
-2. Ajudar a agendar consultas/reuniões
-3. Coletar informações de contato de interessados
-4. Direcionar para atendimento humano quando necessário
+1. Responder dúvidas sobre a empresa e serviços (use a base de conhecimento)
+${permitirAgendamento ? '2. Ajudar a agendar consultas/reuniões' : ''}
+3. Qualificar interessados conversando NATURALMENTE (não em formulário)
+${permitirTransferencia ? '4. Direcionar para atendimento humano quando necessário' : ''}
 
-REGRAS:
-- Seja cordial, profissional e objetivo
-- Mantenha respostas curtas (máximo 3 parágrafos)
-- Se o visitante quiser agendar, colete: nome, telefone, data/horário preferido e tipo de serviço
-- Se não souber algo, ofereça contato com atendente humano
-- Não invente informações sobre preços ou serviços específicos
+REGRAS DE HUMANIZAÇÃO (CRÍTICAS):
+- NUNCA dispare múltiplas perguntas em uma só mensagem
+- Reaja ao que a pessoa disse antes de fazer próxima pergunta ("Entendi…", "Faz sentido…", "Imagino que…")
+- Use o nome dela depois que souber
+- Adapte o ritmo: quem responde rápido recebe respostas curtas, quem responde longo recebe acolhimento maior
+- Se a pessoa estiver hesitante, NÃO empurre — pergunte o que ela precisa saber para decidir
+- Demonstre conhecimento real do negócio (use a base de conhecimento)
+- Mantenha respostas em 1-3 parágrafos curtos
+- Se não souber algo, seja honesta e ofereça contato com humano
+- Não invente preços nem serviços não listados
 
 AÇÕES (inclua no final da resposta se aplicável):
 - [COLETAR_LEAD:nome=X,telefone=Y,email=Z,interesse=descrição] - quando coletar dados do visitante
-- [MOSTRAR_HORARIOS:data=YYYY-MM-DD] - mostrar slots de horário disponíveis em cards clicáveis
-- [AGENDAR:data=YYYY-MM-DD,horario=HH:MM,servico=X] - confirmar agendamento (cria lead + compromisso + envia WhatsApp)
-- [TRANSFERIR_HUMANO:motivo=X] - quando o lead estiver QUALIFICADO e pronto para o time comercial
+${permitirAgendamento ? '- [MOSTRAR_HORARIOS:data=YYYY-MM-DD] - mostrar slots de horário disponíveis em cards clicáveis\n- [AGENDAR:data=YYYY-MM-DD,horario=HH:MM,servico=X] - confirmar agendamento' : ''}
+${permitirTransferencia ? '- [TRANSFERIR_HUMANO:motivo=X] - quando o lead estiver QUALIFICADO (score >= ' + scoreMin + ') e pronto para o time comercial' : ''}
 - [QUALIFICAR_LEAD:score=0-100,classificacao=quente|morno|frio|curioso,resumo=texto curto,interesse=produto/serviço] - SEMPRE inclua isso quando tiver coletado informações suficientes para julgar (após 3-5 trocas). Use score:
    * 80-100 = QUENTE (decisor, prazo curto, dor clara, dados completos)
    * 50-79 = MORNO (interesse real mas algo falta — prazo longo, sem urgência ou sem todos dados)
    * 20-49 = FRIO (curioso interessado mas sem prazo nem decisão)
    * 0-19 = CURIOSO (só pesquisa, estudante, concorrente, sem dor real)
 
-IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mostrar slots, ou colete nome+telefone+data+serviço e use AGENDAR diretamente. Quando classificar como QUENTE, também emita TRANSFERIR_HUMANO.`;
+IMPORTANTE: ${permitirAgendamento ? 'Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS, depois AGENDAR. ' : ''}Quando classificar com score >= ${scoreMin}, ${permitirTransferencia ? 'também emita TRANSFERIR_HUMANO.' : 'apenas registre a qualificação.'}
+AÇÃO CONFIGURADA AO QUALIFICAR LEAD QUENTE: ${acaoQuente}.`;
       }
 
       // Construir histórico de mensagens
@@ -382,9 +458,10 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: botCfg.modelo || 'google/gemini-2.5-flash',
           messages,
-          max_tokens: 500,
+          max_tokens: 600,
+          temperature: typeof botCfg.criatividade === 'number' ? Math.max(0, Math.min(1, botCfg.criatividade / 100)) : 0.7,
         }),
       });
 
