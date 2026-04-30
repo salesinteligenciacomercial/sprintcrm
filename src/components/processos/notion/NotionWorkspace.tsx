@@ -224,7 +224,7 @@ export function NotionWorkspace({ companyId }: NotionWorkspaceProps) {
 
     return (
       <div className="flex-1 overflow-auto h-full">
-        <div className="max-w-4xl mx-auto px-6 py-6">
+        <div className="w-full max-w-5xl px-5 py-4">
           {/* Hero compacto */}
           <div className="flex items-start gap-4 mb-6 p-5 rounded-xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20">
             <div className="w-12 h-12 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
