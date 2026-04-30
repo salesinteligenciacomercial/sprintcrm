@@ -91,13 +91,9 @@ export default function ProcessosComerciais() {
             <FileText className="h-4 w-4" />
             <span className="hidden md:inline">Workspace</span>
           </TabsTrigger>
-          <TabsTrigger value="adoption" className="flex items-center gap-2 py-2">
-            <BookOpen className="h-4 w-4" />
-            <span className="hidden md:inline">Adoção Playbooks</span>
-          </TabsTrigger>
           <TabsTrigger value="ebooks" className="flex items-center gap-2 py-2">
-            <Library className="h-4 w-4" />
-            <span className="hidden md:inline">Playbooks & Scripts</span>
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden md:inline">Playbooks Comerciais</span>
           </TabsTrigger>
         </TabsList>
 
@@ -109,12 +105,11 @@ export default function ProcessosComerciais() {
           <NotionWorkspace companyId={companyId} />
         </TabsContent>
 
-        <TabsContent value="adoption">
-          <PlaybookAdoptionDashboard />
-        </TabsContent>
-
         <TabsContent value="ebooks">
           <PlaybooksCatalog />
+          <div className="mt-6">
+            <PlaybookAdoptionDashboard />
+          </div>
         </TabsContent>
 
       </Tabs>
