@@ -622,6 +622,10 @@ IMPORTANTE: Se o visitante quiser agendar, primeiro use MOSTRAR_HORARIOS para mo
           response: cleanResponse,
           context,
           actions: actions.length > 0 ? actions : undefined,
+          qualificacao: qualificacaoAtual,
+          transferir_humano: transferirHumano,
+          motivo_transferencia: motivoTransferencia,
+          segmento: companySegmento,
           session_id: body.session_id || crypto.randomUUID(),
           execution_time: executionTime
         }),
