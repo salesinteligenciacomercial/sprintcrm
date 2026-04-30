@@ -1249,12 +1249,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
               </div>
             )}
 
-            {lead.source && (
-              <Badge variant="outline" className="text-xs font-medium border-primary/20 text-primary">
-                <Tag className="h-3 w-3 mr-1" />
-                {lead.source}
-              </Badge>
-            )}
+            {/* Origem do lead já é exibida permanentemente no cabeçalho */}
 
             {/* ✅ CRÍTICO: Passa notes do lead ao LeadComments - Se retroceder, verificar se passa initialNotes */}
             <LeadComments
