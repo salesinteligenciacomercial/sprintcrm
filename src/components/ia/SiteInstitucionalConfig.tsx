@@ -224,6 +224,7 @@ export function SiteInstitucionalConfig({ companyId }: Props) {
           <TabsTrigger value="faq">FAQ</TabsTrigger>
           <TabsTrigger value="contato">Contato</TabsTrigger>
           <TabsTrigger value="secoes">Seções</TabsTrigger>
+          <TabsTrigger value="bot-ia" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">🤖 Bot IA</TabsTrigger>
           <TabsTrigger value="preview">Preview</TabsTrigger>
         </TabsList>
 
