@@ -59,11 +59,15 @@ export function ChatCaptureWidget({
 
   const slug = (config as any).company_slug || companyName?.toLowerCase().replace(/\s+/g, "-");
 
+  const botCfg = config.bot_ia_site || {};
+  const botName = botCfg.nome_bot || `atendimento da ${companyName}`;
+
   useEffect(() => {
     if (open && messages.length === 0) {
       const greeting =
+        botCfg.saudacao ||
         config.whatsapp_flutuante_mensagem ||
-        `Olá! 👋 Sou o atendimento virtual da ${companyName}. Como posso te ajudar hoje?`;
+        `Olá! 👋 Sou ${botCfg.nome_bot ? botCfg.nome_bot + ', da ' + companyName : 'o atendimento virtual da ' + companyName}. Como posso te ajudar hoje?`;
       setMessages([{ role: "assistant", content: greeting }]);
     }
   }, [open]);
