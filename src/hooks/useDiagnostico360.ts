@@ -239,10 +239,12 @@ export function useSalvarDiagnostico() {
     mutationFn: async (input: {
       pontuacoes: Record<string, number>;
       respostas_perguntas: Record<string, boolean>;
-      dores: DoresDesejos;
+      dores?: DoresDesejos;
       segmento?: string | null;
-      gargalos: GargaloDetectado[];
+      gargalos?: GargaloDetectado[];
     }) => {
+      const dores = input.dores || {};
+      const gargalos = input.gargalos || [];
       const { data: companyId } = await supabase.rpc("get_my_company_id");
       const { data: userData } = await supabase.auth.getUser();
 
