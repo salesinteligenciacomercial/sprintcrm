@@ -433,6 +433,15 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
             parte_contraria: form.parte_contraria || null,
             valor_causa: form.valor_causa ? Number(form.valor_causa) : 0,
             data_audiencia: newAudiencia,
+            audiencia_modalidade: form.audiencia_modalidade || null,
+            audiencia_local: form.audiencia_local || null,
+            audiencia_sala: form.audiencia_sala || null,
+            audiencia_link: form.audiencia_link || null,
+            audiencia_observacoes: form.audiencia_observacoes || null,
+            juiz: form.juiz || null,
+            forum_tribunal: form.forum_tribunal || null,
+            advogado_adversario: form.advogado_adversario || null,
+            oab_adversario: form.oab_adversario || null,
           })
           .eq("id", editingProcess.id);
 
@@ -455,11 +464,21 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
           lead_id: leadId,
           numero_processo: form.numero_processo,
           tipo: form.tipo,
+          status: form.status,
           vara: form.vara || null,
           comarca: form.comarca || null,
           parte_contraria: form.parte_contraria || null,
           valor_causa: form.valor_causa ? Number(form.valor_causa) : 0,
           data_audiencia: form.data_audiencia || null,
+          audiencia_modalidade: form.audiencia_modalidade || null,
+          audiencia_local: form.audiencia_local || null,
+          audiencia_sala: form.audiencia_sala || null,
+          audiencia_link: form.audiencia_link || null,
+          audiencia_observacoes: form.audiencia_observacoes || null,
+          juiz: form.juiz || null,
+          forum_tribunal: form.forum_tribunal || null,
+          advogado_adversario: form.advogado_adversario || null,
+          oab_adversario: form.oab_adversario || null,
         }).select().single();
         if (error) throw error;
 
