@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Scale, Plus, ChevronDown, Gavel, Calendar, DollarSign, Pencil, Upload, FileText, Trash2, Download, Video, MapPin, Loader2 } from "lucide-react";
+import ProcessTimeline from "@/components/juridico/ProcessTimeline";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
