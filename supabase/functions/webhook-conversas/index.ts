@@ -296,6 +296,8 @@ async function transformEvolutionPayload(body: any, supabase: any) {
   // 👥 GRUPOS: pushName em mensagens de grupo é o NOME DO PARTICIPANTE (remetente),
   // NÃO é o nome do grupo. Capturar separadamente.
   let group_participant_name: string | null = null;
+  const group_participant_jid = isGroup && !fromMe ? extractGroupParticipantJid(data) : null;
+  const group_participant_phone = normalizeParticipantPhone(group_participant_jid);
   if (!fromMe) {
     if (isGroup) {
       // Em grupos, pushName = nome do participante que enviou
@@ -526,6 +528,8 @@ async function transformEvolutionPayload(body: any, supabase: any) {
     midia_url,
     nome_contato, // Null para mensagens enviadas, pushName para recebidas (NÃO grupos)
     group_participant_name, // 👥 Nome do participante que enviou em grupos
+    group_participant_jid,
+    group_participant_phone,
     arquivo_nome,
     replied_to_message,
     status, // 'Enviada' se fromMe=true, 'Recebida' se fromMe=false
