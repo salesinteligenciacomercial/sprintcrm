@@ -129,7 +129,7 @@ export function Sidebar({
   const { unreadCount: conversasUnread } = useConversasNotifications();
   const { alertCount: tarefasAlert } = useTarefasNotifications();
   const { todayCount: agendaToday } = useAgendaNotifications();
-  const { isJuridico, loading: segmentoLoading } = useCompanySegmento();
+  const { isJuridico, isMasterAccount: isMasterFromSegmento, loading: segmentoLoading } = useCompanySegmento();
 
   // AI Insights count from database
   const [aiInsightsCount, setAiInsightsCount] = useState(0);
