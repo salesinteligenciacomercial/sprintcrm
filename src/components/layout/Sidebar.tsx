@@ -230,7 +230,7 @@ export function Sidebar({
 
             // Jurídico só aparece para contas com segmento de advocacia (ou master)
             if ((item as any).juridicoOnly) {
-              if (segmentoLoading) return false;
+              if (segmentoLoading) return true; // mostra enquanto carrega para evitar flicker/sumiço
               if (!isMasterAccount && !isJuridico) return false;
             }
 
