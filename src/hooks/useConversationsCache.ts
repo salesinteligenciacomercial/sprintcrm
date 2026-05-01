@@ -388,9 +388,19 @@ export const useConversationsCache = (companyId: string | null) => {
         const leadName = leadData?.name;
         const hasGoodLeadName = leadName && !isInstagramPlaceholderName(leadName) && !/^\d{10,}$/.test(leadName.trim());
         
-        const contactName = (hasGoodLeadName ? leadName : null)
+        // 👥 GRUPOS: priorizar group_subject (nome real do grupo) sobre nome_contato
+        let groupSubject: string | undefined;
+        if (isGroup) {
+          const subjects = mensagens
+            .map((m: any) => (m.group_subject || '').trim())
+            .filter((s: string) => s);
+          groupSubject = subjects[subjects.length - 1] || subjects[0];
+        }
+
+        const contactName = (isGroup && groupSubject ? groupSubject : null)
+          || (hasGoodLeadName ? leadName : null)
           || bestNamedMessage?.nome_contato
-          || (isInstagramConversation ? 'Contato Instagram' : telefone);
+          || (isGroup ? 'Grupo' : isInstagramConversation ? 'Contato Instagram' : telefone);
          
         const ultimaMensagem = messagensFormatadas[messagensFormatadas.length - 1];
          
