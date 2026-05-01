@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, MessageSquare, Calendar, Bot, Settings, LogOut, MessagesSquare, Video, PhoneCall, Target, Lock, X, Brain, DollarSign, GraduationCap, Activity, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Calendar, Bot, Settings, LogOut, MessagesSquare, Video, PhoneCall, Target, Lock, X, Brain, DollarSign, GraduationCap, Activity, Sparkles, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { useConversasNotifications } from "@/hooks/useConversasNotifications";
 import { useTarefasNotifications } from "@/hooks/useTarefasNotifications";
 import { useAgendaNotifications } from "@/hooks/useAgendaNotifications";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 
 const navigation = [{
   name: "Relatórios",
@@ -74,6 +75,12 @@ const navigation = [{
   icon: Activity,
   menuKey: "maturidade"
 }, {
+  name: "Jurídico",
+  href: "/juridico",
+  icon: Scale,
+  menuKey: "juridico",
+  juridicoOnly: true
+}, {
   name: "Mentoria",
   href: "/mentoria",
   icon: Sparkles,
@@ -122,6 +129,7 @@ export function Sidebar({
   const { unreadCount: conversasUnread } = useConversasNotifications();
   const { alertCount: tarefasAlert } = useTarefasNotifications();
   const { todayCount: agendaToday } = useAgendaNotifications();
+  const { isJuridico, loading: segmentoLoading } = useCompanySegmento();
 
   // AI Insights count from database
   const [aiInsightsCount, setAiInsightsCount] = useState(0);
@@ -218,6 +226,12 @@ export function Sidebar({
             // Financeiro só aparece para master accounts
             if ((item as any).masterOnly && !isMasterAccount) {
               return false;
+            }
+
+            // Jurídico só aparece para contas com segmento de advocacia (ou master)
+            if ((item as any).juridicoOnly) {
+              if (segmentoLoading) return false;
+              if (!isMasterAccount && !isJuridico) return false;
             }
 
             // Verificar se é módulo premium

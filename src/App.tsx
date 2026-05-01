@@ -28,6 +28,7 @@ import Financeiro from "./pages/Financeiro";
 import Prospeccao from "./pages/Prospeccao";
 import Maturidade from "./pages/Maturidade";
 import Mentoria from "./pages/Mentoria";
+import Juridico from "./pages/Juridico";
 import ConfiguracoesGamificacao from "./pages/ConfiguracoesGamificacao";
 import ConfiguracoesComercial from "./pages/ConfiguracoesComercial";
 import OAuthCallback from "./pages/OAuthCallback";
@@ -107,6 +108,7 @@ const App = () => (
               <Route path="prospeccao" element={<Prospeccao />} />
               <Route path="maturidade" element={<Maturidade />} />
               <Route path="mentoria" element={<Mentoria />} />
+              <Route path="juridico" element={<Juridico />} />
               <Route path="configuracoes/gamificacao" element={<ConfiguracoesGamificacao />} />
               <Route path="configuracoes/comercial" element={<ConfiguracoesComercial />} />
               <Route path="financeiro" element={<Financeiro />} />
