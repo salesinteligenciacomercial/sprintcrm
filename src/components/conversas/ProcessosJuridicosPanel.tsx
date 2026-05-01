@@ -594,13 +594,22 @@ export function ProcessosJuridicosPanel({ leadId, companyId, telefoneContato, no
           </DialogHeader>
 
           <Tabs defaultValue="processo" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="processo"><Gavel className="h-3.5 w-3.5 mr-1" /> Processo</TabsTrigger>
               <TabsTrigger value="audiencia"><Calendar className="h-3.5 w-3.5 mr-1" /> Audiência</TabsTrigger>
               <TabsTrigger value="documentos" disabled={!editingProcess}>
                 <FileText className="h-3.5 w-3.5 mr-1" /> Documentos {documents.length > 0 && `(${documents.length})`}
               </TabsTrigger>
+              <TabsTrigger value="timeline" disabled={!editingProcess}>
+                <Calendar className="h-3.5 w-3.5 mr-1" /> Andamentos
+              </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="timeline" className="mt-4">
+              {editingProcess && (
+                <ProcessTimeline processId={editingProcess.id} companyId={editingProcess.company_id} />
+              )}
+            </TabsContent>
 
             {/* TAB PROCESSO */}
             <TabsContent value="processo" className="space-y-3 mt-4">
