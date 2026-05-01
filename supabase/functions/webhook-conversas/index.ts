@@ -1693,6 +1693,9 @@ serve(async (req) => {
       delivered: validatedData.fromMe === true ? true : false, // Mensagens enviadas começam como entregues
       read: false, // Mensagens começam como não lidas
       whatsapp_message_id: body?.data?.key?.id || null, // 🔥 Salvar ID da mensagem do WhatsApp para edição/exclusão
+      // 👥 GRUPOS: identificação adequada
+      group_subject: isGroup ? (groupSubjectFinal || nomeContatoFinal) : null,
+      group_participant_name: isGroup ? (validatedData.group_participant_name || null) : null,
     };
     
     // ⚡ CORREÇÃO DEFINITIVA: Se mensagem foi enviada (fromMe = true), verificar se já existe no banco
