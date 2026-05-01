@@ -640,6 +640,94 @@ async function resolveGroupSubject(
   }
 }
 
+async function resolveGroupParticipantProfile(
+  supabase: any,
+  companyId: string | null | undefined,
+  groupJid: string,
+  participantJid: string | null | undefined,
+  participantName: string | null | undefined,
+  participantPhone: string | null | undefined,
+): Promise<{ phone: string | null; avatarUrl: string | null; name: string | null }> {
+  if (!companyId || !groupJid || !participantJid) {
+    return { phone: participantPhone || null, avatarUrl: null, name: participantName || null };
+  }
+
+  try {
+    const { data: cached } = await supabase
+      .from('whatsapp_group_participants_cache')
+      .select('participant_phone, participant_name, avatar_url, last_synced_at')
+      .eq('company_id', companyId)
+      .eq('group_jid', groupJid)
+      .eq('participant_jid', participantJid)
+      .maybeSingle();
+
+    if (cached) {
+      const synced = cached.last_synced_at ? new Date(cached.last_synced_at).getTime() : 0;
+      if (Date.now() - synced < 24 * 60 * 60 * 1000) {
+        return {
+          phone: cached.participant_phone || participantPhone || null,
+          avatarUrl: cached.avatar_url || null,
+          name: cached.participant_name || participantName || null,
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('⚠️ [GROUP-PARTICIPANT] Erro ao ler cache:', e);
+  }
+
+  let avatarUrl: string | null = null;
+  const phone = participantPhone || normalizeParticipantPhone(participantJid);
+
+  if (phone) {
+    try {
+      const { data: connection } = await supabase
+        .from('whatsapp_connections')
+        .select('instance_name, evolution_api_key, evolution_api_url')
+        .eq('company_id', companyId)
+        .limit(1)
+        .maybeSingle();
+
+      const evolutionUrl = connection?.evolution_api_url || Deno.env.get('EVOLUTION_API_URL');
+      const apiKey = connection?.evolution_api_key || Deno.env.get('EVOLUTION_API_KEY');
+      const instanceName = connection?.instance_name || Deno.env.get('EVOLUTION_INSTANCE');
+
+      if (evolutionUrl && apiKey && instanceName) {
+        const response = await fetch(`${evolutionUrl}/chat/fetchProfilePictureUrl/${instanceName}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': apiKey },
+          body: JSON.stringify({ number: phone }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const url = data.profilePictureUrl || data.url || data.profilePicture || data.picture || data.imgUrl || data.profileUrl;
+          if (typeof url === 'string' && url.startsWith('http')) avatarUrl = url;
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ [GROUP-PARTICIPANT] Erro ao buscar foto:', e);
+    }
+  }
+
+  try {
+    await supabase
+      .from('whatsapp_group_participants_cache')
+      .upsert({
+        company_id: companyId,
+        group_jid: groupJid,
+        participant_jid: participantJid,
+        participant_phone: phone,
+        participant_name: participantName || null,
+        avatar_url: avatarUrl,
+        last_synced_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'company_id,group_jid,participant_jid' });
+  } catch (e) {
+    console.warn('⚠️ [GROUP-PARTICIPANT] Erro ao salvar cache:', e);
+  }
+
+  return { phone, avatarUrl, name: participantName || null };
+}
+
 // ==============================
 // MAIN WEBHOOK HANDLER
 // ==============================
