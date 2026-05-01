@@ -1693,6 +1693,17 @@ serve(async (req) => {
         }
       }
     }
+
+    const participantProfile = isGroup && validatedData.fromMe !== true
+      ? await resolveGroupParticipantProfile(
+          supabase,
+          companyId,
+          validatedData.numero,
+          validatedData.group_participant_jid || null,
+          validatedData.group_participant_name || null,
+          validatedData.group_participant_phone || null,
+        )
+      : { phone: null, avatarUrl: null, name: null };
     
     // ⚡ GARANTIA FINAL: Se ainda não tem nome (caso extremo), usar o número original
     if (!nomeContatoFinal) {
@@ -1816,6 +1827,8 @@ serve(async (req) => {
       // 👥 GRUPOS: identificação adequada
       group_subject: isGroup ? (groupSubjectFinal || nomeContatoFinal) : null,
       group_participant_name: isGroup ? (validatedData.group_participant_name || null) : null,
+      group_participant_phone: isGroup ? (participantProfile.phone || validatedData.group_participant_phone || null) : null,
+      group_participant_avatar_url: isGroup ? (participantProfile.avatarUrl || validatedData.group_participant_avatar_url || null) : null,
     };
     
     // ⚡ CORREÇÃO DEFINITIVA: Se mensagem foi enviada (fromMe = true), verificar se já existe no banco
