@@ -203,24 +203,35 @@ serve(async (req) => {
       };
     }
 
-    const endpoints: Array<{ url: string; token: string }> = [];
-    
+    const endpoints: Array<{ url: string; token: string; label: string }> = [];
+
+    // Endpoint 1: Instagram Login API (graph.instagram.com) com IG User Access Token
+    // Este é o endpoint OFICIAL para Instagram Messaging API (não-Facebook-linked)
+    if (igToken && accountId) {
+      endpoints.push({
+        url: `${INSTAGRAM_API_BASE_URL}/${META_API_VERSION}/${accountId}/messages`,
+        token: igToken,
+        label: 'instagram-graph-with-account-id',
+      });
+    }
     if (igToken) {
-      endpoints.push({ 
-        url: `${INSTAGRAM_API_BASE_URL}/${META_API_VERSION}/me/messages`, 
-        token: igToken 
+      endpoints.push({
+        url: `${INSTAGRAM_API_BASE_URL}/${META_API_VERSION}/me/messages`,
+        token: igToken,
+        label: 'instagram-graph-me',
       });
     }
+    // Endpoint 2: Facebook Graph com Page Access Token (Instagram via Facebook Page)
     if (metaToken && accountId) {
-      endpoints.push({ 
-        url: `${META_API_BASE_URL}/${META_API_VERSION}/${accountId}/messages`, 
-        token: metaToken 
+      endpoints.push({
+        url: `${META_API_BASE_URL}/${META_API_VERSION}/${accountId}/messages`,
+        token: metaToken,
+        label: 'facebook-graph-with-account-id',
       });
-    }
-    if (metaToken) {
-      endpoints.push({ 
-        url: `${META_API_BASE_URL}/${META_API_VERSION}/me/messages`, 
-        token: metaToken 
+      endpoints.push({
+        url: `${META_API_BASE_URL}/${META_API_VERSION}/me/messages`,
+        token: metaToken,
+        label: 'facebook-graph-me',
       });
     }
 
