@@ -1542,10 +1542,36 @@ serve(async (req) => {
       console.log('⚠️ Usando telefone como nome:', nomeContatoFinal);
     }
     
-    // Para grupos, usar o JID como nome se não tiver outro
-    if (!nomeContatoFinal && isGroup) {
-      nomeContatoFinal = validatedData.numero;
-      console.log('👥 Usando JID do grupo como nome');
+    // 👥 GRUPOS: resolver SUBJECT real do grupo (com cache) e usar como nome_contato
+    let groupSubjectFinal: string | null = null;
+    if (isGroup) {
+      groupSubjectFinal = await resolveGroupSubject(supabase, companyId, validatedData.numero);
+      if (groupSubjectFinal) {
+        nomeContatoFinal = groupSubjectFinal;
+        console.log('👥 [GROUP] Usando subject do grupo como nome_contato:', groupSubjectFinal);
+      } else if (!nomeContatoFinal) {
+        // Fallback: tentar buscar nome existente no banco para esse grupo
+        try {
+          const { data: existingConv } = await supabase
+            .from('conversas')
+            .select('group_subject, nome_contato')
+            .eq('numero', validatedData.numero)
+            .eq('is_group', true)
+            .not('group_subject', 'is', null)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (existingConv?.group_subject) {
+            groupSubjectFinal = existingConv.group_subject;
+            nomeContatoFinal = existingConv.group_subject;
+            console.log('👥 [GROUP] Subject recuperado do banco:', groupSubjectFinal);
+          }
+        } catch {}
+        if (!nomeContatoFinal) {
+          nomeContatoFinal = 'Grupo';
+          console.log('👥 [GROUP] Subject não resolvido, usando "Grupo" como fallback');
+        }
+      }
     }
     
     // ⚡ GARANTIA FINAL: Se ainda não tem nome (caso extremo), usar o número original
