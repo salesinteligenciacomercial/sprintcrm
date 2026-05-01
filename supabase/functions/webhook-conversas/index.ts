@@ -141,6 +141,9 @@ const webhookPayloadSchema = z.object({
   fromMe: z.boolean().optional(),
   remoteJidAlt: z.string().nullable().optional(), // 🔥 Número alternativo real da Evolution API
   group_participant_name: z.string().max(100).nullable().optional(),
+  group_participant_jid: z.string().max(160).nullable().optional(),
+  group_participant_phone: z.string().max(30).nullable().optional(),
+  group_participant_avatar_url: z.string().nullable().optional(),
 });
 
 // Verify webhook signature for security
@@ -181,6 +184,31 @@ async function verifyWebhookSignature(
 function isEvolutionAPIPayload(body: any): boolean {
   const event = (body.event || '').toLowerCase();
   return event === 'messages.upsert' && body.data?.key?.remoteJid;
+}
+
+function extractGroupParticipantJid(data: any): string | null {
+  const contextInfo = data?.message?.extendedTextMessage?.contextInfo
+    || data?.message?.imageMessage?.contextInfo
+    || data?.message?.videoMessage?.contextInfo
+    || data?.message?.audioMessage?.contextInfo
+    || data?.message?.documentMessage?.contextInfo
+    || data?.message?.stickerMessage?.contextInfo
+    || data?.message?.contactMessage?.contextInfo;
+  const candidates = [
+    data?.key?.participant,
+    data?.participant,
+    data?.message?.participant,
+    contextInfo?.participant,
+  ];
+  return candidates.find((value) => typeof value === 'string' && value.includes('@')) || null;
+}
+
+function normalizeParticipantPhone(participantJid: string | null): string | null {
+  if (!participantJid || participantJid.includes('@lid')) return null;
+  const digits = participantJid.replace(/@.*/, '').replace(/[^0-9]/g, '');
+  if (!digits) return null;
+  if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) return `55${digits}`;
+  return digits;
 }
 
 // Transformar payload da Evolution API para formato do CRM
