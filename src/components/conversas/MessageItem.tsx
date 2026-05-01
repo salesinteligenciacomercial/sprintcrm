@@ -47,6 +47,7 @@ interface Message {
   replyTo?: string;
   edited?: boolean;
   sentBy?: string; // Nome do responsável que enviou
+  participantName?: string; // 👥 Nome do participante remetente em grupos
   contactData?: {
     name: string;
     phone: string;
