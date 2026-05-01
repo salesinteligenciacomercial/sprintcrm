@@ -170,6 +170,7 @@ export default function Prospeccao() {
     comando: "Painel do Gestor",
     fila: "Minha Fila",
     intel: "Inteligência",
+    social: "Social Selling",
   };
 
   return (
