@@ -4488,6 +4488,9 @@ function Conversas() {
             mediaUrl: m.midia_url,
             fileName: m.arquivo_nome,
             sentBy: sentBy,
+            participantName: m.group_participant_name || undefined,
+            participantPhone: m.group_participant_phone || undefined,
+            participantAvatarUrl: m.group_participant_avatar_url || undefined,
             contactData: contactDataParsed4
           };
         })
