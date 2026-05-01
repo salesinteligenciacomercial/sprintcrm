@@ -2011,8 +2011,9 @@ function Conversas() {
             // Criar nova conversa para TODOS os usuários
             console.log('✅ [REALTIME-MULTIUSER] Criando nova conversa para TODOS:', telefoneKey);
             const novaConversa: Conversation = {
-              id: isInstagramMessage ? telefoneKey : (novaMensagem.lead_id || `conv-${telefoneKey}`),
+              id: isGroupMessage || isInstagramMessage ? telefoneKey : (novaMensagem.lead_id || `conv-${telefoneKey}`),
               contactName: (() => {
+                if (isGroupMessage) return novaMensagem.group_subject || novaMensagem.nome_contato || 'Grupo';
                 // Para nova conversa, usar nome_contato apenas se NÃO for um número puro e NÃO for fallback
                 const nome = novaMensagem.nome_contato || '';
                 const isFallback = isInstagramPlaceholderName(nome);
@@ -2031,7 +2032,7 @@ function Conversas() {
               unread: novaMensagemObj.sender === 'contact' ? 1 : 0,
               messages: [novaMensagemObj],
               tags: [],
-              phoneNumber: isInstagramMessage ? telefoneKey : (novaMensagem.telefone_formatado || novaMensagem.numero || telefoneKey),
+              phoneNumber: isGroupMessage || isInstagramMessage ? telefoneKey : (novaMensagem.telefone_formatado || novaMensagem.numero || telefoneKey),
               isGroup: novaMensagem.is_group || /@g\.us$/.test(novaMensagem.numero || ''),
               origemApi: isInstagramMessage ? 'meta' : undefined,
               avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent((novaMensagem.nome_contato || telefoneKey).substring(0, 2))}&background=0ea5e9&color=fff`
