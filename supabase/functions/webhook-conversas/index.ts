@@ -140,6 +140,7 @@ const webhookPayloadSchema = z.object({
   is_group: z.boolean().optional(),
   fromMe: z.boolean().optional(),
   remoteJidAlt: z.string().nullable().optional(), // 🔥 Número alternativo real da Evolution API
+  group_participant_name: z.string().max(100).nullable().optional(),
 });
 
 // Verify webhook signature for security
