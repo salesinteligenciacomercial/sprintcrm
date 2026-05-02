@@ -1741,6 +1741,12 @@ export default function Agenda() {
       }).eq('id', id);
       if (error) throw error;
 
+      // 🗓️ Sync para Google: delete se cancelado, update caso contrário
+      supabase.functions.invoke("google-calendar-event", {
+        body: { action: novoStatus === "cancelado" ? "delete" : "update", compromisso_id: id }
+      }).catch((e) => console.warn("[gcal] sync skipped:", e?.message));
+
+
       // Enviar notificação de cancelamento se status mudou para 'cancelado' e tiver lead
       if (novoStatus === 'cancelado' && compromissoAtual?.lead_id) {
         try {
