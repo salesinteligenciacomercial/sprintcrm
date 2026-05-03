@@ -8258,6 +8258,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assigned_to: string | null
           assignee_id: string | null
           attachments: Json | null
           board_id: string | null
@@ -8286,6 +8287,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assigned_to?: string | null
           assignee_id?: string | null
           attachments?: Json | null
           board_id?: string | null
@@ -8314,6 +8316,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assigned_to?: string | null
           assignee_id?: string | null
           attachments?: Json | null
           board_id?: string | null
