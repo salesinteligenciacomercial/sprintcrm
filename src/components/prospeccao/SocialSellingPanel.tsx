@@ -33,7 +33,7 @@ const intentBadge = (level: string | null) => {
   return <Badge variant="outline">—</Badge>;
 };
 
-export function SocialSellingPanel() {
+const [funilOpen, setFunilOpen] = useState(false);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [funilId, setFunilId] = useState<string | null>(null);
   const [leads, setLeads] = useState<SocialLead[]>([]);
