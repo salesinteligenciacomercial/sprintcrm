@@ -350,6 +350,13 @@ export default function Prospeccao() {
                       >
                         💬 Bate-papo
                       </Button>
+                      <Button
+                        variant={channelView === "funil" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setChannelView("funil")}
+                      >
+                        📊 Funil de Vendas
+                      </Button>
                     </div>
                     {channelView === "chat" && (
                       <Button variant="outline" size="sm" asChild>
@@ -362,12 +369,30 @@ export default function Prospeccao() {
                         </Link>
                       </Button>
                     )}
+                    {channelView === "funil" && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to="/kanban" target="_blank" rel="noopener noreferrer">
+                          Abrir em nova aba
+                        </Link>
+                      </Button>
+                    )}
                   </div>
                 )}
                 {activeTab === "instagram" && instagramSub === "social" ? (
                   <SocialSellingPanel />
                 ) : activeTab === "instagram" && instagramSub === "prospect" ? (
                   <ChannelProspectPanel channel="instagram" />
+                ) : activeTab === "whatsapp" && channelView === "funil" ? (
+                  <div
+                    className="rounded-lg border border-border overflow-hidden bg-background"
+                    style={{ height: "calc(100vh - 360px)", minHeight: 600 }}
+                  >
+                    <iframe
+                      src="/kanban?embed=1"
+                      title="Funil de Vendas"
+                      className="w-full h-full border-0"
+                    />
+                  </div>
                 ) : activeTab === "instagram" || (channelView === "chat" && activeTab === "whatsapp") ? (
                   <div
                     className="rounded-lg border border-border overflow-hidden bg-background"
