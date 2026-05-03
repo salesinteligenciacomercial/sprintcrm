@@ -200,10 +200,8 @@ export function SocialSellingPanel() {
           <Button variant="outline" size="sm" onClick={refresh} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Atualizar
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/kanban" target="_blank" rel="noreferrer">
-              Ver funil
-            </Link>
+          <Button variant="outline" size="sm" onClick={() => setFunilOpen(true)}>
+            Ver funil
           </Button>
         </div>
       </div>
