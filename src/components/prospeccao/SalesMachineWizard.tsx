@@ -42,7 +42,7 @@ const ATIVIDADES_LIST = [
 const FERRAMENTAS_LIST = ["CRM", "Discador", "WhatsApp Business", "E-mail marketing", "LinkedIn Sales Navigator", "Planilhas"];
 
 export function SalesMachineWizard() {
-  const [phase, setPhase] = useState<"1" | "2" | "3" | "4">("1");
+  const [phase, setPhase] = useState<"1" | "2" | "3" | "4" | "5">("1");
   const { data: diagDb, upsert } = useDiagnostico();
   const [diag, setDiag] = useState<DiagnosticoMaquina>(DEFAULT_DIAGNOSTICO);
 
