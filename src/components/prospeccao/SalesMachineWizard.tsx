@@ -18,6 +18,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ReferenceDot,
 } from "recharts";
 import { RevenueMixEngine } from "./RevenueMixEngine";
+import { PerformanceHubPanel } from "./PerformanceHubPanel";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import {
   useDiagnostico, DEFAULT_DIAGNOSTICO, type DiagnosticoMaquina, detectGargalos,
