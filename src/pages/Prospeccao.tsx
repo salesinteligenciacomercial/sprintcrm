@@ -170,7 +170,7 @@ export default function Prospeccao() {
     closer: "Leads Qualificados",
     comando: "Painel do Gestor",
     fila: "Minha Fila",
-    intel: "Inteligência",
+    intel: "Metas e Vendas",
     social: "Social Selling",
   };
 
