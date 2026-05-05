@@ -357,8 +357,10 @@ export default function Agenda() {
     horas_antecedencia_minutos: "0",
     destinatario_lembrete: "lead",
     enviar_confirmacao: false,
-    // Nova opção: enviar confirmação imediata
-    notificar_responsavel: true // Nova opção: notificar responsável via push
+    notificar_responsavel: true,
+    convidar_lead_email: false, // Convida o lead como participante no Google Calendar
+    lembrete_email_24h: true, // Lembrete extra por e-mail 24h antes
+    lembrete_whatsapp_24h: true, // Lembrete extra por WhatsApp 24h antes
   });
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadName, setSelectedLeadName] = useState("");
@@ -1231,6 +1233,9 @@ export default function Agenda() {
       // Preencher titulo com tipo_servico formatado
       compromissoData.titulo = tipoServicoFinal.charAt(0).toUpperCase() + tipoServicoFinal.slice(1);
 
+      // Convidar lead por e-mail no Google Calendar (opcional)
+      compromissoData.convidar_lead_email = !!formData.convidar_lead_email;
+
       // Preencher paciente e telefone com dados do lead para compatibilidade com app Waze Agenda
       if (leadSelecionadoData) {
         compromissoData.paciente = leadSelecionadoData.name;
@@ -1502,6 +1507,44 @@ export default function Agenda() {
               console.log('📅 [LEMBRETE] Data do compromisso:', dataHoraInicio.toISOString());
               console.log('⏰ [LEMBRETE] Antecedência:', tempoAntecedenciaDecimal, 'horas');
               console.log('🔗 [LEMBRETE] Vinculado ao compromisso:', compromisso.id);
+            }
+
+            // 🔁 Lembretes ADICIONAIS — WhatsApp 24h antes + E-mail 24h antes
+            const dataEnvio24h = new Date(dataHoraInicio.getTime() - 24 * 3600000);
+            if (dataEnvio24h > new Date()) {
+              const leadEmail = leadSelecionado?.email;
+              const baseMsg = `Olá ${leadNome}! Lembrete: você tem ${tipoServicoFinal} agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.`;
+              const extras: any[] = [];
+              if (formData.lembrete_whatsapp_24h && (leadSelecionado?.phone || leadSelecionado?.telefone)) {
+                extras.push({
+                  compromisso_id: compromisso.id,
+                  canal: 'whatsapp',
+                  horas_antecedencia: 24,
+                  mensagem: baseMsg,
+                  status_envio: 'pendente',
+                  data_envio: dataEnvio24h.toISOString(),
+                  destinatario: 'lead',
+                  telefone_responsavel: leadSelecionado?.phone || leadSelecionado?.telefone || null,
+                  company_id: userRole.company_id,
+                });
+              }
+              if (formData.lembrete_email_24h && leadEmail) {
+                extras.push({
+                  compromisso_id: compromisso.id,
+                  canal: 'email',
+                  horas_antecedencia: 24,
+                  mensagem: baseMsg,
+                  status_envio: 'pendente',
+                  data_envio: dataEnvio24h.toISOString(),
+                  destinatario: 'lead',
+                  company_id: userRole.company_id,
+                });
+              }
+              if (extras.length > 0) {
+                const { error: extrasErr } = await supabase.from('lembretes').insert(extras);
+                if (extrasErr) console.warn('⚠️ [LEMBRETE] Falha ao criar lembretes 24h:', extrasErr);
+                else console.log(`✅ [LEMBRETE] ${extras.length} lembrete(s) extras de 24h criado(s)`);
+              }
             }
           }
         } catch (error: any) {
@@ -1956,7 +1999,10 @@ export default function Agenda() {
       horas_antecedencia_minutos: "0",
       destinatario_lembrete: "lead",
       enviar_confirmacao: false,
-      notificar_responsavel: true
+      notificar_responsavel: true,
+      convidar_lead_email: false,
+      lembrete_email_24h: true,
+      lembrete_whatsapp_24h: true,
     });
     setLeadSearch("");
     setSelectedLeadName("");
