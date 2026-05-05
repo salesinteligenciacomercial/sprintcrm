@@ -255,6 +255,7 @@ export default function Prospeccao() {
               {/* Funil de Vendas e Leads Qualificados ocultos */}
               {isManagerLike && <TabsTrigger value="comando">{labels.comando}</TabsTrigger>}
               <TabsTrigger value="intel">🎯 {labels.intel}</TabsTrigger>
+              <TabsTrigger value="rotina">🧠 {labels.rotina}</TabsTrigger>
               {gamificationOn && <TabsTrigger value="arena">{labels.arena}</TabsTrigger>}
             </TabsList>
 
