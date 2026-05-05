@@ -348,6 +348,9 @@ export function useSalvarDiagnostico() {
       const nota = calcularNota(percentual);
       const classificacao = CLASSIFICACOES[nota].titulo;
       const revenueLeak = calcularRevenueLeak(dores);
+      // Classifica curva ABC (se preenchida)
+      const curvaABC = classificarCurvaABC((dores.curva_abc as ProdutoABC[]) || []);
+      const doresFinal = { ...dores, curva_abc: curvaABC };
 
       const { data: saved, error } = await supabase
         .from("diagnostico_respostas" as any)
