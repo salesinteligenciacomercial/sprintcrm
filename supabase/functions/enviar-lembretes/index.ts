@@ -306,6 +306,75 @@ serve(async (req) => {
             continue;
           }
 
+            // ✉️ Canal E-MAIL — usa Gmail integrado da empresa
+            if (lembrete.canal === 'email') {
+              const emailDestino = lembrete.compromisso.lead?.email;
+              if (!emailDestino) {
+                console.warn(`⚠️ Lembrete ${lembrete.id} (email): lead sem e-mail cadastrado — ignorando silenciosamente`);
+                await supabase
+                  .from('lembretes')
+                  .update({ status_envio: 'erro', data_envio: new Date().toISOString() })
+                  .eq('id', lembrete.id);
+                totalErros++;
+                continue;
+              }
+
+              const dataCompromisso = new Date(lembrete.compromisso.data_hora_inicio);
+              const dataFmt = dataCompromisso.toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Sao_Paulo' });
+              const tipoServ = lembrete.compromisso.tipo_servico || 'Compromisso';
+              const nomeLead = lembrete.compromisso.lead?.name || 'Cliente';
+              const subject = `Lembrete: ${tipoServ.charAt(0).toUpperCase()}${tipoServ.slice(1)} em ${dataFmt}`;
+              const bodyHtml = `
+                <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#222">
+                  <h2 style="color:#16a34a;margin:0 0 16px">⏰ Lembrete de Compromisso</h2>
+                  <p>Olá, <strong>${nomeLead}</strong>!</p>
+                  <p>${(lembrete.mensagem || '').replace(/\n/g, '<br/>') || `Este é um lembrete do seu compromisso de <strong>${tipoServ}</strong>.`}</p>
+                  <div style="background:#f1f5f9;border-radius:8px;padding:16px;margin:16px 0">
+                    <p style="margin:4px 0"><strong>📅 Quando:</strong> ${dataFmt}</p>
+                    <p style="margin:4px 0"><strong>📋 Tipo:</strong> ${tipoServ}</p>
+                  </div>
+                  <p style="color:#64748b;font-size:12px;margin-top:24px">Este é um lembrete automático. Por favor, confirme sua presença respondendo a este e-mail ou pelo WhatsApp.</p>
+                </div>
+              `;
+
+              try {
+                const { data: emailResult, error: emailError } = await supabase.functions.invoke('enviar-email-gmail', {
+                  body: {
+                    company_id: lembrete.compromisso.company_id || companyId,
+                    to: emailDestino,
+                    subject,
+                    body: bodyHtml,
+                    is_html: true,
+                    lead_id: lembrete.compromisso.lead_id,
+                  },
+                });
+
+                if (emailError || !emailResult?.success) {
+                  console.error(`❌ Erro ao enviar e-mail do lembrete ${lembrete.id}:`, emailError || emailResult);
+                  await supabase
+                    .from('lembretes')
+                    .update({ status_envio: 'erro', data_envio: new Date().toISOString() })
+                    .eq('id', lembrete.id);
+                  totalErros++;
+                } else {
+                  console.log(`✅ E-mail do lembrete ${lembrete.id} enviado para ${emailDestino}`);
+                  await supabase
+                    .from('lembretes')
+                    .update({ status_envio: 'enviado', data_hora_envio: new Date().toISOString(), data_envio: new Date().toISOString() })
+                    .eq('id', lembrete.id);
+                  totalProcessados++;
+                }
+              } catch (err) {
+                console.error(`❌ Exceção ao enviar e-mail do lembrete ${lembrete.id}:`, err);
+                await supabase
+                  .from('lembretes')
+                  .update({ status_envio: 'erro', data_envio: new Date().toISOString() })
+                  .eq('id', lembrete.id);
+                totalErros++;
+              }
+              continue;
+            }
+
             // Enviar mensagem via edge function enviar-whatsapp
             if (lembrete.canal === 'whatsapp') {
               const destinatario = lembrete.destinatario || 'lead';
