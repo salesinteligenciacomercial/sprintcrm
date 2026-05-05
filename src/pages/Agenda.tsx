@@ -1507,6 +1507,46 @@ export default function Agenda() {
               console.log('📅 [LEMBRETE] Data do compromisso:', dataHoraInicio.toISOString());
               console.log('⏰ [LEMBRETE] Antecedência:', tempoAntecedenciaDecimal, 'horas');
               console.log('🔗 [LEMBRETE] Vinculado ao compromisso:', compromisso.id);
+            } else {
+              console.log('✅ [LEMBRETE] Lembrete principal criado:', lembreteCriado?.id);
+            }
+
+            // 🔁 Lembretes ADICIONAIS — WhatsApp 24h antes + E-mail 24h antes
+            const dataEnvio24h = new Date(dataHoraInicio.getTime() - 24 * 3600000);
+            if (dataEnvio24h > new Date()) {
+              const leadEmail = leadSelecionado?.email;
+              const baseMsg = `Olá ${leadNome}! Lembrete: você tem ${tipoServicoFinal} agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.`;
+              const extras: any[] = [];
+              if (formData.lembrete_whatsapp_24h && (leadSelecionado?.phone || leadSelecionado?.telefone)) {
+                extras.push({
+                  compromisso_id: compromisso.id,
+                  canal: 'whatsapp',
+                  horas_antecedencia: 24,
+                  mensagem: baseMsg,
+                  status_envio: 'pendente',
+                  data_envio: dataEnvio24h.toISOString(),
+                  destinatario: 'lead',
+                  telefone_responsavel: leadSelecionado?.phone || leadSelecionado?.telefone || null,
+                  company_id: userRole.company_id,
+                });
+              }
+              if (formData.lembrete_email_24h && leadEmail) {
+                extras.push({
+                  compromisso_id: compromisso.id,
+                  canal: 'email',
+                  horas_antecedencia: 24,
+                  mensagem: baseMsg,
+                  status_envio: 'pendente',
+                  data_envio: dataEnvio24h.toISOString(),
+                  destinatario: 'lead',
+                  company_id: userRole.company_id,
+                });
+              }
+              if (extras.length > 0) {
+                const { error: extrasErr } = await supabase.from('lembretes').insert(extras);
+                if (extrasErr) console.warn('⚠️ [LEMBRETE] Falha ao criar lembretes 24h:', extrasErr);
+                else console.log(`✅ [LEMBRETE] ${extras.length} lembrete(s) extras de 24h criado(s)`);
+              }
             }
           }
         } catch (error: any) {
