@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -940,7 +940,7 @@ const MODULOS_LINK: Record<string, { label: string; route: string }> = {
 
 function RevenueLeakCard({ result }: { result: any }) {
   const navigate = useNavigate();
-  const leak: RevenueLeak | null =
+  const leakBase: RevenueLeak | null =
     (result?.revenue_leak as RevenueLeak) || calcularRevenueLeak(result || {});
 
   // Identifica gargalo principal (alavanca com menor score)
@@ -950,6 +950,67 @@ function RevenueLeakCard({ result }: { result: any }) {
     if (!entries.length) return null;
     return entries.sort((a, b) => a[1] - b[1])[0];
   }, [result]);
+
+  // ===== Defaults realistas (cresc. 2x-3x da realidade atual, NÃO 15x) =====
+  const defaults = useMemo(() => {
+    const ticket = Number(result?.ticket_medio) || 0;
+    const conv = Number(result?.taxa_conversao) || 0;
+    const dias = Number(result?.dias_uteis_mes) || 20;
+    const atual = Number(result?.prospeccoes_dia_atual) || 0;
+    // Meta ideal realista: limitada a 3x da realidade atual (ou o ideal informado, o menor entre eles)
+    const idealInformado = Number(result?.prospeccoes_dia_ideal) || 0;
+    const idealRealista = atual > 0
+      ? Math.min(idealInformado || atual * 3, atual * 3)
+      : idealInformado;
+    return {
+      ticket, conv, dias, atual,
+      ideal: idealRealista || atual * 2 || 10,
+      prazo: Number(result?.prazo_meta_meses) || 6,
+    };
+  }, [result]);
+
+  const [ticket, setTicket] = useState(defaults.ticket);
+  const [conv, setConv] = useState(defaults.conv);
+  const [atualDia, setAtualDia] = useState(defaults.atual);
+  const [idealDia, setIdealDia] = useState(defaults.ideal);
+  const [prazo, setPrazo] = useState(defaults.prazo);
+  const [showConfig, setShowConfig] = useState(false);
+
+  useEffect(() => {
+    setTicket(defaults.ticket);
+    setConv(defaults.conv);
+    setAtualDia(defaults.atual);
+    setIdealDia(defaults.ideal);
+    setPrazo(defaults.prazo);
+  }, [defaults]);
+
+  const fmt = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
+  const parseBR = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
+
+  const leak = useMemo(() => {
+    const c = conv / 100;
+    if (!ticket || !c || (!atualDia && !idealDia)) return null;
+    const leadsIdeaisMes = idealDia * defaults.dias;
+    const leadsAtuaisMes = atualDia * defaults.dias;
+    const clientesPotenciais = leadsIdeaisMes * c;
+    const clientesAtuais = leadsAtuaisMes * c;
+    const receita_potencial = clientesPotenciais * ticket;
+    const receita_atual_estimada = clientesAtuais * ticket;
+    const perda_mensal = Math.max(0, receita_potencial - receita_atual_estimada);
+    const perda_diaria = perda_mensal / defaults.dias;
+    const perda_projetada = perda_mensal * prazo;
+    const capacidade_uso_pct = receita_potencial > 0
+      ? Math.round((receita_atual_estimada / receita_potencial) * 100) : 0;
+    return {
+      receita_potencial, receita_atual_estimada, perda_mensal, perda_diaria,
+      perda_projetada, capacidade_uso_pct, prazo_meses: prazo,
+      leads_ideais_mes: leadsIdeaisMes, leads_atuais_mes: leadsAtuaisMes,
+      clientes_potenciais: clientesPotenciais, clientes_atuais: clientesAtuais,
+    } as RevenueLeak;
+  }, [ticket, conv, atualDia, idealDia, prazo, defaults.dias]);
+
+  const editado = ticket !== defaults.ticket || conv !== defaults.conv
+    || atualDia !== defaults.atual || idealDia !== defaults.ideal || prazo !== defaults.prazo;
 
   if (!leak) {
     return (
@@ -962,8 +1023,6 @@ function RevenueLeakCard({ result }: { result: any }) {
       </Card>
     );
   }
-
-  const fmt = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
 
   // Discurso adaptativo conforme pior pilar
   const piorKey = piorPilar?.[0] || "";
@@ -1002,35 +1061,119 @@ function RevenueLeakCard({ result }: { result: any }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Cards de impacto */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-lg p-3 bg-emerald-500/5 border border-emerald-500/30">
-            <div className="text-[10px] uppercase text-muted-foreground">Receita potencial</div>
-            <div className="text-xl font-bold text-emerald-600">{fmt(leak.receita_potencial)}</div>
-            <div className="text-[10px] text-muted-foreground mt-1">
-              {Math.round(leak.clientes_potenciais)} clientes/mês
+        {/* ====== EDITOR DE PREMISSAS (simples) ====== */}
+        <div className="rounded-lg border bg-muted/30">
+          <button
+            type="button"
+            onClick={() => setShowConfig((v) => !v)}
+            className="w-full flex items-center justify-between p-3 text-left hover:bg-muted/50 transition"
+          >
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Settings className="h-4 w-4 text-primary" />
+              Ajustar premissas em tempo real
+              {editado && <Badge className="bg-amber-500 text-white border-0 text-[10px]">Editado</Badge>}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {showConfig ? "Recolher ▲" : "Personalize sem refazer o diagnóstico ▼"}
+            </span>
+          </button>
+          {showConfig && (
+            <div className="p-3 pt-0 grid sm:grid-cols-2 lg:grid-cols-5 gap-3 border-t">
+              <div className="space-y-1">
+                <Label className="text-[11px]">Ticket médio</Label>
+                <Input value={fmt(ticket)} onChange={(e) => setTicket(parseBR(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Taxa de conversão (%)</Label>
+                <Input type="number" value={conv} onChange={(e) => setConv(Number(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Prospecções/dia hoje</Label>
+                <Input type="number" value={atualDia} onChange={(e) => setAtualDia(Number(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Prospecções/dia meta</Label>
+                <Input type="number" value={idealDia} onChange={(e) => setIdealDia(Number(e.target.value) || 0)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[11px]">Horizonte (meses)</Label>
+                <div className="flex gap-1">
+                  {[3, 6, 12].map((m) => (
+                    <Button
+                      key={m} size="sm" variant={prazo === m ? "default" : "outline"}
+                      onClick={() => setPrazo(m)} className="flex-1 h-9 text-xs"
+                    >{m}m</Button>
+                  ))}
+                </div>
+              </div>
+              <p className="sm:col-span-2 lg:col-span-5 text-[10px] text-muted-foreground">
+                💡 Recomendamos meta realista: <b>2x a 3x a sua prospecção atual</b>. Metas muito agressivas geram cenários irreais.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ====== CENÁRIO ATUAL vs CENÁRIO META (lado a lado, fórmula visível) ====== */}
+        <div className="grid md:grid-cols-2 gap-3">
+          {/* HOJE */}
+          <div className="rounded-lg p-4 border-2 border-muted bg-muted/30">
+            <div className="flex items-center justify-between mb-2">
+              <Badge variant="outline" className="text-[10px]">📊 SITUAÇÃO ATUAL</Badge>
+              <span className="text-[10px] text-muted-foreground">Hoje</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground">Faturamento estimado / mês</div>
+            <div className="text-3xl font-black">{fmt(leak.receita_atual_estimada)}</div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              {atualDia} prospecções/dia × {defaults.dias} dias × {conv}% conversão × {fmt(ticket)} ticket
+            </div>
+            <div className="text-xs mt-2">
+              ≈ <b>{Math.round(leak.clientes_atuais)} clientes/mês</b> · {leak.leads_atuais_mes} leads/mês
             </div>
           </div>
-          <div className="rounded-lg p-3 bg-muted/40 border">
-            <div className="text-[10px] uppercase text-muted-foreground">Receita atual estimada</div>
-            <div className="text-xl font-bold">{fmt(leak.receita_atual_estimada)}</div>
-            <div className="text-[10px] text-muted-foreground mt-1">
-              {Math.round(leak.clientes_atuais)} clientes/mês
+
+          {/* META */}
+          <div className="rounded-lg p-4 border-2 border-emerald-500/40 bg-emerald-500/5">
+            <div className="flex items-center justify-between mb-2">
+              <Badge className="bg-emerald-600 text-white border-0 text-[10px]">🎯 CENÁRIO META</Badge>
+              <span className="text-[10px] text-muted-foreground">Atingível em {prazo}m</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground">Faturamento possível / mês</div>
+            <div className="text-3xl font-black text-emerald-700">{fmt(leak.receita_potencial)}</div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              {idealDia} prospecções/dia × {defaults.dias} dias × {conv}% conversão × {fmt(ticket)} ticket
+            </div>
+            <div className="text-xs mt-2">
+              ≈ <b>{Math.round(leak.clientes_potenciais)} clientes/mês</b> · {leak.leads_ideais_mes} leads/mês
             </div>
           </div>
-          <div className="rounded-lg p-3 bg-rose-500/10 border border-rose-500/30">
-            <div className="text-[10px] uppercase text-rose-600 font-semibold">🚨 Perda mensal</div>
-            <div className="text-xl font-bold text-rose-600">{fmt(leak.perda_mensal)}</div>
-            <div className="text-[10px] text-muted-foreground mt-1">
-              ≈ {fmt(leak.perda_diaria)}/dia
+        </div>
+
+        {/* ====== HEMORRAGIA EM LINHAS DE TEMPO ====== */}
+        <div className="rounded-lg border-2 border-rose-500/30 overflow-hidden">
+          <div className="bg-rose-500/10 px-3 py-2 flex items-center justify-between">
+            <div className="text-sm font-bold text-rose-700 flex items-center gap-2">
+              <Flame className="h-4 w-4" /> Quanto você está perdendo
             </div>
+            <span className="text-[10px] text-rose-700 font-mono">
+              = (R$ Meta − R$ Atual)
+            </span>
           </div>
-          <div className="rounded-lg p-3 bg-gradient-to-br from-rose-500/15 to-rose-700/10 border-2 border-rose-500/50">
-            <div className="text-[10px] uppercase text-rose-700 font-semibold">⏳ Em {leak.prazo_meses} {leak.prazo_meses === 1 ? "mês" : "meses"}</div>
-            <div className="text-2xl font-bold text-rose-700">{fmt(leak.perda_projetada)}</div>
-            <div className="text-[10px] text-rose-600 mt-1 font-medium">
-              deixados na mesa
-            </div>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-rose-500/20">
+            {[
+              { label: "POR DIA", v: leak.perda_diaria, sub: "dia útil" },
+              { label: "POR SEMANA", v: leak.perda_diaria * 5, sub: "5 dias úteis" },
+              { label: "POR MÊS", v: leak.perda_mensal, sub: `${defaults.dias} dias úteis` },
+              { label: "POR TRIMESTRE", v: leak.perda_mensal * 3, sub: "3 meses" },
+              { label: `EM ${prazo} MESES`, v: leak.perda_projetada, sub: "se nada mudar", big: true },
+            ].map((it) => (
+              <div key={it.label} className={`p-3 bg-background ${it.big ? "bg-rose-500/5" : ""}`}>
+                <div className="text-[10px] uppercase font-bold text-rose-700">{it.label}</div>
+                <div className={`font-black text-rose-700 ${it.big ? "text-2xl" : "text-lg"}`}>
+                  {fmt(it.v)}
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-0.5">{it.sub}</div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -1042,7 +1185,7 @@ function RevenueLeakCard({ result }: { result: any }) {
           </div>
           <Progress value={leak.capacidade_uso_pct} className="h-2" />
           <div className="text-[11px] text-muted-foreground mt-2">
-            {leak.leads_atuais_mes} leads/mês atuais ↔ {leak.leads_ideais_mes} leads/mês necessários
+            Você usa <b>{leak.capacidade_uso_pct}%</b> do potencial — sobram <b>{100 - leak.capacidade_uso_pct}%</b> de receita inexplorada.
           </div>
         </div>
 
