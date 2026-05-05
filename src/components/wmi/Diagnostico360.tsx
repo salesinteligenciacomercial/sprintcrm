@@ -532,12 +532,11 @@ export function Diagnostico360() {
                       gargalos,
                     },
                     {
-                      onSuccess: async () => {
-                        toast.success("Diagnóstico salvo! Gerando roadmap de 90 dias...");
+                      onSuccess: async (saved) => {
+                        toast.success("Diagnóstico salvo! Gerando roadmap...");
                         setStep("result");
-                        // Dispara roadmap automaticamente
                         try {
-                          await genRoadmap.mutateAsync();
+                          await genRoadmap.mutateAsync(saved as DiagnosticoResposta);
                           toast.success("Roadmap gerado!");
                         } catch (e: any) {
                           toast.error("Roadmap: " + (e.message || "falha"));
