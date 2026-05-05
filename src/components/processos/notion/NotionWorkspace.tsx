@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { NotionSidebar } from "./NotionSidebar";
 import { NotionPage } from "./NotionPage";
 import { TemplateLibrary } from "./TemplateLibrary";
+import { ImportDocumentDialog } from "./ImportDocumentDialog";
 import { ProcessCalendar } from "./ProcessCalendar";
 import { Button } from "@/components/ui/button";
 import { 
