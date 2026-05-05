@@ -261,7 +261,11 @@ export default function Prospeccao() {
 
             {/* Sub-abas Registros/Interações ocultas conforme solicitado */}
 
-            {isSocialTab ? (
+            {isRotinaTab ? (
+              <div className="mt-4">
+                <RotinaInteligente />
+              </div>
+            ) : isSocialTab ? (
               <div className="mt-4">
                 <SocialSellingPanel />
               </div>
