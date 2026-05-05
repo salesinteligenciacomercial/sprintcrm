@@ -32,10 +32,15 @@ Deno.serve(async (req) => {
     if (userErr || !userData.user) throw new Error("Not authenticated");
     const userId = userData.user.id;
 
-    // Buscar compromisso + lead
+    // Buscar compromisso + lead + agenda + profissional
     const { data: comp, error: compErr } = await supabase
       .from("compromissos")
-      .select("*, lead:leads(name, email, phone)")
+      .select(`
+        *,
+        lead:leads(name, email, phone, telefone),
+        agenda:agendas(nome, tipo),
+        profissional:profissionais(nome, email, especialidade)
+      `)
       .eq("id", compromisso_id)
       .maybeSingle();
     if (compErr || !comp) throw new Error("Compromisso not found");
@@ -58,17 +63,38 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build body
+    // Convidados (opcional)
     const attendees: string[] = [];
     if (comp.convidar_lead_email && comp.lead?.email) attendees.push(comp.lead.email);
 
+    // Título descritivo: "<Tipo de serviço> — <Nome do lead>"
+    const tipoServ = (comp.tipo_servico || "Compromisso").charAt(0).toUpperCase() + (comp.tipo_servico || "Compromisso").slice(1);
+    const summary = comp.lead?.name
+      ? `${tipoServ} — ${comp.lead.name}`
+      : (comp.titulo || tipoServ);
+
+    // Descrição completa
+    const fone = comp.lead?.phone || comp.lead?.telefone;
+    const valor = comp.custo_estimado != null && Number(comp.custo_estimado) > 0
+      ? Number(comp.custo_estimado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+      : null;
+    const descLines = [
+      `📋 Tipo: ${tipoServ}`,
+      comp.lead?.name ? `👤 Lead: ${comp.lead.name}` : null,
+      fone ? `📞 Telefone: ${fone}` : null,
+      comp.lead?.email ? `✉️ E-mail: ${comp.lead.email}` : null,
+      comp.agenda?.nome ? `📅 Agenda: ${comp.agenda.nome}` : null,
+      comp.profissional?.nome
+        ? `👨‍💼 Profissional: ${comp.profissional.nome}${comp.profissional.especialidade ? ` (${comp.profissional.especialidade})` : ""}`
+        : null,
+      valor ? `💰 Valor estimado: ${valor}` : null,
+      comp.observacoes ? `\n📝 Observações:\n${comp.observacoes}` : null,
+      `\n— Sincronizado pelo Waze Sales OS`,
+    ].filter(Boolean).join("\n");
+
     const body = buildEventBody({
-      summary: comp.titulo || comp.tipo_servico || "Compromisso",
-      description: [
-        comp.observacoes,
-        comp.lead?.name ? `Lead: ${comp.lead.name}` : null,
-        comp.lead?.phone ? `Telefone: ${comp.lead.phone}` : null,
-      ].filter(Boolean).join("\n\n"),
+      summary,
+      description: descLines,
       start: comp.data_hora_inicio,
       end: comp.data_hora_fim,
       attendeeEmails: attendees,
