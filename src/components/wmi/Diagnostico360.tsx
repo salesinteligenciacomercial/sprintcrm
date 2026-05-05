@@ -862,6 +862,8 @@ function ResultadoDiagnostico({
           )}
         </CardContent>
       </Card>
+        );
+      })()}
 
       <div className="flex gap-2">
         <Button variant="outline" onClick={onRefazer} className="gap-2">
