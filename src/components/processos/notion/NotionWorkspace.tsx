@@ -272,6 +272,10 @@ export function NotionWorkspace({ companyId }: NotionWorkspaceProps) {
                   companyId={companyId}
                   onCreateFromTemplate={handleCreateFromTemplate}
                 />
+                <ImportDocumentDialog
+                  companyId={companyId}
+                  onCreated={handleCreateFromTemplate}
+                />
               </div>
             </div>
           </div>
