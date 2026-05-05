@@ -782,15 +782,19 @@ function ResultadoDiagnostico({
         </Card>
       )}
 
-      {/* ROADMAP 90 DIAS */}
+      {/* ROADMAP — prazo dinâmico definido pela empresa */}
+      {(() => {
+        const meses = result.prazo_meta_meses || 3;
+        const semanas = Math.max(3, Math.round(meses * 4));
+        return (
       <Card className="border-2 border-primary/30">
         <CardHeader>
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
-                <Map className="h-5 w-5 text-primary" /> Roadmap 90 dias
+                <Map className="h-5 w-5 text-primary" /> Roadmap {meses} {meses === 1 ? "mês" : "meses"}
               </CardTitle>
-              <CardDescription>Plano semanal de correção dos gargalos.</CardDescription>
+              <CardDescription>Plano semanal alinhado ao seu prazo para atingir a meta ({semanas} semanas).</CardDescription>
             </div>
             <Button size="sm" onClick={onGerarRoadmap} disabled={isGenerating} className="gap-2">
               {isGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
