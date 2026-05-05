@@ -570,14 +570,14 @@ export function Diagnostico360() {
 // RESULTADO + GARGALOS + ROADMAP
 // ============================================================
 function ResultadoDiagnostico({
-  onRefazer, onGerarRoadmap, roadmap, updateRoadmap, isGenerating,
+  onRefazer, genRoadmap, roadmap, updateRoadmap,
 }: {
   onRefazer: () => void;
-  onGerarRoadmap: () => void;
+  genRoadmap: ReturnType<typeof useGerarRoadmapDiagnostico>;
   roadmap: any[] | undefined;
   updateRoadmap: ReturnType<typeof useUpdateRoadmapItem>;
-  isGenerating: boolean;
 }) {
+  const isGenerating = genRoadmap.isPending;
   const { data: result } = useUltimoDiagnostico();
   const { data: alavancas } = useAlavancas();
   const { data: gargalos } = useGargalos(result?.id);
