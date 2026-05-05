@@ -1958,7 +1958,10 @@ export default function Agenda() {
       horas_antecedencia_minutos: "0",
       destinatario_lembrete: "lead",
       enviar_confirmacao: false,
-      notificar_responsavel: true
+      notificar_responsavel: true,
+      convidar_lead_email: false,
+      lembrete_email_24h: true,
+      lembrete_whatsapp_24h: true,
     });
     setLeadSearch("");
     setSelectedLeadName("");
