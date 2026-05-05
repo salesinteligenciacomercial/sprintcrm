@@ -37,6 +37,41 @@ export interface DoresDesejos {
   prospeccoes_dia_atual?: number;
   prospeccoes_dia_ideal?: number;
   dias_uteis_mes?: number;
+  curva_abc?: ProdutoABC[];
+}
+
+export interface ProdutoABC {
+  id?: string;
+  produto_servico_id?: string | null;
+  nome: string;
+  receita_mensal: number;
+  custo_unitario?: number;
+  qtd_vendas_mes?: number;
+  curva?: "A" | "B" | "C";
+  pct_receita?: number;
+  pct_acumulado?: number;
+  margem_pct?: number;
+}
+
+/** Classifica produtos em A/B/C usando regra Pareto (80/15/5). Retorna nova lista ordenada e enriquecida. */
+export function classificarCurvaABC(produtos: ProdutoABC[]): ProdutoABC[] {
+  const valid = produtos.filter((p) => p.nome && Number(p.receita_mensal) > 0);
+  if (!valid.length) return [];
+  const total = valid.reduce((s, p) => s + Number(p.receita_mensal || 0), 0);
+  const ord = [...valid].sort((a, b) => Number(b.receita_mensal) - Number(a.receita_mensal));
+  let acc = 0;
+  return ord.map((p) => {
+    const pct = total > 0 ? (Number(p.receita_mensal) / total) * 100 : 0;
+    acc += pct;
+    let curva: "A" | "B" | "C" = "C";
+    if (acc <= 80) curva = "A";
+    else if (acc <= 95) curva = "B";
+    const margem_pct =
+      p.custo_unitario && p.qtd_vendas_mes && p.receita_mensal
+        ? Math.max(0, ((p.receita_mensal - p.custo_unitario * p.qtd_vendas_mes) / p.receita_mensal) * 100)
+        : undefined;
+    return { ...p, curva, pct_receita: pct, pct_acumulado: acc, margem_pct };
+  });
 }
 
 export interface RevenueLeak {
