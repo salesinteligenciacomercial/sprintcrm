@@ -940,7 +940,7 @@ const MODULOS_LINK: Record<string, { label: string; route: string }> = {
 
 function RevenueLeakCard({ result }: { result: any }) {
   const navigate = useNavigate();
-  const leak: RevenueLeak | null =
+  const leakBase: RevenueLeak | null =
     (result?.revenue_leak as RevenueLeak) || calcularRevenueLeak(result || {});
 
   // Identifica gargalo principal (alavanca com menor score)
@@ -950,6 +950,67 @@ function RevenueLeakCard({ result }: { result: any }) {
     if (!entries.length) return null;
     return entries.sort((a, b) => a[1] - b[1])[0];
   }, [result]);
+
+  // ===== Defaults realistas (cresc. 2x-3x da realidade atual, NÃO 15x) =====
+  const defaults = useMemo(() => {
+    const ticket = Number(result?.ticket_medio) || 0;
+    const conv = Number(result?.taxa_conversao) || 0;
+    const dias = Number(result?.dias_uteis_mes) || 20;
+    const atual = Number(result?.prospeccoes_dia_atual) || 0;
+    // Meta ideal realista: limitada a 3x da realidade atual (ou o ideal informado, o menor entre eles)
+    const idealInformado = Number(result?.prospeccoes_dia_ideal) || 0;
+    const idealRealista = atual > 0
+      ? Math.min(idealInformado || atual * 3, atual * 3)
+      : idealInformado;
+    return {
+      ticket, conv, dias, atual,
+      ideal: idealRealista || atual * 2 || 10,
+      prazo: Number(result?.prazo_meta_meses) || 6,
+    };
+  }, [result]);
+
+  const [ticket, setTicket] = useState(defaults.ticket);
+  const [conv, setConv] = useState(defaults.conv);
+  const [atualDia, setAtualDia] = useState(defaults.atual);
+  const [idealDia, setIdealDia] = useState(defaults.ideal);
+  const [prazo, setPrazo] = useState(defaults.prazo);
+  const [showConfig, setShowConfig] = useState(false);
+
+  useEffect(() => {
+    setTicket(defaults.ticket);
+    setConv(defaults.conv);
+    setAtualDia(defaults.atual);
+    setIdealDia(defaults.ideal);
+    setPrazo(defaults.prazo);
+  }, [defaults]);
+
+  const fmt = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
+  const parseBR = (v: string) => Number(v.replace(/[^\d]/g, "")) || 0;
+
+  const leak = useMemo(() => {
+    const c = conv / 100;
+    if (!ticket || !c || (!atualDia && !idealDia)) return null;
+    const leadsIdeaisMes = idealDia * defaults.dias;
+    const leadsAtuaisMes = atualDia * defaults.dias;
+    const clientesPotenciais = leadsIdeaisMes * c;
+    const clientesAtuais = leadsAtuaisMes * c;
+    const receita_potencial = clientesPotenciais * ticket;
+    const receita_atual_estimada = clientesAtuais * ticket;
+    const perda_mensal = Math.max(0, receita_potencial - receita_atual_estimada);
+    const perda_diaria = perda_mensal / defaults.dias;
+    const perda_projetada = perda_mensal * prazo;
+    const capacidade_uso_pct = receita_potencial > 0
+      ? Math.round((receita_atual_estimada / receita_potencial) * 100) : 0;
+    return {
+      receita_potencial, receita_atual_estimada, perda_mensal, perda_diaria,
+      perda_projetada, capacidade_uso_pct, prazo_meses: prazo,
+      leads_ideais_mes: leadsIdeaisMes, leads_atuais_mes: leadsAtuaisMes,
+      clientes_potenciais: clientesPotenciais, clientes_atuais: clientesAtuais,
+    } as RevenueLeak;
+  }, [ticket, conv, atualDia, idealDia, prazo, defaults.dias]);
+
+  const editado = ticket !== defaults.ticket || conv !== defaults.conv
+    || atualDia !== defaults.atual || idealDia !== defaults.ideal || prazo !== defaults.prazo;
 
   if (!leak) {
     return (
@@ -962,8 +1023,6 @@ function RevenueLeakCard({ result }: { result: any }) {
       </Card>
     );
   }
-
-  const fmt = (n: number) => `R$ ${Math.round(n).toLocaleString("pt-BR")}`;
 
   // Discurso adaptativo conforme pior pilar
   const piorKey = piorPilar?.[0] || "";
