@@ -366,7 +366,7 @@ export function useSalvarDiagnostico() {
           segmento: input.segmento,
           gargalos_detectados: gargalos as any,
           revenue_leak: revenueLeak as any,
-          ...dores,
+          ...doresFinal,
         })
         .select()
         .single();
