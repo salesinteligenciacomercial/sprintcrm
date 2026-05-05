@@ -103,6 +103,7 @@ serve(async (req) => {
           usuario_responsavel_id,
           lead:leads (
             name,
+            email,
             phone,
             telefone
           )
