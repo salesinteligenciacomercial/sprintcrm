@@ -174,6 +174,7 @@ export default function Prospeccao() {
     fila: "Minha Fila",
     intel: "Metas e Vendas",
     social: "Social Selling",
+    rotina: "Rotina Inteligente",
   };
 
   return (
