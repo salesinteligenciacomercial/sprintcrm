@@ -1207,8 +1207,6 @@ function RevenueLeakCard({ result }: { result: any }) {
           </p>
         </div>
 
-        </div>
-
         {/* ====== HEMORRAGIA EM LINHAS DE TEMPO ====== */}
         <div className="rounded-lg border-2 border-rose-500/30 overflow-hidden">
           <div className="bg-rose-500/10 px-3 py-2 flex items-center justify-between">
