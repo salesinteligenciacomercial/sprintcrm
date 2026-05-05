@@ -312,6 +312,7 @@ export function useSalvarDiagnostico() {
       const percentual = max > 0 ? Math.round((total / max) * 100) : 0;
       const nota = calcularNota(percentual);
       const classificacao = CLASSIFICACOES[nota].titulo;
+      const revenueLeak = calcularRevenueLeak(dores);
 
       const { data: saved, error } = await supabase
         .from("diagnostico_respostas" as any)
@@ -326,6 +327,7 @@ export function useSalvarDiagnostico() {
           classificacao,
           segmento: input.segmento,
           gargalos_detectados: gargalos as any,
+          revenue_leak: revenueLeak as any,
           ...dores,
         })
         .select()
