@@ -83,20 +83,23 @@ serve(async (req) => {
     // Calcular datas
     const now = new Date();
     let dateStart: Date;
-    let dateEnd = endDate ? new Date(endDate) : now;
+    const dateEnd = endDate ? new Date(endDate) : new Date(now);
 
     if (startDate) {
       dateStart = new Date(startDate);
     } else {
       switch (period) {
         case 'week':
-          dateStart = new Date(now.setDate(now.getDate() - 7));
+          dateStart = new Date(now);
+          dateStart.setDate(dateStart.getDate() - 7);
           break;
         case 'month':
-          dateStart = new Date(now.setMonth(now.getMonth() - 1));
+          dateStart = new Date(now);
+          dateStart.setMonth(dateStart.getMonth() - 1);
           break;
         default: // day
-          dateStart = new Date(now.setHours(0, 0, 0, 0));
+          dateStart = new Date(now);
+          dateStart.setHours(0, 0, 0, 0);
       }
     }
 
