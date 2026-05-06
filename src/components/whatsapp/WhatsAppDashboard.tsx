@@ -440,6 +440,14 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
                           <p className="text-muted-foreground">Lidas</p>
                         </div>
                         <div className="text-center">
+                          <p className="font-bold">{campaign.total_replied || 0}</p>
+                          <p className="text-muted-foreground">Responderam</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold text-destructive">{campaign.total_failed || 0}</p>
+                          <p className="text-muted-foreground">Falhas</p>
+                        </div>
+                        <div className="text-center">
                           <p className="font-bold">{formatCurrency(campaign.estimated_cost)}</p>
                           <p className="text-muted-foreground">Custo</p>
                         </div>
