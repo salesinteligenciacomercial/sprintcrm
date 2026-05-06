@@ -340,14 +340,14 @@ export const loadAllUniqueConversations = async (companyId: string): Promise<Con
     const telefonesParaBuscar = Array.from(conversasMap.keys()).map(tel => tel.replace(/[^0-9]/g, '')).filter(tel => tel.length >= 10);
     
     // Buscar leads para obter nomes corretos
-    const leadsNamesMap = new Map<string, { name: string; leadId: string; profilePictureUrl?: string }>();
+    const leadsNamesMap = new Map<string, { name: string; leadId: string; profilePictureUrl?: string; tags?: string[]; stage?: string; value?: number }>();
     if (telefonesParaBuscar.length > 0) {
       const BATCH_SIZE = 50;
       for (let i = 0; i < telefonesParaBuscar.length; i += BATCH_SIZE) {
         const batch = telefonesParaBuscar.slice(i, i + BATCH_SIZE);
         const { data: leadsData } = await supabase
           .from('leads')
-          .select('id, phone, name, telefone, profile_picture_url')
+          .select('id, phone, name, telefone, profile_picture_url, tags, stage, value')
           .eq('company_id', companyId)
           .or(batch.map(tel => `phone.ilike.%${tel}%,telefone.ilike.%${tel}%`).join(','))
           .limit(BATCH_SIZE);
@@ -355,11 +355,15 @@ export const loadAllUniqueConversations = async (companyId: string): Promise<Con
         if (leadsData) {
           leadsData.forEach(lead => {
             const phoneKey = (lead.phone || lead.telefone || '').replace(/[^0-9]/g, '');
-            if (phoneKey && lead.name && !isInstagramPlaceholderName(lead.name) && !/^\d{10,}$/.test(lead.name.trim())) {
+            if (phoneKey) {
+              const validName = lead.name && !isInstagramPlaceholderName(lead.name) && !/^\d{10,}$/.test(String(lead.name).trim());
               leadsNamesMap.set(phoneKey, {
-                name: lead.name,
+                name: validName ? lead.name : (leadsNamesMap.get(phoneKey)?.name || ''),
                 leadId: lead.id,
                 profilePictureUrl: lead.profile_picture_url || undefined,
+                tags: Array.isArray(lead.tags) ? lead.tags : [],
+                stage: lead.stage || undefined,
+                value: lead.value != null ? Number(lead.value) : undefined,
               });
             }
           });
