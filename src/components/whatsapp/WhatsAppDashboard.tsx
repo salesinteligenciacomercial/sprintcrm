@@ -8,6 +8,7 @@ import {
   MessageSquare, 
   CheckCircle2, 
   Eye, 
+  Reply,
   XCircle, 
   RefreshCw, 
   TrendingUp,
@@ -36,8 +37,10 @@ interface Analytics {
     total_read: number;
     total_failed: number;
     total_pending: number;
+    total_replied: number;
     delivery_rate: number;
     read_rate: number;
+    reply_rate: number;
     estimated_cost: number;
     by_provider: {
       meta: number;
@@ -58,6 +61,8 @@ interface Analytics {
     total_sent: number;
     total_delivered: number;
     total_read: number;
+    total_failed: number;
+    total_replied: number;
     estimated_cost: number;
     created_at: string;
   }>;
