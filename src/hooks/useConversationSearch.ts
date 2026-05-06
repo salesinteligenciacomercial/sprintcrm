@@ -374,11 +374,11 @@ export const loadAllUniqueConversations = async (companyId: string): Promise<Con
 
     // Enriquecer bestNamesMap com nomes dos leads (prioridade maior)
     leadsNamesMap.forEach((leadInfo, phoneKey) => {
-      // Buscar a key correspondente no conversasMap
+      if (!leadInfo.name) return;
       for (const key of conversasMap.keys()) {
         const keyDigits = key.replace(/^ig_/, '').replace(/[^0-9]/g, '');
         if (keyDigits === phoneKey || phoneKey.endsWith(keyDigits) || keyDigits.endsWith(phoneKey)) {
-          bestNamesMap.set(key, leadInfo.name); // Sobrescrever com nome do lead
+          bestNamesMap.set(key, leadInfo.name);
           break;
         }
       }
