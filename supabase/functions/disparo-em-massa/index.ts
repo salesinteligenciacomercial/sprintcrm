@@ -57,7 +57,15 @@ async function sendWhatsAppWithTimeout(
       throw new Error(`Falha no enviar-whatsapp (${response.status}): ${errorText}`);
     }
 
-    return await response.json().catch(() => ({}));
+    const json = await response.json().catch(() => ({} as any));
+    // Extrair message_id (wamid) e provider do retorno
+    const messageId =
+      json?.message_id ||
+      json?.data?.messages?.[0]?.id ||
+      json?.data?.key?.id ||
+      null;
+    const provider = json?.provider || null;
+    return { ...json, _message_id: messageId, _provider: provider };
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
       throw new Error(`Timeout no enviar-whatsapp após ${Math.round(SEND_TIMEOUT_MS / 1000)}s`);
