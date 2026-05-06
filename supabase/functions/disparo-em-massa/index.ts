@@ -231,6 +231,7 @@ serve(async (req) => {
           const payload: any = {
             numero: formattedPhone,
             company_id: campaign.company_id,
+            force_provider: campaign.message_type === 'template' ? 'meta' : undefined,
           };
 
           if (campaign.message_type === 'text') {
