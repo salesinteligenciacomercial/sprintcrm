@@ -220,7 +220,7 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
       </div>
 
       {/* Métricas Principais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -274,6 +274,21 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Falhas</p>
                 <p className="text-2xl font-bold">{metrics?.total_failed || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent rounded-lg">
+                <Reply className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Responderam</p>
+                <p className="text-2xl font-bold">{metrics?.total_replied || 0}</p>
+                <p className="text-xs text-muted-foreground">{metrics?.reply_rate || 0}%</p>
               </div>
             </div>
           </CardContent>
