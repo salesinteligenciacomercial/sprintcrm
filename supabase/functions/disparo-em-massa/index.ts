@@ -254,7 +254,10 @@ serve(async (req) => {
 
           const sendResult = await sendWhatsAppWithTimeout(supabaseUrl, supabaseServiceKey, payload);
           const wamid: string | null = sendResult?._message_id || null;
-          const usedProvider: string = sendResult?._provider || 'evolution';
+          // Templates SEMPRE vão pela Meta API (force_provider=meta). Se a resposta não trouxe provider,
+          // confiamos no force_provider do payload para registrar corretamente como 'meta'.
+          const forcedProvider = (payload as any)?.force_provider as string | undefined;
+          const usedProvider: string = sendResult?._provider || forcedProvider || (campaign.message_type === 'template' ? 'meta' : 'evolution');
 
           sentCount++;
 
