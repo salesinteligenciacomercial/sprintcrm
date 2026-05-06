@@ -304,6 +304,27 @@ serve(async (req) => {
 
           await supabase.from('conversas').insert([conversaData]);
 
+          // Marcar lead como tendo recebido disparo (data + nome da campanha + contador)
+          if (lead?.id) {
+            try {
+              const { data: leadRow } = await supabase
+                .from('leads')
+                .select('disparo_count')
+                .eq('id', lead.id)
+                .maybeSingle();
+              await supabase
+                .from('leads')
+                .update({
+                  last_disparo_at: new Date().toISOString(),
+                  last_disparo_campaign: campaign.campaign_name || null,
+                  disparo_count: (leadRow?.disparo_count || 0) + 1,
+                })
+                .eq('id', lead.id);
+            } catch (e) {
+              console.error('⚠️ Falha ao marcar last_disparo_at:', e);
+            }
+          }
+
         } catch (error: any) {
           console.error(`❌ Erro ao enviar para ${lead?.name || 'lead'}:`, error.message);
           errorCount++;
