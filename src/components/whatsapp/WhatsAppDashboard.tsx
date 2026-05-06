@@ -8,6 +8,7 @@ import {
   MessageSquare, 
   CheckCircle2, 
   Eye, 
+  Reply,
   XCircle, 
   RefreshCw, 
   TrendingUp,
@@ -36,8 +37,10 @@ interface Analytics {
     total_read: number;
     total_failed: number;
     total_pending: number;
+    total_replied: number;
     delivery_rate: number;
     read_rate: number;
+    reply_rate: number;
     estimated_cost: number;
     by_provider: {
       meta: number;
@@ -58,6 +61,8 @@ interface Analytics {
     total_sent: number;
     total_delivered: number;
     total_read: number;
+    total_failed: number;
+    total_replied: number;
     estimated_cost: number;
     created_at: string;
   }>;
@@ -215,7 +220,7 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
       </div>
 
       {/* Métricas Principais */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -269,6 +274,21 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
               <div>
                 <p className="text-sm text-muted-foreground">Falhas</p>
                 <p className="text-2xl font-bold">{metrics?.total_failed || 0}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-accent rounded-lg">
+                <Reply className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Responderam</p>
+                <p className="text-2xl font-bold">{metrics?.total_replied || 0}</p>
+                <p className="text-xs text-muted-foreground">{metrics?.reply_rate || 0}%</p>
               </div>
             </div>
           </CardContent>
@@ -418,6 +438,14 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
                         <div className="text-center">
                           <p className="font-bold text-purple-600">{campaign.total_read}</p>
                           <p className="text-muted-foreground">Lidas</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold">{campaign.total_replied || 0}</p>
+                          <p className="text-muted-foreground">Responderam</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold text-destructive">{campaign.total_failed || 0}</p>
+                          <p className="text-muted-foreground">Falhas</p>
                         </div>
                         <div className="text-center">
                           <p className="font-bold">{formatCurrency(campaign.estimated_cost)}</p>
