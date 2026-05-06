@@ -49,6 +49,9 @@ interface Lead {
   status: string;
   tags: string[] | null;
   segmentacao: string | null;
+  last_disparo_at: string | null;
+  last_disparo_campaign: string | null;
+  disparo_count: number | null;
 }
 
 export function DisparoEmMassa() {
@@ -62,6 +65,7 @@ export function DisparoEmMassa() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedSegmentacao, setSelectedSegmentacao] = useState<string>("all");
+  const [disparoFilter, setDisparoFilter] = useState<string>("all"); // all | never | older_30 | older_7
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableSegmentacoes, setAvailableSegmentacoes] = useState<string[]>([]);
@@ -90,7 +94,7 @@ export function DisparoEmMassa() {
   // Filtrar leads quando filtros mudarem
   useEffect(() => {
     filterLeads();
-  }, [leads, searchTerm, selectedStatus, selectedTag, selectedSegmentacao]);
+  }, [leads, searchTerm, selectedStatus, selectedTag, selectedSegmentacao, disparoFilter]);
 
   // Check for active campaigns on mount
   useEffect(() => {
@@ -193,7 +197,7 @@ export function DisparoEmMassa() {
 
         const { data: batch, error } = await supabase
           .from("leads")
-          .select("id, name, telefone, phone, email, status, tags, segmentacao")
+          .select("id, name, telefone, phone, email, status, tags, segmentacao, last_disparo_at, last_disparo_campaign, disparo_count")
           .eq("company_id", companyId)
           .or("telefone.not.is.null,phone.not.is.null")
           .range(from, to);
@@ -270,6 +274,19 @@ export function DisparoEmMassa() {
       filtered = filtered.filter(
         (lead) => lead.segmentacao === selectedSegmentacao
       );
+    }
+
+    // Filtro por histórico de disparo
+    if (disparoFilter !== "all") {
+      const now = Date.now();
+      filtered = filtered.filter((lead) => {
+        const last = lead.last_disparo_at ? new Date(lead.last_disparo_at).getTime() : null;
+        if (disparoFilter === "never") return !last;
+        if (disparoFilter === "received") return !!last;
+        if (disparoFilter === "older_7") return !last || (now - last) > 7 * 86400000;
+        if (disparoFilter === "older_30") return !last || (now - last) > 30 * 86400000;
+        return true;
+      });
     }
 
     setFilteredLeads(filtered);
@@ -605,6 +622,23 @@ export function DisparoEmMassa() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Histórico de Disparo */}
+              <div className="space-y-2">
+                <Label>Histórico de disparo</Label>
+                <Select value={disparoFilter} onValueChange={setDisparoFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="never">Nunca recebeu disparo</SelectItem>
+                    <SelectItem value="received">Já recebeu disparo</SelectItem>
+                    <SelectItem value="older_7">Sem disparo há +7 dias</SelectItem>
+                    <SelectItem value="older_30">Sem disparo há +30 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Estatísticas */}
@@ -667,6 +701,15 @@ export function DisparoEmMassa() {
                         <div className="text-sm text-muted-foreground truncate">
                           {lead.telefone || lead.phone || "Sem telefone"}
                         </div>
+                        {lead.last_disparo_at ? (
+                          <div className="text-xs text-amber-600 dark:text-amber-400 mt-0.5 truncate">
+                            Último disparo: {new Date(lead.last_disparo_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                            {lead.last_disparo_campaign ? ` · ${lead.last_disparo_campaign}` : ""}
+                            {lead.disparo_count && lead.disparo_count > 1 ? ` (${lead.disparo_count}x)` : ""}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-muted-foreground/70 mt-0.5">Nunca recebeu disparo</div>
+                        )}
                       </div>
                       <div className="flex gap-2 flex-shrink-0">
                         {lead.tags && lead.tags.length > 0 && (
