@@ -54,6 +54,83 @@ function inferConversationProvider(row: any) {
   return 'meta';
 }
 
+function toNumber(value: any) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function readTemplateMetric(point: any, metric: 'sent' | 'delivered' | 'read' | 'clicked' | 'cost') {
+  const aliases = [metric, `${metric}_count`, `messages_${metric}`, `marketing_messages_${metric}`];
+  let total = aliases.reduce((sum, key) => sum + toNumber(point?.[key]), 0);
+
+  if (metric === 'cost' && Array.isArray(point?.cost)) {
+    total += point.cost.reduce((sum: number, item: any) => sum + toNumber(item?.value ?? item?.amount ?? item?.cost), 0);
+  }
+
+  if (Array.isArray(point?.metrics)) {
+    total += point.metrics.reduce((sum: number, item: any) => {
+      const name = String(item?.metric_type || item?.name || item?.metric || '').toLowerCase();
+      return name.includes(metric) ? sum + toNumber(item?.value ?? item?.count) : sum;
+    }, 0);
+  }
+
+  return total;
+}
+
+function templatePointDay(point: any, fallback?: any) {
+  const raw = point?.start ?? point?.date ?? fallback;
+  if (!raw) return null;
+  if (typeof raw === 'string' && raw.includes('-')) return raw.slice(0, 10);
+  const epoch = toNumber(raw);
+  if (!epoch) return null;
+  return new Date((epoch > 9_999_999_999 ? epoch : epoch * 1000)).toISOString().split('T')[0];
+}
+
+function summarizeTemplateAnalytics(payloads: any[], templateIdToName: Record<string, string>) {
+  const byName: Record<string, { sent: number; delivered: number; read: number; clicked: number; cost: number }> = {};
+  const byDate: Record<string, { read: number; delivered: number }> = {};
+  const totals = { sent: 0, delivered: 0, read: 0, clicked: 0, cost: 0 };
+
+  for (const payload of payloads || []) {
+    const rows = payload?.data || payload?.template_analytics?.data || payload?.template_analytics || [];
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const templateId = String(row?.template_id || row?.id || '');
+      const templateName = String(row?.template_name || row?.name || templateIdToName[templateId] || templateId || 'template');
+      const points = row?.data_points || row?.data || row?.values || [row];
+
+      if (!byName[templateName]) byName[templateName] = { sent: 0, delivered: 0, read: 0, clicked: 0, cost: 0 };
+
+      for (const point of Array.isArray(points) ? points : [points]) {
+        const sent = readTemplateMetric(point, 'sent');
+        const delivered = readTemplateMetric(point, 'delivered');
+        const read = readTemplateMetric(point, 'read');
+        const clicked = readTemplateMetric(point, 'clicked');
+        const cost = readTemplateMetric(point, 'cost');
+
+        byName[templateName].sent += sent;
+        byName[templateName].delivered += delivered;
+        byName[templateName].read += read;
+        byName[templateName].clicked += clicked;
+        byName[templateName].cost += cost;
+        totals.sent += sent;
+        totals.delivered += delivered;
+        totals.read += read;
+        totals.clicked += clicked;
+        totals.cost += cost;
+
+        const day = templatePointDay(point, row?.start);
+        if (day) {
+          if (!byDate[day]) byDate[day] = { read: 0, delivered: 0 };
+          byDate[day].read += read;
+          byDate[day].delivered += delivered;
+        }
+      }
+    }
+  }
+
+  return { byName, byDate, totals };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -208,14 +285,14 @@ serve(async (req) => {
     });
 
     // Converter para array ordenado
-    const chartData = Object.entries(dailyData)
+    let chartData = Object.entries(dailyData)
       .map(([date, data]) => ({ date, ...data }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
     // === Consolidar campanhas recentes direto dos disparos e logs ===
     const { data: recentCampaigns, error: campaignsError } = await supabase
       .from('disparo_campaigns')
-      .select('id, campaign_name, sent_count, error_count, created_at, completed_at')
+      .select('id, campaign_name, template_name, sent_count, error_count, created_at, completed_at')
       .eq('company_id', companyId)
       .gte('created_at', dateStart.toISOString())
       .lte('created_at', dateEnd.toISOString())
@@ -224,11 +301,12 @@ serve(async (req) => {
 
     if (campaignsError) console.error('Erro ao buscar campanhas:', campaignsError);
 
-    const campaigns = (recentCampaigns || []).map((campaign: any) => {
+    let campaigns = (recentCampaigns || []).map((campaign: any) => {
       const campaignLogs = logs.filter((log: any) => String(log.campaign_id || '') === String(campaign.id));
       return {
         id: campaign.id,
         campaign_name: campaign.campaign_name,
+        template_name: campaign.template_name,
         total_sent: campaignLogs.length || Number(campaign.sent_count || 0),
         total_delivered: campaignLogs.filter((log: any) => log.status === 'delivered' || log.status === 'read').length || Number(campaign.sent_count || 0),
         total_read: campaignLogs.filter((log: any) => log.status === 'read').length,
@@ -243,14 +321,19 @@ serve(async (req) => {
     // === Buscar métricas oficiais da Meta API (mesmas do WhatsApp Manager) ===
     let metaAnalytics: any = null;
     let metaPricing: any = null;
+    let metaTemplateAnalytics: any[] = [];
+    let templateOfficial = summarizeTemplateAnalytics([], {});
     let metaOfficial: {
       messages_sent: number;
       messages_delivered: number;
+      messages_read: number;
+      messages_clicked: number;
       messages_received: number;
       paid_delivered: number;
       free_delivered: number;
       total_cost: number;
       by_category: Record<string, { delivered: number; cost: number }>;
+      by_template: Record<string, { sent: number; delivered: number; read: number; clicked: number; cost: number }>;
     } | null = null;
 
     const { data: connection } = await supabase
@@ -325,19 +408,80 @@ serve(async (req) => {
           else paidDelivered += vol;
         }
 
+        // 3) Template Analytics é a fonte oficial da Meta para leituras/clicks de templates.
+        const usedTemplateNames = [...new Set([
+          ...campaigns.map((campaign: any) => campaign.template_name || campaign.campaign_name),
+          ...logs.map((log: any) => log.template_name),
+        ].filter(Boolean).map(String))];
+        const { data: templateRows } = usedTemplateNames.length
+          ? await supabase
+            .from('whatsapp_templates')
+            .select('meta_template_id, name')
+            .eq('company_id', companyId)
+            .in('name', usedTemplateNames)
+          : { data: [] } as any;
+        const templateIdToName = Object.fromEntries((templateRows || []).map((template: any) => [String(template.meta_template_id), String(template.name)]));
+        const templateIds = (templateRows || []).map((template: any) => template.meta_template_id).filter(Boolean);
+
+        for (let i = 0; i < templateIds.length; i += 10) {
+          const chunk = templateIds.slice(i, i + 10);
+          const templateUrl = `${META_API_BASE_URL}/${META_API_VERSION}/${connection.meta_business_account_id}/template_analytics?start=${startSec}&end=${endSec}&granularity=daily&metric_types=sent,delivered,read,clicked,cost&template_ids=[${chunk.join(',')}]`;
+          const templateRes = await fetch(templateUrl, {
+            headers: { 'Authorization': `Bearer ${connection.meta_access_token}` }
+          });
+
+          if (templateRes.ok) {
+            metaTemplateAnalytics.push(await templateRes.json());
+          } else {
+            const errTxt = await templateRes.text();
+            console.log('Meta template analytics falhou:', templateRes.status, errTxt.substring(0, 200));
+          }
+        }
+
+        templateOfficial = summarizeTemplateAnalytics(metaTemplateAnalytics, templateIdToName);
+
+        if (templateOfficial.totals.read > metrics.total_read) {
+          metrics.total_read = templateOfficial.totals.read;
+          metrics.read_rate = metrics.total_delivered > 0 ? Math.round((metrics.total_read / metrics.total_delivered) * 100) || 0 : 0;
+
+          for (const [day, values] of Object.entries(templateOfficial.byDate)) {
+            if (!dailyData[day]) dailyData[day] = { sent: 0, delivered: 0, read: 0, failed: 0 };
+            dailyData[day].read = Math.max(dailyData[day].read, values.read);
+            dailyData[day].delivered = Math.max(dailyData[day].delivered, values.delivered || dailyData[day].delivered);
+          }
+        }
+
+        campaigns = campaigns.map((campaign: any) => {
+          const officialTemplate = campaign.template_name ? templateOfficial.byName[String(campaign.template_name)] : null;
+          if (!officialTemplate) return campaign;
+          return {
+            ...campaign,
+            total_read: Math.max(campaign.total_read, officialTemplate.read),
+            total_delivered: Math.max(campaign.total_delivered, officialTemplate.delivered),
+            estimated_cost: campaign.estimated_cost || officialTemplate.cost,
+          };
+        });
+
         metaOfficial = {
-          messages_sent: sent,
-          messages_delivered: delivered,
+          messages_sent: Math.max(sent, templateOfficial.totals.sent),
+          messages_delivered: Math.max(delivered, templateOfficial.totals.delivered),
+          messages_read: templateOfficial.totals.read,
+          messages_clicked: templateOfficial.totals.clicked,
           messages_received: 0, // analytics endpoint nem sempre traz received; mantemos 0 e exibimos quando vier
           paid_delivered: paidDelivered,
           free_delivered: freeDelivered,
-          total_cost: totalCost,
+          total_cost: totalCost || templateOfficial.totals.cost,
           by_category: byCategory,
+          by_template: templateOfficial.byName,
         };
       } catch (e) {
         console.log('Erro consolidando Meta oficial:', e);
       }
     }
+
+    chartData = Object.entries(dailyData)
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return new Response(
       JSON.stringify({
