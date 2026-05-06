@@ -349,7 +349,9 @@ serve(async (req) => {
         metrics,
         chart_data: chartData,
         campaigns,
-        meta_analytics: metaAnalytics
+        meta_analytics: metaAnalytics,
+        meta_pricing: metaPricing,
+        meta_official: metaOfficial,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
