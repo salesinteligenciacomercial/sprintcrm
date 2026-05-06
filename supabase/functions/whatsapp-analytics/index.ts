@@ -301,7 +301,7 @@ serve(async (req) => {
 
     if (campaignsError) console.error('Erro ao buscar campanhas:', campaignsError);
 
-    const campaigns = (recentCampaigns || []).map((campaign: any) => {
+    let campaigns = (recentCampaigns || []).map((campaign: any) => {
       const campaignLogs = logs.filter((log: any) => String(log.campaign_id || '') === String(campaign.id));
       return {
         id: campaign.id,
@@ -451,6 +451,17 @@ serve(async (req) => {
           }
         }
 
+        campaigns = campaigns.map((campaign: any) => {
+          const officialTemplate = campaign.template_name ? templateOfficial.byName[String(campaign.template_name)] : null;
+          if (!officialTemplate) return campaign;
+          return {
+            ...campaign,
+            total_read: Math.max(campaign.total_read, officialTemplate.read),
+            total_delivered: Math.max(campaign.total_delivered, officialTemplate.delivered),
+            estimated_cost: campaign.estimated_cost || officialTemplate.cost,
+          };
+        });
+
         metaOfficial = {
           messages_sent: Math.max(sent, templateOfficial.totals.sent),
           messages_delivered: Math.max(delivered, templateOfficial.totals.delivered),
@@ -467,6 +478,10 @@ serve(async (req) => {
         console.log('Erro consolidando Meta oficial:', e);
       }
     }
+
+    chartData = Object.entries(dailyData)
+      .map(([date, data]) => ({ date, ...data }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return new Response(
       JSON.stringify({
