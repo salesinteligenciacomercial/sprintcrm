@@ -69,11 +69,14 @@ interface Analytics {
   meta_official?: {
     messages_sent: number;
     messages_delivered: number;
+    messages_read: number;
+    messages_clicked: number;
     messages_received: number;
     paid_delivered: number;
     free_delivered: number;
     total_cost: number;
     by_category: Record<string, { delivered: number; cost: number }>;
+    by_template: Record<string, { sent: number; delivered: number; read: number; clicked: number; cost: number }>;
   } | null;
 }
 
@@ -356,11 +359,11 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
               Dados Oficiais Meta (WhatsApp Manager)
             </CardTitle>
             <CardDescription>
-              Mesmas métricas que aparecem no painel oficial do WhatsApp Business — entregues, pagas, grátis e custo real por categoria.
+              Mesmas métricas que aparecem no painel oficial do WhatsApp Business — entregues, lidas, cliques e custo real por categoria.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
               <div className="rounded-lg border p-3">
                 <p className="text-xs text-muted-foreground">Enviadas (Meta)</p>
                 <p className="text-xl font-bold">{analytics.meta_official.messages_sent}</p>
@@ -368,6 +371,14 @@ export function WhatsAppDashboard({ companyId }: DashboardProps) {
               <div className="rounded-lg border p-3">
                 <p className="text-xs text-muted-foreground">Entregues (Meta)</p>
                 <p className="text-xl font-bold">{analytics.meta_official.messages_delivered}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground">Lidas (Meta)</p>
+                <p className="text-xl font-bold">{analytics.meta_official.messages_read}</p>
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs text-muted-foreground">Cliques</p>
+                <p className="text-xl font-bold">{analytics.meta_official.messages_clicked}</p>
               </div>
               <div className="rounded-lg border p-3">
                 <p className="text-xs text-muted-foreground">Pagas entregues</p>
