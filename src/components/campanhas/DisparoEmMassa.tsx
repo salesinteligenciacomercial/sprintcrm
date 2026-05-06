@@ -197,7 +197,7 @@ export function DisparoEmMassa() {
 
         const { data: batch, error } = await supabase
           .from("leads")
-          .select("id, name, telefone, phone, email, status, tags, segmentacao")
+          .select("id, name, telefone, phone, email, status, tags, segmentacao, last_disparo_at, last_disparo_campaign, disparo_count")
           .eq("company_id", companyId)
           .or("telefone.not.is.null,phone.not.is.null")
           .range(from, to);
