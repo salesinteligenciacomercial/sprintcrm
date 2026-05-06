@@ -470,7 +470,16 @@ export const loadAllUniqueConversations = async (companyId: string): Promise<Con
       // ⚡ CRÍTICO: Incluir assignedUser do banco para manter filtro "Transferidos"
       const telKey = String(telefone).replace(/^ig_/, '').replace(/[^0-9]/g, '');
       const assignedUserData = assignmentsMap.get(telKey);
-      const leadInfo = leadsNamesMap.get(telKey);
+      let leadInfo = leadsNamesMap.get(telKey);
+      if (!leadInfo) {
+        // Busca aproximada (mesmo padrão usado para enriquecer bestNamesMap)
+        for (const [phoneKey, info] of leadsNamesMap.entries()) {
+          if (phoneKey === telKey || phoneKey.endsWith(telKey) || telKey.endsWith(phoneKey)) {
+            leadInfo = info;
+            break;
+          }
+        }
+      }
 
       // Avatar: usar foto do lead se disponível
       const avatarUrl = leadInfo?.profilePictureUrl
@@ -487,7 +496,10 @@ export const loadAllUniqueConversations = async (companyId: string): Promise<Con
         lastMessage: message.content,
         unread: 0,
         messages: [message], // Apenas última mensagem inicialmente
-        tags: [],
+        tags: leadInfo?.tags || [],
+        funnelStage: leadInfo?.stage || undefined,
+        valor: leadInfo?.value != null ? `R$ ${Number(leadInfo.value).toLocaleString('pt-BR')}` : undefined,
+        leadId: leadInfo?.leadId || undefined,
         phoneNumber: telefone,
         isGroup,
         avatarUrl,
