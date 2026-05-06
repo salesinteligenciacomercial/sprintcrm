@@ -54,6 +54,83 @@ function inferConversationProvider(row: any) {
   return 'meta';
 }
 
+function toNumber(value: any) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function readTemplateMetric(point: any, metric: 'sent' | 'delivered' | 'read' | 'clicked' | 'cost') {
+  const aliases = [metric, `${metric}_count`, `messages_${metric}`, `marketing_messages_${metric}`];
+  let total = aliases.reduce((sum, key) => sum + toNumber(point?.[key]), 0);
+
+  if (metric === 'cost' && Array.isArray(point?.cost)) {
+    total += point.cost.reduce((sum: number, item: any) => sum + toNumber(item?.value ?? item?.amount ?? item?.cost), 0);
+  }
+
+  if (Array.isArray(point?.metrics)) {
+    total += point.metrics.reduce((sum: number, item: any) => {
+      const name = String(item?.metric_type || item?.name || item?.metric || '').toLowerCase();
+      return name.includes(metric) ? sum + toNumber(item?.value ?? item?.count) : sum;
+    }, 0);
+  }
+
+  return total;
+}
+
+function templatePointDay(point: any, fallback?: any) {
+  const raw = point?.start ?? point?.date ?? fallback;
+  if (!raw) return null;
+  if (typeof raw === 'string' && raw.includes('-')) return raw.slice(0, 10);
+  const epoch = toNumber(raw);
+  if (!epoch) return null;
+  return new Date((epoch > 9_999_999_999 ? epoch : epoch * 1000)).toISOString().split('T')[0];
+}
+
+function summarizeTemplateAnalytics(payloads: any[], templateIdToName: Record<string, string>) {
+  const byName: Record<string, { sent: number; delivered: number; read: number; clicked: number; cost: number }> = {};
+  const byDate: Record<string, { read: number; delivered: number }> = {};
+  const totals = { sent: 0, delivered: 0, read: 0, clicked: 0, cost: 0 };
+
+  for (const payload of payloads || []) {
+    const rows = payload?.data || payload?.template_analytics?.data || payload?.template_analytics || [];
+    for (const row of Array.isArray(rows) ? rows : []) {
+      const templateId = String(row?.template_id || row?.id || '');
+      const templateName = String(row?.template_name || row?.name || templateIdToName[templateId] || templateId || 'template');
+      const points = row?.data_points || row?.data || row?.values || [row];
+
+      if (!byName[templateName]) byName[templateName] = { sent: 0, delivered: 0, read: 0, clicked: 0, cost: 0 };
+
+      for (const point of Array.isArray(points) ? points : [points]) {
+        const sent = readTemplateMetric(point, 'sent');
+        const delivered = readTemplateMetric(point, 'delivered');
+        const read = readTemplateMetric(point, 'read');
+        const clicked = readTemplateMetric(point, 'clicked');
+        const cost = readTemplateMetric(point, 'cost');
+
+        byName[templateName].sent += sent;
+        byName[templateName].delivered += delivered;
+        byName[templateName].read += read;
+        byName[templateName].clicked += clicked;
+        byName[templateName].cost += cost;
+        totals.sent += sent;
+        totals.delivered += delivered;
+        totals.read += read;
+        totals.clicked += clicked;
+        totals.cost += cost;
+
+        const day = templatePointDay(point, row?.start);
+        if (day) {
+          if (!byDate[day]) byDate[day] = { read: 0, delivered: 0 };
+          byDate[day].read += read;
+          byDate[day].delivered += delivered;
+        }
+      }
+    }
+  }
+
+  return { byName, byDate, totals };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
