@@ -622,6 +622,23 @@ export function DisparoEmMassa() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Histórico de Disparo */}
+              <div className="space-y-2">
+                <Label>Histórico de disparo</Label>
+                <Select value={disparoFilter} onValueChange={setDisparoFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="never">Nunca recebeu disparo</SelectItem>
+                    <SelectItem value="received">Já recebeu disparo</SelectItem>
+                    <SelectItem value="older_7">Sem disparo há +7 dias</SelectItem>
+                    <SelectItem value="older_30">Sem disparo há +30 dias</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Estatísticas */}
