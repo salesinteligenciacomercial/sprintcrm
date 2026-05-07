@@ -7126,6 +7126,8 @@ function Conversas() {
       setMeetingNotes("");
       setEnviarConfirmacaoReuniao(true); // Reset para padrão
       setEnviarLembreteReuniao(true); // Reset para padrão
+      setConvidarPorEmailReuniao(false);
+      setEmailConvidadoReuniao("");
       setHorasAntecedenciaReuniaoHoras("0"); // Reset para padrão
       setHorasAntecedenciaReuniaoMinutos("0"); // Reset para padrão
 
