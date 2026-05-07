@@ -2244,6 +2244,7 @@ function Conversas() {
   const [meetingAgendaIdSelecionada, setMeetingAgendaIdSelecionada] = useState<string>("");
   const [enviarConfirmacaoReuniao, setEnviarConfirmacaoReuniao] = useState(true); // ⚡ Enviar confirmação por padrão
   const [enviarLembreteReuniao, setEnviarLembreteReuniao] = useState(true); // ⚡ Enviar lembrete por padrão
+  const [meetingLembretesAntecipados, setMeetingLembretesAntecipados] = useState<LembreteAntecipado[]>([]);
   const [convidarPorEmailReuniao, setConvidarPorEmailReuniao] = useState(false); // ⚡ Convidar via Google Calendar
   const [emailConvidadoReuniao, setEmailConvidadoReuniao] = useState(""); // ⚡ E-mail do convidado
   const [horasAntecedenciaReuniaoHoras, setHorasAntecedenciaReuniaoHoras] = useState("1"); // ⚡ 1 hora padrão
