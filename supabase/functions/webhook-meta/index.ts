@@ -865,6 +865,25 @@ serve(async (req) => {
                 .eq('id', existingLead.id);
             }
 
+            // 🏷️ Detectar se o nome atual do lead é placeholder (gerado a partir do telefone)
+            const metaContactName = (msg.contact_name && String(msg.contact_name).trim()) || '';
+            const isRealMetaName = metaContactName && metaContactName !== formattedNumber && metaContactName !== msg.from;
+            const currentLeadName = String(existingLead?.name || '').trim();
+            const isPlaceholderLeadName = !currentLeadName
+              || currentLeadName === formattedNumber
+              || /^\d{8,}$/.test(currentLeadName)
+              || /^Contato\s*\(?\d/i.test(currentLeadName)
+              || /^Lead\s/i.test(currentLeadName);
+
+            // Se Meta enviou um nome real e o lead tem nome placeholder, atualizar o lead
+            if (isRealMetaName && existingLead?.id && isPlaceholderLeadName) {
+              console.log('🏷️ Atualizando nome do lead com nome do WhatsApp:', metaContactName);
+              await supabase
+                .from('leads')
+                .update({ name: metaContactName })
+                .eq('id', existingLead.id);
+            }
+
             // 🔥 PROCESSAR REFERRAL (Click-to-WhatsApp Ads)
             let leadId = existingLead?.id || null;
             const referral = msg.referral;
@@ -940,7 +959,7 @@ serve(async (req) => {
               fromme: msg.is_from_me || false,
               company_id: company_id,
               lead_id: leadId,
-              nome_contato: existingLead?.name || msg.contact_name || formattedNumber,
+              nome_contato: (isRealMetaName ? metaContactName : null) || (!isPlaceholderLeadName ? currentLeadName : null) || metaContactName || currentLeadName || formattedNumber,
               midia_url: msg.media_url || null,
               arquivo_nome: msg.file_name || null,
               is_group: false,
