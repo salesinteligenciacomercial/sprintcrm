@@ -142,7 +142,10 @@ serve(async (req) => {
       console.warn(`[transcrever-audio] resultado inválido recebido (${JSON.stringify(text)}), tentando gpt-4o-transcribe`);
       result = await transcribeWithOpenAI(audioBlob, ext, language, 'gpt-4o-transcribe').catch(async (error) => {
         console.warn(`[transcrever-audio] gpt-4o-transcribe falhou, tentando fallback Lovable AI: ${error?.message || error}`);
-        return await transcribeWithLovableAI(audioBlob, language);
+        return await transcribeWithLovableAI(audioBlob, language).catch((fallbackError) => {
+          console.warn(`[transcrever-audio] fallback Lovable AI falhou: ${fallbackError?.message || fallbackError}`);
+          return { text: undefined };
+        });
       });
       text = result.text;
     }
