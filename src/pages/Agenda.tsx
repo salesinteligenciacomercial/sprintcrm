@@ -1858,13 +1858,18 @@ export default function Agenda() {
                   const dataHoraInicio = new Date(compromissoAtual.data_hora_inicio);
                   const dataHoraFim = new Date(compromissoAtual.data_hora_fim);
                   const tipoServicoFormatado = compromissoAtual.tipo_servico ? compromissoAtual.tipo_servico.charAt(0).toUpperCase() + compromissoAtual.tipo_servico.slice(1) : 'Compromisso';
-                  const mensagemCancelamento = `❌ *Compromisso Cancelado*\n\n` + `Olá ${leadData.name}! Infelizmente seu compromisso foi cancelado.\n\n` + `📅 *Data:* ${format(dataHoraInicio, "dd/MM/yyyy", {
+                  const profCanc = compromissoAtual.profissional;
+                  const profissionalLinhaCanc = profCanc?.nome
+                    ? `👨‍⚕️ *Profissional:* ${profCanc.nome}${profCanc.especialidade ? ` (${profCanc.especialidade})` : ''}\n`
+                    : '';
+                  const empresaLinhaCanc = companyNome ? `🏢 *Empresa:* ${companyNome}\n` : '';
+                  const mensagemCancelamento = `❌ *Compromisso Cancelado*\n\n` + `Olá ${leadData.name}! Infelizmente seu compromisso foi cancelado.\n\n` + empresaLinhaCanc + `📅 *Data:* ${format(dataHoraInicio, "dd/MM/yyyy", {
                     locale: ptBR
                   })}\n` + `🕐 *Horário:* ${format(dataHoraInicio, "HH:mm", {
                     locale: ptBR
                   })} às ${format(dataHoraFim, "HH:mm", {
                     locale: ptBR
-                  })}\n` + `📋 *Tipo:* ${tipoServicoFormatado}\n` + `\n❌ *Status:* Cancelado\n\n` + `Entre em contato conosco se tiver dúvidas ou desejar reagendar.\n\n` + `_Esta é uma notificação automática de cancelamento._`;
+                  })}\n` + `📋 *Tipo:* ${tipoServicoFormatado}\n` + profissionalLinhaCanc + `\n❌ *Status:* Cancelado\n\n` + `Entre em contato conosco se tiver dúvidas ou desejar reagendar.\n\n` + `_Esta é uma notificação automática de cancelamento._`;
 
                   // Normalizar telefone
                   const normalizePhoneBR = (phone: string) => {
