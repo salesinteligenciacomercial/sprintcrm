@@ -7141,6 +7141,7 @@ function Conversas() {
       setEmailConvidadoReuniao("");
       setHorasAntecedenciaReuniaoHoras("0"); // Reset para padrão
       setHorasAntecedenciaReuniaoMinutos("0"); // Reset para padrão
+      setMeetingProfissionalId("");
 
       if (!enviarConfirmacaoReuniao) {
         toast.success("Reunião agendada e sincronizada com Agenda!");
