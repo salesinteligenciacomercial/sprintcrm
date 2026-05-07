@@ -1240,6 +1240,11 @@ export default function Agenda() {
       } else {
         compromissoData.agenda_id = null; // Explicitamente null se vazio
       }
+      // Profissional escolhido manualmente no formulário tem prioridade
+      const profissionalIdManual = formData.profissional_id?.trim();
+      if (profissionalIdManual) {
+        compromissoData.profissional_id = profissionalIdManual;
+      }
       const leadId = formData.lead_id?.trim();
       if (leadId && leadId.length > 0) {
         compromissoData.lead_id = leadId;
