@@ -39,13 +39,13 @@ function isInvalidTranscription(text: unknown, durationSeconds?: number): boolea
   return knownNoise.has(normalized) && (durationSeconds === undefined || durationSeconds >= 2);
 }
 
-async function transcribeWithOpenAI(audioBlob: Blob, ext: string, language?: string) {
+async function transcribeWithOpenAI(audioBlob: Blob, ext: string, language?: string, model = 'gpt-4o-mini-transcribe') {
   const openaiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiKey) throw new Error('OPENAI_API_KEY ausente');
 
   const formData = new FormData();
   formData.append('file', audioBlob, `audio.${ext}`);
-  formData.append('model', 'gpt-4o-mini-transcribe');
+  formData.append('model', model);
   formData.append('language', language || 'pt');
   formData.append('response_format', 'json');
 
@@ -132,12 +132,18 @@ serve(async (req) => {
     const ext = extFromMime(audioBlob.type || effectiveMime);
     console.log(`[transcrever-audio] mime=${audioBlob.type} ext=${ext} size=${audioBlob.size}`);
 
-    let result = await transcribeWithOpenAI(audioBlob, ext, language);
+    let result = await transcribeWithOpenAI(audioBlob, ext, language).catch(async (error) => {
+      console.warn(`[transcrever-audio] gpt-4o-mini-transcribe falhou, tentando whisper-1: ${error?.message || error}`);
+      return await transcribeWithOpenAI(audioBlob, ext, language, 'whisper-1');
+    });
     let text: string | undefined = result.text;
 
     if (isInvalidTranscription(text, durationSeconds)) {
-      console.warn(`[transcrever-audio] resultado inválido recebido (${JSON.stringify(text)}), tentando fallback Lovable AI`);
-      result = await transcribeWithLovableAI(audioBlob, language);
+      console.warn(`[transcrever-audio] resultado inválido recebido (${JSON.stringify(text)}), tentando gpt-4o-transcribe`);
+      result = await transcribeWithOpenAI(audioBlob, ext, language, 'gpt-4o-transcribe').catch(async (error) => {
+        console.warn(`[transcrever-audio] gpt-4o-transcribe falhou, tentando fallback Lovable AI: ${error?.message || error}`);
+        return await transcribeWithLovableAI(audioBlob, language);
+      });
       text = result.text;
     }
 
