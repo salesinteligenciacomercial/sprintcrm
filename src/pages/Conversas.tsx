@@ -2244,6 +2244,7 @@ function Conversas() {
   const [meetingAgendaIdSelecionada, setMeetingAgendaIdSelecionada] = useState<string>("");
   const [enviarConfirmacaoReuniao, setEnviarConfirmacaoReuniao] = useState(true); // ⚡ Enviar confirmação por padrão
   const [enviarLembreteReuniao, setEnviarLembreteReuniao] = useState(true); // ⚡ Enviar lembrete por padrão
+  const [meetingLembretesAntecipados, setMeetingLembretesAntecipados] = useState<LembreteAntecipado[]>([]);
   const [convidarPorEmailReuniao, setConvidarPorEmailReuniao] = useState(false); // ⚡ Convidar via Google Calendar
   const [emailConvidadoReuniao, setEmailConvidadoReuniao] = useState(""); // ⚡ E-mail do convidado
   const [horasAntecedenciaReuniaoHoras, setHorasAntecedenciaReuniaoHoras] = useState("1"); // ⚡ 1 hora padrão
@@ -7128,6 +7129,35 @@ function Conversas() {
           } else {
             console.log('✅ [LEMBRETE] Lembrete criado com sucesso!');
           }
+
+          // Criar lembretes antecipados configurados
+          const lembretesAntecipAtivos = meetingLembretesAntecipados.filter(la => la.ativo);
+          if (lembretesAntecipAtivos.length > 0) {
+            const lembretesAntecipCriar = lembretesAntecipAtivos.map(la => {
+              const dataEnvioAnt = new Date(dataHoraInicio);
+              dataEnvioAnt.setDate(dataEnvioAnt.getDate() - la.dias);
+              const horasAnt = (dataHoraInicio.getTime() - dataEnvioAnt.getTime()) / (1000 * 60 * 60);
+              return {
+                compromisso_id: compromisso.id,
+                canal: 'whatsapp',
+                horas_antecedencia: horasAnt,
+                mensagem: la.mensagem,
+                status_envio: 'pendente',
+                data_envio: dataEnvioAnt.toISOString(),
+                destinatario: 'lead',
+                telefone_responsavel: leadVinculado?.phone || leadVinculado?.telefone || null,
+                company_id: companyId,
+                tipo_lembrete: 'antecipado'
+              };
+            });
+            const { error: antecipErr } = await supabase.from('lembretes').insert(lembretesAntecipCriar);
+            if (antecipErr) {
+              console.error('❌ [LEMBRETE] Erro ao criar lembretes antecipados:', antecipErr);
+              toast.warning("Houve erro ao criar lembretes antecipados");
+            } else {
+              console.log(`✅ [LEMBRETE] ${lembretesAntecipAtivos.length} lembretes antecipados criados`);
+            }
+          }
         } catch (error) {
           console.error('❌ [LEMBRETE] Erro ao criar lembrete:', error);
         }
@@ -7141,6 +7171,7 @@ function Conversas() {
       setEmailConvidadoReuniao("");
       setHorasAntecedenciaReuniaoHoras("0"); // Reset para padrão
       setHorasAntecedenciaReuniaoMinutos("0"); // Reset para padrão
+      setMeetingLembretesAntecipados([]);
       setMeetingProfissionalId("");
 
       if (!enviarConfirmacaoReuniao) {
@@ -11154,6 +11185,14 @@ function Conversas() {
                                        </div>
                                     </div>}
                                 </div>
+
+                                {/* ⚡ LEMBRETES ANTECIPADOS */}
+                                <LembretesAntecipados
+                                  lembretes={meetingLembretesAntecipados}
+                                  onChange={setMeetingLembretesAntecipados}
+                                  dataCompromisso={meetingData && meetingHoraInicio ? `${meetingData}T${meetingHoraInicio}` : ''}
+                                  nomeCliente={leadVinculado?.name || selectedConv?.contactName || 'Cliente'}
+                                />
 
                                 {/* ⚡ CONVIDAR POR E-MAIL (GOOGLE CALENDAR) */}
                                 <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
