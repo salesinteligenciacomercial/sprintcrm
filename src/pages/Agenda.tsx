@@ -2618,11 +2618,12 @@ export default function Agenda() {
                   </>}
 
                 {/* Lembretes adicionais e convite por e-mail */}
-                {formData.lead_id && (() => {
-                  const leadSel = leads.find(l => l.id === formData.lead_id);
+                {(() => {
+                  const leadSel = formData.lead_id ? leads.find(l => l.id === formData.lead_id) : null;
                   const leadEmail = leadSel?.email;
                   const leadTel = leadSel?.phone || leadSel?.telefone;
                   return <>
+                    {formData.lead_id && (<>
                     <div className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <Label>Lembrete WhatsApp 24h antes</Label>
@@ -2642,6 +2643,7 @@ export default function Agenda() {
                       </div>
                       <Switch checked={formData.lembrete_email_24h && !!leadEmail} disabled={!leadEmail} onCheckedChange={checked => setFormData({ ...formData, lembrete_email_24h: checked })} />
                     </div>
+                    </>)}
 
                     <div className="space-y-3 p-4 border rounded-lg">
                       <div className="flex items-center justify-between">
