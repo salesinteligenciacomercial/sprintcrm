@@ -11120,6 +11120,42 @@ function Conversas() {
                                        </div>
                                     </div>}
                                 </div>
+
+                                {/* ⚡ CONVIDAR POR E-MAIL (GOOGLE CALENDAR) */}
+                                <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                                  <div className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                      <Label className="text-sm font-medium">Convidar por e-mail (Google Agenda)</Label>
+                                      <p className="text-xs text-muted-foreground">
+                                        O convidado receberá o convite nativo do Google Calendar
+                                      </p>
+                                    </div>
+                                    <Switch
+                                      checked={convidarPorEmailReuniao}
+                                      onCheckedChange={(checked) => {
+                                        setConvidarPorEmailReuniao(checked);
+                                        if (checked && !emailConvidadoReuniao && leadVinculado?.email) {
+                                          setEmailConvidadoReuniao(leadVinculado.email);
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                  {convidarPorEmailReuniao && (
+                                    <div className="space-y-1">
+                                      <Label className="text-xs">E-mail do convidado</Label>
+                                      <Input
+                                        type="email"
+                                        placeholder={leadVinculado?.email || "exemplo@email.com"}
+                                        value={emailConvidadoReuniao}
+                                        onChange={(e) => setEmailConvidadoReuniao(e.target.value)}
+                                        className="h-9"
+                                      />
+                                      {leadVinculado?.email && !emailConvidadoReuniao && (
+                                        <p className="text-xs text-muted-foreground">Padrão: e-mail do lead ({leadVinculado.email})</p>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
                                 <Button onClick={async () => {
                             // CORREÇÃO: Garantir lead antes de agendar
                             if (!leadVinculado?.id && selectedConv) {
