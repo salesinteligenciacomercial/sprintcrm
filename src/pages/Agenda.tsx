@@ -31,6 +31,7 @@ import { HorarioSeletor } from "@/components/agenda/HorarioSeletor";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AgendaDayView } from "@/components/agenda/AgendaDayView";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LembretesAntecipados, LembreteAntecipado } from "@/components/conversas/LembretesAntecipados";
 interface Lembrete {
   id: string;
   compromisso_id: string;
