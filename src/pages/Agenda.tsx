@@ -2060,6 +2060,7 @@ export default function Agenda() {
     });
     setLeadSearch("");
     setSelectedLeadName("");
+    setLembretesAntecipados([]);
   };
 
   // Limpar formulário quando fechar o dialog
