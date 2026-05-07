@@ -31,6 +31,7 @@ import { HorarioSeletor } from "@/components/agenda/HorarioSeletor";
 import { AgendaWeekView } from "@/components/agenda/AgendaWeekView";
 import { AgendaDayView } from "@/components/agenda/AgendaDayView";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LembretesAntecipados, LembreteAntecipado } from "@/components/conversas/LembretesAntecipados";
 interface Lembrete {
   id: string;
   compromisso_id: string;
@@ -366,6 +367,7 @@ export default function Agenda() {
   });
   const [profissionaisList, setProfissionaisList] = useState<Array<{ id: string; nome: string; especialidade?: string | null }>>([]);
   const [companyNome, setCompanyNome] = useState<string>("");
+  const [lembretesAntecipados, setLembretesAntecipados] = useState<LembreteAntecipado[]>([]);
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadName, setSelectedLeadName] = useState("");
 
@@ -1548,6 +1550,34 @@ export default function Agenda() {
               console.log('🔗 [LEMBRETE] Vinculado ao compromisso:', compromisso.id);
             }
 
+            // 🔔 Lembretes ANTECIPADOS configurados pelo usuário (mesmo padrão do módulo Bate-papo)
+            const lembretesAntecipAtivos = lembretesAntecipados.filter(la => la.ativo);
+            if (lembretesAntecipAtivos.length > 0) {
+              const lembretesAntecipCriar = lembretesAntecipAtivos.map((la, index) => {
+                const dataEnvioAntecipado = new Date(dataHoraInicio);
+                dataEnvioAntecipado.setDate(dataEnvioAntecipado.getDate() - la.dias);
+                return {
+                  compromisso_id: compromisso.id,
+                  canal: 'whatsapp',
+                  horas_antecedencia: la.dias * 24,
+                  data_envio: dataEnvioAntecipado.toISOString(),
+                  mensagem: la.mensagem,
+                  status_envio: 'pendente',
+                  destinatario: formData.destinatario_lembrete || 'lead',
+                  telefone_responsavel: leadSelecionado?.phone || leadSelecionado?.telefone || null,
+                  company_id: userRole.company_id,
+                  ativo: true,
+                };
+              });
+              const { error: antecipError } = await supabase.from('lembretes').insert(lembretesAntecipCriar);
+              if (antecipError) {
+                console.error('❌ [LEMBRETE] Erro ao criar lembretes antecipados:', antecipError);
+                toast.warning("Lembrete principal criado, mas houve erro nos lembretes antecipados");
+              } else {
+                console.log(`✅ [LEMBRETE] ${lembretesAntecipAtivos.length} lembrete(s) antecipado(s) criado(s)`);
+              }
+            }
+
             // 🔁 Lembretes ADICIONAIS — WhatsApp 24h antes + E-mail 24h antes
             const dataEnvio24h = new Date(dataHoraInicio.getTime() - 24 * 3600000);
             if (dataEnvio24h > new Date()) {
@@ -2058,6 +2088,7 @@ export default function Agenda() {
     });
     setLeadSearch("");
     setSelectedLeadName("");
+    setLembretesAntecipados([]);
   };
 
   // Limpar formulário quando fechar o dialog
@@ -2688,6 +2719,14 @@ export default function Agenda() {
                       </p>
                     </div>
                   </>}
+
+                {/* Lembretes Antecipados (dias antes do compromisso) */}
+                <LembretesAntecipados
+                  lembretes={lembretesAntecipados}
+                  onChange={setLembretesAntecipados}
+                  dataCompromisso={formData.data && formData.hora_inicio ? `${formData.data}T${formData.hora_inicio}` : ""}
+                  nomeCliente={(formData.lead_id ? leads.find(l => l.id === formData.lead_id)?.name : "") || "Cliente"}
+                />
 
                 {/* Lembretes adicionais e convite por e-mail */}
                 {(() => {
