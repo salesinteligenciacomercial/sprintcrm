@@ -767,6 +767,30 @@ export default function Agenda() {
       console.error('Erro ao carregar agendas:', error);
     }
   };
+  const carregarProfissionais = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profissionais')
+        .select('id, nome, especialidade')
+        .order('nome');
+      if (error) throw error;
+      setProfissionaisList((data || []) as any[]);
+    } catch (error) {
+      console.error('Erro ao carregar profissionais:', error);
+    }
+  };
+  const carregarCompanyNome = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: userRole } = await supabase.from('user_roles').select('company_id').eq('user_id', user.id).maybeSingle();
+      if (!userRole?.company_id) return;
+      const { data: company } = await supabase.from('companies').select('name').eq('id', userRole.company_id).maybeSingle();
+      if (company?.name) setCompanyNome(company.name);
+    } catch (error) {
+      console.error('Erro ao carregar nome da empresa:', error);
+    }
+  };
   const carregarLembretes = async () => {
     try {
       const {
