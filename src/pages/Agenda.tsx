@@ -367,6 +367,7 @@ export default function Agenda() {
   });
   const [profissionaisList, setProfissionaisList] = useState<Array<{ id: string; nome: string; especialidade?: string | null }>>([]);
   const [companyNome, setCompanyNome] = useState<string>("");
+  const [lembretesAntecipados, setLembretesAntecipados] = useState<LembreteAntecipado[]>([]);
   const [leadSearch, setLeadSearch] = useState("");
   const [selectedLeadName, setSelectedLeadName] = useState("");
 
