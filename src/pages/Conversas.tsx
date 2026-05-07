@@ -11186,6 +11186,14 @@ function Conversas() {
                                     </div>}
                                 </div>
 
+                                {/* ⚡ LEMBRETES ANTECIPADOS */}
+                                <LembretesAntecipados
+                                  lembretes={meetingLembretesAntecipados}
+                                  onChange={setMeetingLembretesAntecipados}
+                                  dataCompromisso={meetingData && meetingHoraInicio ? `${meetingData}T${meetingHoraInicio}` : ''}
+                                  nomeCliente={leadVinculado?.name || selectedConv?.name || 'Cliente'}
+                                />
+
                                 {/* ⚡ CONVIDAR POR E-MAIL (GOOGLE CALENDAR) */}
                                 <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
                                   <div className="flex items-center justify-between">
