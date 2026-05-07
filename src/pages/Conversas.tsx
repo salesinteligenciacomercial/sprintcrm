@@ -11033,6 +11033,28 @@ function Conversas() {
                                     <Input id="custo_estimado" type="number" step="0.01" value={meetingCustoEstimado} onChange={e => setMeetingCustoEstimado(e.target.value)} placeholder="0.00" className="h-9" />
                                   </div>
                                 </div>
+
+                                {meetingProfissionaisList.length > 0 && (
+                                  <div>
+                                    <Label>Profissional / Especialista (Opcional)</Label>
+                                    <Select value={meetingProfissionalId || "none"} onValueChange={(v) => setMeetingProfissionalId(v === "none" ? "" : v)}>
+                                      <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Selecione o profissional" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="none">Nenhum / Sem preferência</SelectItem>
+                                        {meetingProfissionaisList.map(p => (
+                                          <SelectItem key={p.id} value={p.id}>
+                                            {p.nome}{p.especialidade ? ` — ${p.especialidade}` : ''}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Aparecerá nas mensagens de confirmação e cancelamento.
+                                    </p>
+                                  </div>
+                                )}
                                 
                                 <div>
                                   <Label htmlFor="descricao">Descrição</Label>
