@@ -37,7 +37,7 @@ serve(async (req) => {
   }
 
   try {
-    const { audioUrl, audioBase64 } = await req.json();
+    const { audioUrl, audioBase64, mimeType, language } = await req.json();
 
     if (!audioUrl && !audioBase64) {
       return new Response(
@@ -54,18 +54,23 @@ serve(async (req) => {
       );
     }
 
-    // Preparar Blob do áudio
+    // Preparar Blob do áudio com MIME real (default webm — formato típico do MediaRecorder no browser)
+    const effectiveMime = (mimeType || 'audio/webm').split(';')[0].trim();
     let audioBlob: Blob;
     if (audioBase64) {
-      audioBlob = base64ToBlob(audioBase64, 'audio/ogg');
+      audioBlob = base64ToBlob(audioBase64, effectiveMime);
     } else {
-      audioBlob = await fetchAudioAsBlob(audioUrl);
+      audioBlob = await fetchAudioAsBlob(audioUrl, effectiveMime);
     }
+
+    const ext = extFromMime(audioBlob.type || effectiveMime);
+    console.log(`[transcrever-audio] mime=${audioBlob.type} ext=${ext} size=${audioBlob.size}`);
 
     // Montar FormData para Whisper
     const formData = new FormData();
-    formData.append('file', audioBlob, 'audio.ogg');
+    formData.append('file', audioBlob, `audio.${ext}`);
     formData.append('model', 'whisper-1');
+    formData.append('language', language || 'pt');
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
