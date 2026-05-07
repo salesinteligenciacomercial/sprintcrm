@@ -6929,6 +6929,7 @@ function Conversas() {
       const dataHoraInicio = new Date(`${meetingData}T${meetingHoraInicio}`);
       const duracaoMinutos = parseInt(meetingDuracao) || 30;
       const dataHoraFim = new Date(dataHoraInicio.getTime() + duracaoMinutos * 60 * 1000);
+      const emailConvidadoFinal = (emailConvidadoReuniao?.trim() || leadVinculado?.email || '').trim();
       const {
         data: compromisso,
         error
@@ -6943,10 +6944,18 @@ function Conversas() {
         tipo_servico: meetingTipoServico,
         observacoes: meetingDescricao || meetingNotes,
         status: 'agendado',
-        custo_estimado: meetingCustoEstimado ? parseFloat(meetingCustoEstimado) : null
+        custo_estimado: meetingCustoEstimado ? parseFloat(meetingCustoEstimado) : null,
+        convidar_lead_email: !!convidarPorEmailReuniao,
+        email_convidado: convidarPorEmailReuniao && emailConvidadoFinal ? emailConvidadoFinal : null
       }).select().single();
       if (error) throw error;
       console.log('✅ [COMPROMISSO] Compromisso criado com sucesso:', compromisso?.id);
+
+      // 📅 Sincronizar com Google Calendar (envia convite por e-mail se habilitado)
+      if (compromisso?.id) {
+        supabase.functions.invoke("google-calendar-event", { body: { action: "create", compromisso_id: compromisso.id } })
+          .catch(err => console.warn('⚠️ [GCAL] Falha ao sincronizar com Google Calendar:', err));
+      }
 
       // ⚡ ENVIAR MENSAGEM DE CONFIRMAÇÃO IMEDIATA
       console.log('🔍 [DEBUG-CONFIRMAÇÃO] Estado enviarConfirmacaoReuniao:', enviarConfirmacaoReuniao);
