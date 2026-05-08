@@ -60,8 +60,8 @@ export default function Maturidade() {
       {/* HEADER */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant="outline" className="text-xs">WMI · Waze Maturity Index</Badge>
-          <Badge className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground text-xs">Sales OS</Badge>
+          <Badge variant="outline" className="text-xs">GMI · GROW Maturity Index</Badge>
+          <Badge className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground text-xs">GROW OS</Badge>
         </div>
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
@@ -70,7 +70,7 @@ export default function Maturidade() {
           Maturidade Comercial
         </h1>
         <p className="text-muted-foreground mt-1 max-w-2xl">
-          Diagnóstico estratégico 360° + plano de ação executivo gerado pela IA com base nos 5 pilares do Waze Sales OS.
+          Diagnóstico estratégico 360° + plano de ação executivo gerado pela IA com base nos 5 pilares do GROW OS.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export default function Maturidade() {
           <CardContent className="p-8">
             <div className="grid md:grid-cols-2 gap-6 items-center">
               <div>
-                <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Seu WMI Score</div>
+                <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Seu GMI Score</div>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className={`text-7xl font-bold bg-gradient-to-br ${cls.color} bg-clip-text text-transparent`}>
                     {score.total_score}
@@ -195,7 +195,7 @@ export default function Maturidade() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Evolução do WMI Score</CardTitle>
+              <CardTitle className="text-base">Evolução do GMI Score</CardTitle>
               <CardDescription>Histórico de avaliações geradas.</CardDescription>
             </CardHeader>
             <CardContent>
