@@ -147,7 +147,7 @@ Para cada um: causa-raiz + perda em R$/leads/mês + qual módulo GROW resolve.
 Para cada pilar fraco, escreva 3-5 ações ESPECÍFICAS, com:
 - Número-meta (ex: "passar de 5 para 30 prospecções/dia")
 - KPI de medição
-- **Módulo Waze recomendado** (Prospecção, Processos Comerciais, Funil, Conversas, Discador, IA, Analytics, Gamificação)
+- **Módulo GROW recomendado** (Prospecção, Processos Comerciais, Funil, Conversas, Discador, IA, Analytics, Gamificação)
 
 ## 📊 5. Metas de Recuperação no Prazo (${prazoMeses} meses)
 Tabela: Métrica | Hoje | Mês 1 | Mês ${Math.ceil(prazoMeses/2)} | Mês ${prazoMeses}
