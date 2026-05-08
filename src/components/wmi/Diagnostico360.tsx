@@ -346,6 +346,9 @@ export function Diagnostico360() {
             })()}
           </div>
 
+          {/* === Time comercial — custo, produção e ROI === */}
+          <TimeComercialInputs dores={dores} setDores={setDores} />
+
 
           <div className="flex justify-between pt-2 gap-2">
             <Button variant="outline" onClick={() => setStep("intro")} className="gap-2">
