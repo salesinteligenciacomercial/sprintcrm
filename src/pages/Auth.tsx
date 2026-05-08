@@ -269,8 +269,8 @@ export default function Auth() {
   return <div className="flex min-h-screen items-center justify-center bg-gradient-subtle p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="space-y-1 text-center">
-          <img src="/logo-waze.png" alt="Waze Platform" className="mx-auto mb-4 h-16 w-16 object-contain" />
-          <CardTitle className="text-2xl font-bold">WAZE CRM</CardTitle>
+          <img src="/logo-waze.png" alt="GROW OS" className="mx-auto mb-4 h-16 w-16 object-contain" />
+          <CardTitle className="text-2xl font-bold">GROW OS</CardTitle>
           <CardDescription>Sistema inteligente de gestão comercial</CardDescription>
         </CardHeader>
         <CardContent>
