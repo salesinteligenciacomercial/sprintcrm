@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const size = Number((obj.metadata as any)?.size || 0);
+      const size = Number((obj as any).size || 0);
       totalFiles++;
       totalBytes += size;
 
