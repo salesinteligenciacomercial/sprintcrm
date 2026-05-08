@@ -289,6 +289,10 @@ export default function Prospeccao() {
               <div className="mt-4">
                 <ManagerCommandCenter />
               </div>
+            ) : activeTab === "performance" ? (
+              <div className="mt-4">
+                <PerformanceHubPanel meta={0} />
+              </div>
             ) : activeTab === "arena" ? (
               <div className="space-y-6 mt-4">
                 <WeeklyLeaderboard companyId={companyId} currentUserId={userId} />
