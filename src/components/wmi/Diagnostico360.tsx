@@ -689,6 +689,9 @@ function ResultadoDiagnostico({
       {/* === IMPACTO FINANCEIRO EXPANDIDO — risco, 4 escalas, custos invisíveis, cenários e CTA === */}
       <ImpactoFinanceiroExpandido result={result} />
 
+      {/* === ANÁLISE DO TIME COMERCIAL — custo x produção x ROI === */}
+      <TimeComercialResultCard result={result} />
+
       {/* ALAVANCAS - Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
         {alavancas.map((a) => {
