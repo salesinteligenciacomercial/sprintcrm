@@ -183,7 +183,7 @@ Pelo menos 3 frases curtas e diretas que reforcem urgência (ex: "O problema nã
 REGRAS OBRIGATÓRIAS:
 - Use os VALORES REAIS do Revenue Leak — nunca diga "estima-se", "considere", "talvez".
 - Linguagem de consultor sênior + tom agressivo de urgência financeira.
-- Toda recomendação deve apontar PARA UM MÓDULO específico do sistema Waze.
+- Toda recomendação deve apontar PARA UM MÓDULO específico do sistema GROW.
 - O prazo é ${prazoMeses} meses (NÃO use "90 dias" se o prazo for diferente).
 - Adapte o discurso ao pior pilar: prospecção → falta de volume; conversão → desperdício; processo → desorganização; gestão → imprevisibilidade.`;
       payload = {
