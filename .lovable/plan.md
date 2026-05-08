@@ -1,56 +1,85 @@
-## Objetivo
+# Performance OS — Reforma do módulo Prospecção
 
-Transformar o card "Impacto Financeiro / Custo da Inação" (aba Diagnóstico 360°) em uma **calculadora editável em tempo real** — sem precisar refazer todo o diagnóstico para testar cenários diferentes.
+Objetivo: sair do "painel administrativo" e virar **central de performance comercial** com foco diário, pressão saudável e dopamina (streak, badges, evolução).
 
-## O que muda
+Visível para todos os usuários do módulo. Metas vêm de `commercial_goals` com fallback derivado do Diagnóstico 360 (meta de faturamento ÷ ticket médio ÷ dias úteis).
 
-Hoje os valores são fixos, derivados do diagnóstico:
-- Faturamento atual, Meta, Ticket médio
-- Taxas de conversão (10% lead→reunião, 20% reunião→venda)
-- Multiplicador de captação fraca (1x / 2x / 3x)
-- % de recuperação esperada (30% a 70%)
+---
 
-Tudo isso passa a ser **ajustável via inputs/sliders** dentro do próprio card, com recálculo instantâneo de:
-- Perda diária / semanal / mensal / anual / 90 dias
-- Leads não gerados, reuniões perdidas, vendas perdidas
-- Cenário "se nada mudar" vs "com solução"
-- Conclusão estratégica (números do parágrafo se atualizam ao vivo)
+## Onda 1 — Topo de Foco (Meta do Dia + Card de Perda) ⚡ ESTA RODADA
 
-## UX proposto
+Bloco fixo no topo de `/prospeccao`, acima das abas, substituindo a poluição atual.
 
-Adicionar no topo do componente um painel **"⚙️ Ajustar premissas da calculadora"** (colapsável, fechado por padrão para não poluir):
+**Layout (3 colunas em desktop, stack no mobile):**
 
 ```text
-┌─ Ajustar premissas ──────────────────────── [▼] ┐
-│ Faturamento atual  [R$ 3.000     ]              │
-│ Meta de faturamento [R$ 30.000   ]              │
-│ Ticket médio        [R$ 1.000    ]              │
-│ Conv. lead→reunião  [====●==] 10%               │
-│ Conv. reunião→venda [======●] 20%               │
-│ Recuperação mín/máx [==●===●==] 30% – 70%       │
-│ Multiplicador captação  ( ) 1x ( ) 2x (●) 3x    │
-│                              [Restaurar padrão] │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────┬──────────────────────┬─────────────────────┐
+│ 🔥 META DO DIA           │ ⚠️ PERDA ESTIMADA    │ 🏆 SUA POSIÇÃO HOJE │
+│  • 100 prospecções 78%   │  Você executou 32%   │  #2 de 5            │
+│  • 20 respostas    40%   │  da rotina hoje.     │  ▲ subindo          │
+│  • 5 reuniões      60%   │  Receita não gerada: │  Faltam 2 reuniões  │
+│  • 1 venda         0%    │  R$ 1.280            │  para virar TOP 1   │
+│  ███████░░░ 45%          │  [Recuperar agora →] │                     │
+└──────────────────────────┴──────────────────────┴─────────────────────┘
 ```
 
-Os valores iniciais vêm do diagnóstico (como hoje). Qualquer edição apenas altera o **estado local** do card — não grava no banco nem invalida o diagnóstico salvo. Botão "Restaurar padrão" volta aos valores originais do diagnóstico.
+**Lógica:**
+- **Meta do Dia**: lê `commercial_goals` (period=daily, scope=user). Se vazio → deriva do Diagnóstico (`prospeccoes_dia_ideal`, `taxa_conversao`, `ticket_medio`). Progresso vem de `prospecting_logs`/`interactions`/`leads` do dia.
+- **Perda Estimada**: `(metaProspecções − executadas) × taxaConversão × ticketMédio`. Sempre destacado em vermelho/amber.
+- **Posição**: reusa `useLeaderboard` (já existe).
 
-Opcional (segunda iteração, se quiser): botão "💾 Salvar como cenário" para persistir variações nomeadas.
+**Componente novo:** `src/components/prospeccao/foco/TopoFoco.tsx` + hook `useDailyFocus.ts`.
 
-## Onde mexer
+---
 
-Único arquivo: `src/components/wmi/ImpactoFinanceiroExpandido.tsx`
+## Onda 2 — Arena Premium + Streak + Badges
 
-1. Converter as constantes derivadas (`fatAtual`, `meta`, `ticket`, taxas, multiplicador, % recuperação) em `useState` inicializados a partir de `result`.
-2. Adicionar bloco UI colapsável (usar `Collapsible` do shadcn já presente no projeto) com `Input` numérico para valores monetários e `Slider` para percentuais.
-3. Mover os cálculos (`perdaMensalAjustada`, `vendasPerdidas`, etc.) para um `useMemo` que depende dos states.
-4. Botão "Restaurar padrão" que reseta os states aos valores originais do `result`.
-5. Formatação BRL nos inputs (parse on change).
+Repaginar a aba "Ranking/Performance Hub":
 
-Sem alterações de banco, RLS, edge functions ou outros componentes.
+- **Pódio premium**: avatares grandes, glow no #1, contador de streak (🔥 7 dias), barra XP por player.
+- **Streak system**: tabela `prospecting_streaks` (user_id, current_streak, longest_streak, last_active_date). Trigger atualiza ao registrar atividade do dia.
+- **Badges desbloqueáveis** com animação `scale-in` + confete quando ganha (ex: "Maratonista — 7 dias seguidos batendo meta", "Sniper — 5 reuniões em 1 dia").
+- Animação ao bater meta diária: toast premium + som opcional (já existe `soundOn`).
 
-## Melhorias adicionais sugeridas (incluídas no escopo)
+---
 
-- Mostrar um **badge "Editado"** quando algum valor foi alterado em relação ao diagnóstico original, para o usuário lembrar que está vendo cenário simulado.
-- Permitir editar também o **horizonte de projeção** (3 / 6 / 12 meses) no cenário "com solução".
-- Adicionar campo **% de capacidade comercial usada** (visível na imagem 3) também editável.
+## Onda 3 — Hierarquia Visual Geral
+
+- Reduzir peso visual das abas secundárias (cor mais discreta).
+- Espaçamento maior entre blocos, separadores sutis.
+- Cards de KPI com tipografia em escala (número grande + rótulo pequeno).
+- Mover `ArenaTopBar`, `KillFeed` e `PlayerHeaderCard` para uma **drawer lateral colapsável** ("Modo Arena") em vez de empilhar tudo no topo.
+- Mobile: topo de foco vira carrossel swipeable.
+
+---
+
+## Onda 4 — Execução / Pressão Inteligente
+
+- Alertas contextuais no topo: *"Faltam 40 prospecções para meta do dia"*, *"Você está 2h sem registrar atividade"*.
+- Notificação às 14h se < 50% da meta diária.
+- Card "Próxima Ação" com CTA único (call-to-action) baseado no gap maior.
+- Recompensa diária ao bater 100%: moedas + animação 🎉.
+
+---
+
+## Detalhes técnicos
+
+**Arquivos a criar (Onda 1):**
+- `src/hooks/useDailyFocus.ts` — agrega meta + execução + perda.
+- `src/components/prospeccao/foco/TopoFoco.tsx` — bloco de 3 colunas.
+- `src/components/prospeccao/foco/MetaDoDiaCard.tsx`
+- `src/components/prospeccao/foco/PerdaEstimadaCard.tsx`
+- `src/components/prospeccao/foco/PosicaoHojeCard.tsx`
+
+**Arquivos a editar (Onda 1):**
+- `src/pages/Prospeccao.tsx` — inserir `<TopoFoco />` logo após `QuickActionCards` e ocultar `GoalProgressHUD` redundante.
+
+**Sem migrações nesta onda.** Migrações entram na Onda 2 (`prospecting_streaks`, `user_badges`).
+
+**Tokens de design:** uso semântico de `--primary` (verde Waze), `--destructive` para perda, `--muted-foreground` para labels. Nada de cores hardcoded.
+
+---
+
+## O que faço agora
+
+Executo **Onda 1 completa** nesta rodada (Topo de Foco). É a entrega de maior impacto psicológico e desbloqueia visualmente o resto. Confirmo quando estiver no preview e seguimos para Onda 2 na próxima mensagem.
