@@ -191,7 +191,7 @@ export function Sidebar({
       {/* Logo */}
       <div className="flex h-16 items-center justify-between px-3 border-b border-sidebar-border/50">
         {effectiveCollapsed ?
-        <img src="/logo-waze.png" alt="Waze Platform" className="h-10 w-10 object-contain mx-auto" /> :
+        <img src="/logo-waze.png" alt="GROW OS" className="h-10 w-10 object-contain mx-auto" /> :
 
         <>
             <div className="flex items-center gap-3">
