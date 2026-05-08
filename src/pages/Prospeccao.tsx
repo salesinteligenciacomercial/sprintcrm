@@ -153,7 +153,7 @@ export default function Prospeccao() {
 
   const handleRegister = () => {
     if (activeTab === "followup") setShowFollowUpForm(true);
-    else if (activeTab !== "arena") setShowForm(true);
+    else if (activeTab !== "arena" && activeTab !== "performance") setShowForm(true);
   };
 
   const handleRefreshAll = () => {
