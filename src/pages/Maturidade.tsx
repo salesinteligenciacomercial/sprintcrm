@@ -60,8 +60,8 @@ export default function Maturidade() {
       {/* HEADER */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Badge variant="outline" className="text-xs">WMI · Waze Maturity Index</Badge>
-          <Badge className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground text-xs">Sales OS</Badge>
+          <Badge variant="outline" className="text-xs">GMI · GROW Maturity Index</Badge>
+          <Badge className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground text-xs">GROW OS</Badge>
         </div>
         <h1 className="text-3xl font-bold flex items-center gap-3">
           <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
