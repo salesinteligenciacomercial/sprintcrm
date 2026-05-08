@@ -81,7 +81,7 @@ export default function Maturidade() {
           <CardContent className="p-8">
             <div className="grid md:grid-cols-2 gap-6 items-center">
               <div>
-                <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Seu WMI Score</div>
+                <div className="text-sm uppercase tracking-wider text-muted-foreground font-medium">Seu GMI Score</div>
                 <div className="flex items-baseline gap-2 mt-1">
                   <span className={`text-7xl font-bold bg-gradient-to-br ${cls.color} bg-clip-text text-transparent`}>
                     {score.total_score}
