@@ -24,6 +24,7 @@ import {
 import { useWMIRoadmap, useUpdateRoadmapItem } from "@/hooks/useWMI";
 import { PlanoIARenderer } from "./PlanoIARenderer";
 import { ImpactoFinanceiroExpandido } from "./ImpactoFinanceiroExpandido";
+import { TimeComercialInputs, TimeComercialResultCard } from "./TimeComercialAnalysis";
 import { CurvaABCEditor } from "./CurvaABCEditor";
 import { useNavigate } from "react-router-dom";
 import { useCompanySegmento } from "@/hooks/useCompanySegmento";
@@ -344,6 +345,9 @@ export function Diagnostico360() {
               );
             })()}
           </div>
+
+          {/* === Time comercial — custo, produção e ROI === */}
+          <TimeComercialInputs dores={dores} setDores={setDores} />
 
 
           <div className="flex justify-between pt-2 gap-2">
@@ -684,6 +688,9 @@ function ResultadoDiagnostico({
 
       {/* === IMPACTO FINANCEIRO EXPANDIDO — risco, 4 escalas, custos invisíveis, cenários e CTA === */}
       <ImpactoFinanceiroExpandido result={result} />
+
+      {/* === ANÁLISE DO TIME COMERCIAL — custo x produção x ROI === */}
+      <TimeComercialResultCard result={result} />
 
       {/* ALAVANCAS - Cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-3">
