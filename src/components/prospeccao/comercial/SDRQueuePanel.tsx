@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MessageCircle, Instagram, SkipForward, Check, X, Loader2, Inbox, Plus } from "lucide-react";
+import { Phone, MessageCircle, Instagram, SkipForward, Check, X, Loader2, Inbox, Plus, Tag } from "lucide-react";
 import {
   useProspectingQueues,
   useQueueStats,
@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useProspectingQueue";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { CreateQueueDialog } from "./CreateQueueDialog";
+import { AddLeadsByTagsDialog } from "./AddLeadsByTagsDialog";
 
 export function SDRQueuePanel() {
   const { userId, companyId } = usePlayerProfile();
