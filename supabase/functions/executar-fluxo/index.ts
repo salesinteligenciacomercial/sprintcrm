@@ -16,7 +16,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { flowId, leadId, conversationId, triggerType, triggerData, conversationNumber, companyId: inputCompanyId, currentNodeId, userResponse } = await req.json();
+    const { flowId, leadId, conversationId, triggerType, triggerData, conversationNumber, companyId: inputCompanyId, currentNodeId, userResponse, canal } = await req.json();
 
     console.log("🚀 Executando fluxo:", { flowId, leadId, conversationId, triggerType, currentNodeId });
 
@@ -59,6 +59,7 @@ serve(async (req) => {
       conversationNumber,
       triggerData,
       userResponse,
+      canal: canal || 'whatsapp',
     };
 
     try {
@@ -141,7 +142,7 @@ async function executeFromNode(nodeId: string, nodes: any[], edges: any[], conte
       const triggerMessage = node.data?.description || node.data?.message || node.data?.welcomeMessage;
       if (triggerMessage && context.conversationNumber) {
         console.log("📩 Enviando mensagem do trigger:", triggerMessage);
-        await sendWhatsAppMessage(supabase, context.conversationNumber, triggerMessage, context.companyId);
+        await sendChannelMessage(supabase, context.conversationNumber, triggerMessage, context.companyId, context.leadId, context.canal);
       }
       break;
     }
@@ -229,7 +230,7 @@ async function executeAction(node: any, context: any, supabase: any) {
   switch (actionType) {
     case 'enviar_mensagem':
       if (message && context.conversationNumber) {
-        await sendWhatsAppMessage(supabase, context.conversationNumber, message, context.companyId);
+        await sendChannelMessage(supabase, context.conversationNumber, message, context.companyId, context.leadId, context.canal);
       }
       break;
 
@@ -338,7 +339,7 @@ async function executeIA(node: any, context: any, supabase: any) {
   });
 
   if (iaResponse?.response && mode === "auto" && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId, context.leadId, context.canal);
   }
 
   context.lastIAResponse = iaResponse?.response;
@@ -376,7 +377,7 @@ async function executeAIAgent(node: any, context: any, supabase: any) {
   });
 
   if (iaResponse?.response && mode !== "assisted" && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId, context.leadId, context.canal);
   }
 
   context.lastIAResponse = iaResponse?.response;
@@ -483,7 +484,7 @@ async function executeInteractiveMenu(node: any, context: any, supabase: any, fl
     (buttons || []).forEach((btn: any, i: number) => {
       textMenu += `${i + 1}️⃣ ${btn.label}\n`;
     });
-    await sendWhatsAppMessage(supabase, context.conversationNumber, textMenu, context.companyId, context.leadId);
+    await sendChannelMessage(supabase, context.conversationNumber, textMenu, context.companyId, context.leadId, context.canal);
   }
 
   // Salvar estado e aguardar resposta
@@ -507,7 +508,7 @@ async function executeRouteDepartment(node: any, context: any, supabase: any) {
 
   // Enviar mensagem de transferência e persistir no CRM
   if (transferMessage && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, transferMessage, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, transferMessage, context.companyId, context.leadId, context.canal);
     await persistFlowMessage(supabase, context.conversationNumber, transferMessage, context.companyId, context.leadId);
   }
 
@@ -607,18 +608,41 @@ async function persistFlowMessage(supabase: any, numero: string, mensagem: strin
   }
 }
 
-// ============= WHATSAPP HELPERS =============
+// ============= MESSAGING HELPERS =============
 
-async function sendWhatsAppMessage(supabase: any, numero: string, mensagem: string, companyId: string, leadId?: string) {
+async function sendChannelMessage(
+  supabase: any,
+  numero: string,
+  mensagem: string,
+  companyId: string,
+  leadId?: string,
+  canal: string = 'whatsapp',
+) {
   try {
-    await supabase.functions.invoke("enviar-whatsapp", {
-      body: { numero, mensagem, tipo_mensagem: "text", company_id: companyId },
-    });
-    // Persistir mensagem no CRM
+    if (canal === 'instagram' || canal === 'instagram_direct' || canal === 'instagram_comment') {
+      // Instagram só permite Direct (a janela de 24h aplicada pela Meta).
+      await supabase.functions.invoke('enviar-instagram', {
+        body: {
+          recipient_id: numero,
+          mensagem,
+          tipo_mensagem: 'text',
+          company_id: companyId,
+        },
+      });
+    } else {
+      await supabase.functions.invoke('enviar-whatsapp', {
+        body: { numero, mensagem, tipo_mensagem: 'text', company_id: companyId },
+      });
+    }
     await persistFlowMessage(supabase, numero, mensagem, companyId, leadId);
   } catch (e) {
-    console.error("❌ Erro ao enviar WhatsApp:", e);
+    console.error(`❌ Erro ao enviar mensagem (canal=${canal}):`, e);
   }
+}
+
+async function sendWhatsAppMessage(supabase: any, numero: string, mensagem: string, companyId: string, leadId?: string) {
+  // Compat: roteia pelo helper unificado usando WhatsApp como padrão.
+  return sendChannelMessage(supabase, numero, mensagem, companyId, leadId, 'whatsapp');
 }
 
 async function sendInteractiveButtons(supabase: any, numero: string, bodyText: string, buttons: any[], companyId: string, leadId?: string) {
