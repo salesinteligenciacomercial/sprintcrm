@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, MessageCircle, Instagram, SkipForward, Check, X, Loader2, Inbox, Plus } from "lucide-react";
+import { Phone, MessageCircle, Instagram, SkipForward, Check, X, Loader2, Inbox, Plus, Tag } from "lucide-react";
 import {
   useProspectingQueues,
   useQueueStats,
@@ -15,6 +15,7 @@ import {
 } from "@/hooks/useProspectingQueue";
 import { usePlayerProfile } from "@/hooks/usePlayerProfile";
 import { CreateQueueDialog } from "./CreateQueueDialog";
+import { AddLeadsByTagsDialog } from "./AddLeadsByTagsDialog";
 
 export function SDRQueuePanel() {
   const { userId, companyId } = usePlayerProfile();
@@ -23,6 +24,7 @@ export function SDRQueuePanel() {
   const [currentLead, setCurrentLead] = useState<QueueLead | null>(null);
   const [notes, setNotes] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [showAddByTags, setShowAddByTags] = useState(false);
 
   const { data: stats } = useQueueStats(selectedQueueId || null, userId);
   const claimMutation = useClaimNextLead();
@@ -88,14 +90,23 @@ export function SDRQueuePanel() {
           <Plus className="h-4 w-4 mr-1" /> Nova Fila
         </Button>
         {selectedQueueId && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => redistribute.mutate(selectedQueueId)}
-            disabled={redistribute.isPending}
-          >
-            Redistribuir
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddByTags(true)}
+            >
+              <Tag className="h-4 w-4 mr-1" /> Adicionar por tags
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => redistribute.mutate(selectedQueueId)}
+              disabled={redistribute.isPending}
+            >
+              Redistribuir
+            </Button>
+          </>
         )}
       </div>
 
@@ -210,6 +221,16 @@ export function SDRQueuePanel() {
         companyId={companyId || ""}
         userId={userId || ""}
       />
+
+      {selectedQueueId && companyId && (
+        <AddLeadsByTagsDialog
+          open={showAddByTags}
+          onOpenChange={setShowAddByTags}
+          companyId={companyId}
+          queueId={selectedQueueId}
+          queueName={selectedQueue?.name}
+        />
+      )}
     </div>
   );
 }
