@@ -142,7 +142,7 @@ async function executeFromNode(nodeId: string, nodes: any[], edges: any[], conte
       const triggerMessage = node.data?.description || node.data?.message || node.data?.welcomeMessage;
       if (triggerMessage && context.conversationNumber) {
         console.log("📩 Enviando mensagem do trigger:", triggerMessage);
-        await sendWhatsAppMessage(supabase, context.conversationNumber, triggerMessage, context.companyId);
+        await sendChannelMessage(supabase, context.conversationNumber, triggerMessage, context.companyId, context.leadId, context.canal);
       }
       break;
     }
@@ -230,7 +230,7 @@ async function executeAction(node: any, context: any, supabase: any) {
   switch (actionType) {
     case 'enviar_mensagem':
       if (message && context.conversationNumber) {
-        await sendWhatsAppMessage(supabase, context.conversationNumber, message, context.companyId);
+        await sendChannelMessage(supabase, context.conversationNumber, message, context.companyId, context.leadId, context.canal);
       }
       break;
 
@@ -339,7 +339,7 @@ async function executeIA(node: any, context: any, supabase: any) {
   });
 
   if (iaResponse?.response && mode === "auto" && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId, context.leadId, context.canal);
   }
 
   context.lastIAResponse = iaResponse?.response;
@@ -377,7 +377,7 @@ async function executeAIAgent(node: any, context: any, supabase: any) {
   });
 
   if (iaResponse?.response && mode !== "assisted" && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, iaResponse.response, context.companyId, context.leadId, context.canal);
   }
 
   context.lastIAResponse = iaResponse?.response;
@@ -484,7 +484,7 @@ async function executeInteractiveMenu(node: any, context: any, supabase: any, fl
     (buttons || []).forEach((btn: any, i: number) => {
       textMenu += `${i + 1}️⃣ ${btn.label}\n`;
     });
-    await sendWhatsAppMessage(supabase, context.conversationNumber, textMenu, context.companyId, context.leadId);
+    await sendChannelMessage(supabase, context.conversationNumber, textMenu, context.companyId, context.leadId, context.canal);
   }
 
   // Salvar estado e aguardar resposta
@@ -508,7 +508,7 @@ async function executeRouteDepartment(node: any, context: any, supabase: any) {
 
   // Enviar mensagem de transferência e persistir no CRM
   if (transferMessage && context.conversationNumber) {
-    await sendWhatsAppMessage(supabase, context.conversationNumber, transferMessage, context.companyId);
+    await sendChannelMessage(supabase, context.conversationNumber, transferMessage, context.companyId, context.leadId, context.canal);
     await persistFlowMessage(supabase, context.conversationNumber, transferMessage, context.companyId, context.leadId);
   }
 
