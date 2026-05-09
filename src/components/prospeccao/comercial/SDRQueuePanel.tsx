@@ -221,6 +221,16 @@ export function SDRQueuePanel() {
         companyId={companyId || ""}
         userId={userId || ""}
       />
+
+      {selectedQueueId && companyId && (
+        <AddLeadsByTagsDialog
+          open={showAddByTags}
+          onOpenChange={setShowAddByTags}
+          companyId={companyId}
+          queueId={selectedQueueId}
+          queueName={selectedQueue?.name}
+        />
+      )}
     </div>
   );
 }
