@@ -59,6 +59,7 @@ serve(async (req) => {
       conversationNumber,
       triggerData,
       userResponse,
+      canal: canal || 'whatsapp',
     };
 
     try {
