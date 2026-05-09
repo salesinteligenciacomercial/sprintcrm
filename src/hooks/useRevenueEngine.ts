@@ -1,102 +1,130 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export interface RevenueOffer {
-  id?: string;
-  config_id?: string;
-  produto_servico_id?: string | null;
-  name: string;
-  ticket: number;
-  margin_pct: number;
-  target_sales: number;
-  lead_to_meeting_rate: number;
-  meeting_show_rate: number;
-  win_rate: number;
-  cac: number;
-  position: number;
+export interface RevenueSummary {
+  period_start: string;
+  period_end: string;
+  total_leads: number;
+  leads_pagos: number;
+  leads_organicos: number;
+  ganhos: number;
+  perdidos: number;
+  receita_total: number;
+  ticket_medio: number;
+  taxa_conversao: number;
+  top_origem: string;
 }
 
-export interface OfferComputed extends RevenueOffer {
-  receita: number;
-  margem_valor: number;
-  reunioes_realizadas: number;
-  reunioes_agendadas: number;
-  leads: number;
-  cac_total: number;
-  lucro_liquido: number;
+export interface CampaignMetric {
+  campaign_key: string;
+  campaign_id: string | null;
+  campaign_name: string;
+  ad_id: string | null;
+  ad_creative_name: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  source_type: string | null;
+  total_leads: number;
+  novos: number;
+  em_contato: number;
+  qualificados: number;
+  agendados: number;
+  ganhos: number;
+  perdidos: number;
+  receita_total: number;
+  ticket_medio: number;
+  taxa_conversao: number;
+  // enriched from Meta
+  spend?: number;
+  impressions?: number;
+  clicks?: number;
+  cpl?: number;
+  roi?: number;
 }
 
-export function computeOffer(o: RevenueOffer): OfferComputed {
-  const receita = o.ticket * o.target_sales;
-  const margem_valor = receita * (o.margin_pct / 100);
-  const win = Math.max(o.win_rate, 0.0001) / 100;
-  const show = Math.max(o.meeting_show_rate, 0.0001) / 100;
-  const lead = Math.max(o.lead_to_meeting_rate, 0.0001) / 100;
-  const reunioes_realizadas = Math.ceil(o.target_sales / win);
-  const reunioes_agendadas = Math.ceil(reunioes_realizadas / show);
-  const leads = Math.ceil(reunioes_agendadas / lead);
-  const cac_total = o.cac * o.target_sales;
-  const lucro_liquido = margem_valor - cac_total;
-  return { ...o, receita, margem_valor, reunioes_realizadas, reunioes_agendadas, leads, cac_total, lucro_liquido };
+export interface BottleneckRow {
+  etapa_id: string;
+  etapa_nome: string;
+  total_leads: number;
+  leads_parados: number;
+  dias_medio_parado: number;
+  receita_potencial: number;
 }
 
-export function useProdutosServicos() {
-  return useQuery({
-    queryKey: ["produtos_servicos_active"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("produtos_servicos")
-        .select("id, nome, preco_sugerido, categoria")
-        .eq("ativo", true)
-        .order("nome");
-      if (error) throw error;
-      return data || [];
-    },
-  });
-}
+export function useRevenueEngine(companyId: string | null, days: number = 30) {
+  const [summary, setSummary] = useState<RevenueSummary | null>(null);
+  const [campaigns, setCampaigns] = useState<CampaignMetric[]>([]);
+  const [bottlenecks, setBottlenecks] = useState<BottleneckRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export function useRevenueOffers(configId?: string) {
-  return useQuery({
-    queryKey: ["revenue_offers", configId],
-    queryFn: async () => {
-      if (!configId) return [];
-      const { data, error } = await supabase
-        .from("revenue_machine_offers" as any)
-        .select("*")
-        .eq("config_id", configId)
-        .order("position");
-      if (error) throw error;
-      return (data || []) as unknown as RevenueOffer[];
-    },
-    enabled: !!configId,
-  });
-}
+  const load = useCallback(async () => {
+    if (!companyId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - days);
+      const startStr = start.toISOString().slice(0, 10);
+      const endStr = end.toISOString().slice(0, 10);
 
-export function useUpsertOffer() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (o: RevenueOffer & { config_id: string }) => {
-      const { data: companyId } = await supabase.rpc("get_my_company_id");
-      const payload: any = { ...o, company_id: companyId };
-      if (o.id) {
-        const { error } = await supabase.from("revenue_machine_offers" as any).update(payload).eq("id", o.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("revenue_machine_offers" as any).insert(payload);
-        if (error) throw error;
+      const [sumRes, metRes, botRes] = await Promise.all([
+        supabase.rpc("get_revenue_engine_summary", { p_company_id: companyId, p_start_date: startStr, p_end_date: endStr }),
+        supabase.rpc("get_revenue_engine_metrics", { p_company_id: companyId, p_start_date: startStr, p_end_date: endStr }),
+        supabase.rpc("get_revenue_engine_bottlenecks", { p_company_id: companyId, p_start_date: startStr, p_end_date: endStr }),
+      ]);
+
+      if (sumRes.error) throw sumRes.error;
+      if (metRes.error) throw metRes.error;
+      if (botRes.error) throw botRes.error;
+
+      setSummary(sumRes.data as RevenueSummary);
+      const baseCampaigns = (metRes.data || []) as CampaignMetric[];
+
+      // Enrich with Meta Ads spend
+      try {
+        const datePresetMap: Record<number, string> = { 7: "last_7d", 14: "last_14d", 30: "last_30d", 90: "last_90d" };
+        const preset = datePresetMap[days] || "last_30d";
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/meta-marketing-insights?company_id=${companyId}&date_preset=${preset}`;
+          const r = await fetch(url, { headers: { Authorization: `Bearer ${session.access_token}` } });
+          if (r.ok) {
+            const meta = await r.json();
+            const byId = new Map<string, any>();
+            (meta.campaigns || []).forEach((c: any) => byId.set(String(c.id), c));
+            const enriched = baseCampaigns.map((c) => {
+              const m = c.campaign_id ? byId.get(String(c.campaign_id)) : null;
+              const spend = m?.spend ?? 0;
+              const cpl = c.total_leads > 0 ? spend / c.total_leads : 0;
+              const roi = spend > 0 ? (c.receita_total - spend) / spend : 0;
+              return { ...c, spend, impressions: m?.impressions ?? 0, clicks: m?.clicks ?? 0, cpl, roi };
+            });
+            setCampaigns(enriched);
+          } else {
+            setCampaigns(baseCampaigns);
+          }
+        } else {
+          setCampaigns(baseCampaigns);
+        }
+      } catch (e) {
+        console.warn("[RevenueEngine] meta enrich failed:", e);
+        setCampaigns(baseCampaigns);
       }
-    },
-    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["revenue_offers", v.config_id] }),
-  });
-}
 
-export function useDeleteOffer(configId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("revenue_machine_offers" as any).delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["revenue_offers", configId] }),
-  });
+      setBottlenecks((botRes.data || []) as BottleneckRow[]);
+    } catch (e: any) {
+      console.error("[useRevenueEngine] error:", e);
+      setError(e?.message || "Erro ao carregar Revenue Engine");
+    } finally {
+      setLoading(false);
+    }
+  }, [companyId, days]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  return { summary, campaigns, bottlenecks, loading, error, reload: load };
 }
