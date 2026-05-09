@@ -90,14 +90,23 @@ export function SDRQueuePanel() {
           <Plus className="h-4 w-4 mr-1" /> Nova Fila
         </Button>
         {selectedQueueId && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => redistribute.mutate(selectedQueueId)}
-            disabled={redistribute.isPending}
-          >
-            Redistribuir
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowAddByTags(true)}
+            >
+              <Tag className="h-4 w-4 mr-1" /> Adicionar por tags
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => redistribute.mutate(selectedQueueId)}
+              disabled={redistribute.isPending}
+            >
+              Redistribuir
+            </Button>
+          </>
         )}
       </div>
 
