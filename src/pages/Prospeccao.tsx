@@ -16,6 +16,7 @@ import { FollowUpTable } from "@/components/prospeccao/FollowUpTable";
 import { FollowUpKPIs } from "@/components/prospeccao/FollowUpKPIs";
 import { FollowUpFormDialog } from "@/components/prospeccao/FollowUpFormDialog";
 import { EsteiraFollowUp } from "@/components/prospeccao/followup/EsteiraFollowUp";
+import { FunilFollowUp } from "@/components/prospeccao/followup/FunilFollowUp";
 import { BenchmarkPanel } from "@/components/prospeccao/BenchmarkPanel";
 import { InteractionLogDialog } from "@/components/prospeccao/InteractionLogDialog";
 import { InteractionTimeline } from "@/components/prospeccao/InteractionTimeline";
@@ -480,6 +481,7 @@ export default function Prospeccao() {
                 </TabsContent>
                 <TabsContent value="followup" className="space-y-6 mt-0">
                   <EsteiraFollowUp />
+                  <FunilFollowUp />
                   <FollowUpKPIs data={followUpData || []} isLoading={followUpLoading} />
                   <FollowUpTable data={followUpData || []} isLoading={followUpLoading} onRefresh={followUpRefetch} />
                 </TabsContent>

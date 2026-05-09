@@ -1,87 +1,49 @@
-# Esteira de Follow-up (Prospecção)
+## Funil dedicado de Follow-up (etapas customizáveis)
 
-Transforma a aba **Follow-ups** de relatório passivo numa **esteira ativa** estilo Kanban com cadência agressiva, registro de canal e múltiplas fontes de entrada.
+Cria um funil **separado e configurável** dentro da aba Follow-ups da Prospecção, ao lado da esteira de cadência atual. Cada empresa tem seu próprio funil com etapas que o usuário pode criar, renomear, reordenar e excluir — exatamente como um Kanban de vendas, mas dedicado a follow-up.
 
-## Cadência (fixa nesta entrega, configurável depois)
-
-```text
-F1 → D+1   (1 dia após entrar)
-F2 → D+3
-F3 → D+7
-F4 → D+14
-F5 → D+30
-```
-
-Após F5 sem resposta → vai pra coluna **"Esfriou"**. Resposta/reunião/venda → **"Concluído"** com motivo.
-
-## Entrada na esteira (3 fontes)
-
-1. **Favoritados** — botão "Adicionar à esteira" no card do contato favoritado.
-2. **Contactado sem resposta** — quando registrar `Contactado` na prospecção e passar 24h sem `Respondeu`, entra automaticamente.
-3. **Leads frios do CRM** — botão "Reaquecer no follow-up" em leads sem interação há +X dias.
-
-Toda entrada vira um card único com `source` marcado.
-
-## Layout da aba Follow-ups
+### Estrutura
 
 ```text
-┌────────────┬────────────┬────────────┬────────────┬────────────┬────────────┬────────────┐
-│ A executar │   F1 D+1   │   F2 D+3   │   F3 D+7   │  F4 D+14   │  F5 D+30   │ Concluído  │
-│  (HOJE)    │            │            │            │            │            │            │
-│            │            │            │            │            │            │            │
-│ [card]     │ [card]     │ ...        │            │            │            │            │
-│ [card]     │            │            │            │            │            │            │
-└────────────┴────────────┴────────────┴────────────┴────────────┴────────────┴────────────┘
+┌─────────────┬─────────────┬─────────────┬─────────────┬─────────────┐
+│  A Iniciar  │ Tentando 1x │ Tentando 2x │  Negociando │  Fechado ✓  │
+│   (default) │             │             │             │  (terminal) │
+├─────────────┤             │             │             │             │
+│  [card]     │  [card]     │             │  [card]     │             │
+│  [card]     │             │             │             │             │
+└─────────────┴─────────────┴─────────────┴─────────────┴─────────────┘
+                  ← drag-and-drop entre colunas →
 ```
 
-Cada card mostra: nome do contato, canal sugerido, **dias na etapa**, badge da fonte (Favorito / Sem resposta / Frio) e botão **"Executar follow"**.
+- Cada empresa começa com um **funil default** + 5 etapas seed: `A Iniciar`, `Em contato`, `Negociando`, `Ganho`, `Perdido`. Tudo editável.
+- Usuário pode **adicionar, renomear, mudar cor, reordenar e excluir** etapas.
+- Cards arrastados entre colunas atualizam `stage_id`. Ao soltar em etapa terminal (`Ganho`/`Perdido`), o status do entry vira `completed`/`lost` automaticamente.
+- A **cadência (F1→F5)** continua rodando em paralelo: `next_due_at` ainda calcula vencimento e o badge "vencido" continua aparecendo no card. As duas dimensões coexistem: tempo (cadência) + qualidade (funil).
 
-A coluna **"A executar"** lista todos com `next_due_at <= now()` — é o foco do dia.
+### Mudanças técnicas
 
-## Executar follow (dialog)
+**Migration:**
+- `follow_up_funnels` — `company_id`, `name`, `is_default`
+- `follow_up_stages` — `funnel_id`, `name`, `color`, `order_index`, `is_terminal`, `terminal_status` (`completed`|`lost`|null)
+- `follow_up_entries`: adicionar `stage_id uuid` (nullable, FK)
+- Trigger `ensure_default_funnel()` cria funil + etapas seed na primeira inserção em `follow_up_entries` por empresa.
+- RLS por `company_id` via `user_company_ids_array()`.
 
-Ao clicar "Executar follow":
-- Seleciona **canal**: WhatsApp / Ligação / Instagram / Email / SMS
-- Campo de **observação**
-- Resultado: Sem resposta / Respondeu / Reunião agendada / Venda / Perdido
-- Botão **"Sugerir script com IA"** (usa histórico do contato)
-- Confirmar → grava em `follow_up_executions`, avança o card para próxima etapa com `next_due_at` recalculado.
+**Frontend (novos arquivos):**
+- `src/hooks/useFollowUpFunnel.ts` — CRUD funil/etapas + mutation `moveEntryToStage`.
+- `src/components/prospeccao/followup/FunilFollowUp.tsx` — board Kanban com `@dnd-kit` (já no projeto), drag horizontal entre colunas.
+- `src/components/prospeccao/followup/StageManagerDialog.tsx` — gerenciar etapas (add/edit/cor/ordem/excluir).
 
-## Estrutura técnica
+**Página `Prospeccao.tsx` — aba Follow-up:**
+```text
+[ Esteira de Cadência (atual, F1→F5 por tempo) ]
+[ Funil de Follow-up (novo, etapas customizáveis) ]   ← novo bloco
+[ Histórico/Relatório (atual) ]
+```
 
-**Migrations (3 tabelas):**
+Botão **"Gerenciar etapas"** no header do funil abre o dialog de configuração.
 
-- `follow_up_entries` — um registro por contato na esteira
-  - `lead_id`, `contact_id`, `prospecting_id` (nullable, pelo menos um)
-  - `current_step` (0-5), `next_due_at`, `status` (active|completed|cooled|paused)
-  - `source` (favorite|no_response|cold_lead|manual)
-  - `outcome` (responded|meeting|sale|lost|null)
-  - `assigned_to`, `company_id`
-- `follow_up_executions` — histórico de cada toque
-  - `entry_id`, `step_number`, `channel`, `notes`, `outcome`, `script_used`, `executed_at`
-- `follow_up_cadence` — cadência por empresa (default F1=1, F2=3, F3=7, F4=14, F5=30)
-
-RLS por `company_id` usando o pattern `get_user_company_ids()` já existente.
-
-**Frontend:**
-- `src/components/prospeccao/followup/EsteiraFollowUp.tsx` (board)
-- `src/components/prospeccao/followup/FollowEntryCard.tsx`
-- `src/components/prospeccao/followup/ExecutarFollowDialog.tsx`
-- `src/components/prospeccao/followup/AddToEsteiraDialog.tsx`
-- `src/hooks/useFollowUpEsteira.ts`
-
-**Página `Prospeccao.tsx`:** aba `followup` passa a renderizar `<EsteiraFollowUp />` no topo + relatório atual (`FollowUpKPIs` + `FollowUpTable`) abaixo, como histórico.
-
-**Trigger automático** (fonte 2): trigger SQL em `prospecting_logs` — quando insere com `outcome = 'contacted'` e não houver `outcome = 'responded'` no mesmo contato em 24h, função agendada cria entry com `source = 'no_response'`. Implementação: cron diário simples lendo logs sem resposta de 24h+.
-
-## O que entrego nesta rodada
-
-1. Migrations completas (3 tabelas + RLS + função de avanço de etapa).
-2. UI da esteira com colunas + cards + drag opcional (foco em botão "Executar" primeiro).
-3. Dialog de execução com canal/notas/outcome.
-4. Botões de entrada manual (favoritado e lead frio). 
-5. Cron diário para fonte automática (sem resposta 24h).
-
-Sugestão de script IA fica como botão placeholder ligado ao endpoint existente `commercial-ai` numa próxima rodada para não inflar essa entrega.
-
-Confirma que é isso e mando a migration.
+### Fora do escopo desta entrega
+- Múltiplos funis por empresa (entrega só o default).
+- Automação de movimento por outcome (continua manual via drag).
+- Métricas de conversão por etapa (próxima rodada).

@@ -18,6 +18,7 @@ export interface FollowUpEntry {
   notes: string | null;
   last_executed_at: string | null;
   created_at: string;
+  stage_id: string | null;
 }
 
 export interface FollowUpCadenceStep {
