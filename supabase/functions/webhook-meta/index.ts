@@ -1446,14 +1446,31 @@ serve(async (req) => {
 
             console.log('💾 Inserindo conversa Instagram:', JSON.stringify(conversaData, null, 2));
 
-            const { error: insertError } = await supabase
+            const { data: insertedRow, error: insertError } = await supabase
               .from('conversas')
-              .insert(conversaData);
+              .insert(conversaData)
+              .select('id')
+              .maybeSingle();
 
             if (insertError) {
               console.error('❌ Erro ao inserir conversa Instagram:', insertError);
             } else {
               console.log('✅ Conversa Instagram inserida com sucesso');
+
+              // Disparar fluxo apenas para mensagens recebidas (não eco)
+              if (!msg.is_from_me) {
+                const isComment = msg.source === 'instagram_comment';
+                triggerInstagramFlow({
+                  supabase,
+                  companyId: company_id,
+                  canal: isComment ? 'instagram_comment' : 'instagram_direct',
+                  conversationNumber: instagramUserId,
+                  conversationId: insertedRow?.id || null,
+                  leadId: leadId || null,
+                  message: msg.content || '',
+                  contactName: finalContactName,
+                });
+              }
             }
           }
         }
