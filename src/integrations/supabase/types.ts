@@ -3297,6 +3297,7 @@ export type Database = {
           outcome: string | null
           prospecting_contact_id: string | null
           source: string
+          stage_id: string | null
           status: string
           updated_at: string
         }
@@ -3316,6 +3317,7 @@ export type Database = {
           outcome?: string | null
           prospecting_contact_id?: string | null
           source: string
+          stage_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -3335,6 +3337,7 @@ export type Database = {
           outcome?: string | null
           prospecting_contact_id?: string | null
           source?: string
+          stage_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -3344,6 +3347,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follow_up_entries_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "follow_up_stages"
             referencedColumns: ["id"]
           },
         ]
@@ -3391,6 +3401,77 @@ export type Database = {
             columns: ["entry_id"]
             isOneToOne: false
             referencedRelation: "follow_up_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follow_up_funnels: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      follow_up_stages: {
+        Row: {
+          color: string
+          company_id: string
+          created_at: string
+          funnel_id: string
+          id: string
+          is_terminal: boolean
+          name: string
+          order_index: number
+          terminal_status: string | null
+        }
+        Insert: {
+          color?: string
+          company_id: string
+          created_at?: string
+          funnel_id: string
+          id?: string
+          is_terminal?: boolean
+          name: string
+          order_index?: number
+          terminal_status?: string | null
+        }
+        Update: {
+          color?: string
+          company_id?: string
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          is_terminal?: boolean
+          name?: string
+          order_index?: number
+          terminal_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follow_up_stages_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "follow_up_funnels"
             referencedColumns: ["id"]
           },
         ]
@@ -9734,6 +9815,7 @@ export type Database = {
           outcome: string | null
           prospecting_contact_id: string | null
           source: string
+          stage_id: string | null
           status: string
           updated_at: string
         }
@@ -9813,6 +9895,10 @@ export type Database = {
       }
       distribute_queue_leads: { Args: { _queue_id: string }; Returns: number }
       elevate_self_to_super_admin: { Args: never; Returns: Json }
+      ensure_default_follow_up_funnel: {
+        Args: { p_company_id: string }
+        Returns: string
+      }
       ensure_player_profile: {
         Args: { p_company_id: string; p_user_id: string }
         Returns: string
@@ -9995,6 +10081,10 @@ export type Database = {
           name: string
           size: number
         }[]
+      }
+      move_follow_up_to_stage: {
+        Args: { p_entry_id: string; p_stage_id: string }
+        Returns: undefined
       }
       purge_automation_skip_logs: { Args: never; Returns: undefined }
       recalc_quest_progress: {
