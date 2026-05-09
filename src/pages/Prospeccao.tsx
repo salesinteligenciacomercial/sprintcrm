@@ -478,6 +478,7 @@ export default function Prospeccao() {
                   )}
                 </TabsContent>
                 <TabsContent value="followup" className="space-y-6 mt-0">
+                  <EsteiraFollowUp />
                   <FollowUpKPIs data={followUpData || []} isLoading={followUpLoading} />
                   <FollowUpTable data={followUpData || []} isLoading={followUpLoading} onRefresh={followUpRefetch} />
                 </TabsContent>
