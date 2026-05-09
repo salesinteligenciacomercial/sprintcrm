@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 export interface RevenueOffer {
   id?: string;
   config_id?: string;
-  produto_servico_id?: string | null;
   name: string;
   ticket: number;
   margin_pct: number;
@@ -14,42 +13,39 @@ export interface RevenueOffer {
   win_rate: number;
   cac: number;
   position: number;
+  // computed
+  receita?: number;
+  margem_valor?: number;
+  cac_total?: number;
+  leads?: number;
+  reunioes_agendadas?: number;
+  reunioes_realizadas?: number;
 }
 
-export interface OfferComputed extends RevenueOffer {
-  receita: number;
-  margem_valor: number;
-  reunioes_realizadas: number;
-  reunioes_agendadas: number;
-  leads: number;
-  cac_total: number;
-  lucro_liquido: number;
-}
+export function computeOffer(o: RevenueOffer): RevenueOffer {
+  const vendas = Number(o.target_sales) || 0;
+  const ticket = Number(o.ticket) || 0;
+  const winRate = (Number(o.win_rate) || 0) / 100;
+  const showRate = (Number(o.meeting_show_rate) || 0) / 100;
+  const leadToMeet = (Number(o.lead_to_meeting_rate) || 0) / 100;
+  const cac = Number(o.cac) || 0;
+  const marginPct = (Number(o.margin_pct) || 0) / 100;
 
-export function computeOffer(o: RevenueOffer): OfferComputed {
-  const receita = o.ticket * o.target_sales;
-  const margem_valor = receita * (o.margin_pct / 100);
-  const win = Math.max(o.win_rate, 0.0001) / 100;
-  const show = Math.max(o.meeting_show_rate, 0.0001) / 100;
-  const lead = Math.max(o.lead_to_meeting_rate, 0.0001) / 100;
-  const reunioes_realizadas = Math.ceil(o.target_sales / win);
-  const reunioes_agendadas = Math.ceil(reunioes_realizadas / show);
-  const leads = Math.ceil(reunioes_agendadas / lead);
-  const cac_total = o.cac * o.target_sales;
-  const lucro_liquido = margem_valor - cac_total;
-  return { ...o, receita, margem_valor, reunioes_realizadas, reunioes_agendadas, leads, cac_total, lucro_liquido };
+  const reunioes_realizadas = winRate > 0 ? vendas / winRate : 0;
+  const reunioes_agendadas = showRate > 0 ? reunioes_realizadas / showRate : 0;
+  const leads = leadToMeet > 0 ? reunioes_agendadas / leadToMeet : 0;
+  const receita = vendas * ticket;
+  const margem_valor = receita * marginPct;
+  const cac_total = cac * vendas;
+
+  return { ...o, receita, margem_valor, cac_total, leads, reunioes_agendadas, reunioes_realizadas };
 }
 
 export function useProdutosServicos() {
   return useQuery({
-    queryKey: ["produtos_servicos_active"],
+    queryKey: ["produtos-servicos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("produtos_servicos")
-        .select("id, nome, preco_sugerido, categoria")
-        .eq("ativo", true)
-        .order("nome");
-      if (error) throw error;
+      const { data } = await (supabase as any).from("produtos_servicos").select("*").order("nome", { ascending: true });
       return data || [];
     },
   });
@@ -57,36 +53,42 @@ export function useProdutosServicos() {
 
 export function useRevenueOffers(configId?: string) {
   return useQuery({
-    queryKey: ["revenue_offers", configId],
+    queryKey: ["revenue-offers", configId],
+    enabled: !!configId,
     queryFn: async () => {
       if (!configId) return [];
-      const { data, error } = await supabase
-        .from("revenue_machine_offers" as any)
+      const { data } = await (supabase as any)
+        .from("revenue_offers")
         .select("*")
         .eq("config_id", configId)
-        .order("position");
-      if (error) throw error;
-      return (data || []) as unknown as RevenueOffer[];
+        .order("position", { ascending: true });
+      return data || [];
     },
-    enabled: !!configId,
   });
 }
 
 export function useUpsertOffer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (o: RevenueOffer & { config_id: string }) => {
-      const { data: companyId } = await supabase.rpc("get_my_company_id");
-      const payload: any = { ...o, company_id: companyId };
-      if (o.id) {
-        const { error } = await supabase.from("revenue_machine_offers" as any).update(payload).eq("id", o.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("revenue_machine_offers" as any).insert(payload);
-        if (error) throw error;
-      }
+    mutationFn: async (offer: RevenueOffer & { config_id: string }) => {
+      const payload: any = {
+        config_id: offer.config_id,
+        name: offer.name,
+        ticket: offer.ticket,
+        margin_pct: offer.margin_pct,
+        target_sales: offer.target_sales,
+        lead_to_meeting_rate: offer.lead_to_meeting_rate,
+        meeting_show_rate: offer.meeting_show_rate,
+        win_rate: offer.win_rate,
+        cac: offer.cac,
+        position: offer.position,
+      };
+      if (offer.id) payload.id = offer.id;
+      const { data, error } = await (supabase as any).from("revenue_offers").upsert(payload).select().single();
+      if (error) throw error;
+      return data;
     },
-    onSuccess: (_d, v) => qc.invalidateQueries({ queryKey: ["revenue_offers", v.config_id] }),
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["revenue-offers", vars.config_id] }),
   });
 }
 
@@ -94,9 +96,9 @@ export function useDeleteOffer(configId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("revenue_machine_offers" as any).delete().eq("id", id);
+      const { error } = await (supabase as any).from("revenue_offers").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["revenue_offers", configId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["revenue-offers", configId] }),
   });
 }
