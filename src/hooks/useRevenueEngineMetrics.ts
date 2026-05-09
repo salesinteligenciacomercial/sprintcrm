@@ -79,7 +79,7 @@ export function useRevenueEngineMetrics(companyId: string | null, days: number =
       if (metRes.error) throw metRes.error;
       if (botRes.error) throw botRes.error;
 
-      setSummary(sumRes.data as RevenueSummary);
+      setSummary(sumRes.data as unknown as RevenueSummary);
       const baseCampaigns = (metRes.data || []) as CampaignMetric[];
 
       // Enrich with Meta Ads spend
