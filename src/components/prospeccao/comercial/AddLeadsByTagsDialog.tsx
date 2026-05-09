@@ -22,7 +22,7 @@ interface Props {
 
 interface LeadRow {
   id: string;
-  nome: string | null;
+  name: string | null;
   telefone: string | null;
   tags: string[] | null;
 }
