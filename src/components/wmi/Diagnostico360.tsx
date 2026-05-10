@@ -27,6 +27,7 @@ import { ImpactoFinanceiroExpandido } from "./ImpactoFinanceiroExpandido";
 import { TimeComercialInputs, TimeComercialResultCard } from "./TimeComercialAnalysis";
 import { CurvaABCEditor } from "./CurvaABCEditor";
 import { ResumoExecutivoConsultivo } from "./ResumoExecutivoConsultivo";
+import { GrowSalesIntelligence } from "./GrowSalesIntelligence";
 import { useNavigate } from "react-router-dom";
 import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 import { SEGMENTOS_EMPRESA } from "@/lib/segmentos";
