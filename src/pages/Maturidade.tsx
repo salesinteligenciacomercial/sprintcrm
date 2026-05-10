@@ -187,6 +187,10 @@ export default function Maturidade() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="onboarding">
+          <Onboarding7Days />
+        </TabsContent>
+
         <TabsContent value="diagnostico">
           <Diagnostico360 />
         </TabsContent>
