@@ -12,7 +12,7 @@ import { SegmentBenchmarkCard } from "@/components/wmi/SegmentBenchmarkCard";
 import { GrowSegmentBenchmarkCard } from "@/components/wmi/GrowSegmentBenchmarkCard";
 import { PillarEvolutionChart } from "@/components/wmi/PillarEvolutionChart";
 import { Diagnostico360 } from "@/components/wmi/Diagnostico360";
-import { GrowSalesIntelligence } from "@/components/wmi/GrowSalesIntelligence";
+
 import { CRMMaturityCheck } from "@/components/wmi/CRMMaturityCheck";
 import { CommercialHRPanel } from "@/components/wmi/CommercialHRPanel";
 import { BusinessPhaseCard } from "@/components/wmi/BusinessPhaseCard";
