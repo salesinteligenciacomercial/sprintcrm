@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Stethoscope, Sparkles, ArrowRight } from "lucide-react";
+import { Stethoscope, Sparkles, ArrowRight, ListChecks } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePrescriptiveRules, useLogDiagnosis } from "@/hooks/useEstruturacao";
+import { usePrescriptiveRules, useLogDiagnosis, useGenerateActionPlan } from "@/hooks/useEstruturacao";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
