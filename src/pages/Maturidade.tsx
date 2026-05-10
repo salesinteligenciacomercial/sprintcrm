@@ -22,7 +22,7 @@ import { RhythmTemplatesPanel } from "@/components/wmi/RhythmTemplatesPanel";
 import { Onboarding7Days } from "@/components/wmi/Onboarding7Days";
 import {
   Activity, Trophy, Sparkles, ArrowRight, GraduationCap, AlertTriangle,
-  TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck, Calculator,
+  TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck,
   Database, Heart, Rocket, Compass, Calendar as CalendarIcon, Zap,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
