@@ -181,6 +181,7 @@ export default function Prospeccao() {
     intel: "Metas e Vendas",
     social: "Social Selling",
     rotina: "Rotina Inteligente",
+    estrategia: "Estratégia Comercial",
   };
 
   return (
