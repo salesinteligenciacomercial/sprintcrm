@@ -8674,6 +8674,32 @@ function Conversas() {
       });
     }
   };
+  const reativarUraAtendimento = async (telefoneFormatado: string, companyId?: string | null, conversationId?: string) => {
+    if (!telefoneFormatado || !companyId) {
+      throw new Error('Telefone ou empresa não encontrados para reativar a URA');
+    }
+
+    const { data, error } = await supabase.functions.invoke('resetar-fluxo-conversa', {
+      body: {
+        telefone: telefoneFormatado,
+        companyId,
+        actions: ['flow_state', 'assignment', 'attendance', 'ai_mode'],
+      },
+    });
+
+    if (error || data?.error) {
+      throw new Error(error?.message || data?.error || 'Erro ao reativar URA');
+    }
+
+    setAiMode(prev => ({
+      ...prev,
+      [telefoneFormatado]: 'fluxo',
+      ...(conversationId ? { [conversationId]: 'fluxo' } : {}),
+    }));
+
+    return data;
+  };
+
   const finalizarAtendimento = async (mensagem: string) => {
     if (!selectedConv) return;
     try {
@@ -8730,20 +8756,10 @@ function Conversas() {
         status: 'Resolvida'
       }).eq('telefone_formatado', telefoneFormatado).eq('company_id', userRole?.company_id).neq('status', 'Resolvida'); // Só atualizar as que ainda não estão resolvidas
 
-      // Limpar conversation_assignments, fluxo e atendimento ativo para que a URA reative no próximo contato
-      await Promise.all([
-        supabase.from('conversation_assignments').delete()
-          .eq('telefone_formatado', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-        supabase.from('conversation_flow_state').delete()
-          .eq('conversation_number', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-        supabase.from('active_attendances').delete()
-          .eq('telefone_formatado', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-      ]);
+      // Limpar bloqueios e religar Fluxo/URA para que a próxima mensagem seja novo atendimento
+      await reativarUraAtendimento(telefoneFormatado, userRole?.company_id, selectedConv.id);
 
-      console.log('✅ Conversa finalizada — assignment, flow_state e active_attendance limpos (URA reativa)');
+      console.log('✅ Conversa finalizada — bloqueios limpos e Fluxo/URA reativado');
 
       // Atualizar estados localmente
       const updatedConv: Conversation = {
@@ -8784,20 +8800,10 @@ function Conversas() {
         .eq('company_id', userRole?.company_id)
         .neq('status', 'Resolvida');
 
-      // Limpar conversation_assignments, fluxo e atendimento ativo para que a URA reative no próximo contato
-      await Promise.all([
-        supabase.from('conversation_assignments').delete()
-          .eq('telefone_formatado', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-        supabase.from('conversation_flow_state').delete()
-          .eq('conversation_number', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-        supabase.from('active_attendances').delete()
-          .eq('telefone_formatado', telefoneFormatado)
-          .eq('company_id', userRole?.company_id),
-      ]);
+      // Limpar bloqueios e religar Fluxo/URA para que a próxima mensagem seja novo atendimento
+      await reativarUraAtendimento(telefoneFormatado, userRole?.company_id, selectedConv.id);
 
-      console.log('✅ Conversa finalizada (silent) — assignment, flow_state e active_attendance limpos');
+      console.log('✅ Conversa finalizada (silent) — bloqueios limpos e Fluxo/URA reativado');
 
       // Atualizar estados localmente
       const updatedConv: Conversation = {
