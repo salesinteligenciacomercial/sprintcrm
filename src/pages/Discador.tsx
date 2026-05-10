@@ -81,7 +81,7 @@ const Discador = () => {
 
         {/* Tabs Navigation */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
+          <TabsList className="flex flex-wrap h-auto">
             <TabsTrigger value="fazer-ligacao" className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
               Fazer Ligação
@@ -93,6 +93,9 @@ const Discador = () => {
             <TabsTrigger value="painel-sdr" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Painel SDR
+            </TabsTrigger>
+            <TabsTrigger value="especializacao" className="flex items-center gap-2">
+              ✨ Especialização SDR
             </TabsTrigger>
           </TabsList>
 
