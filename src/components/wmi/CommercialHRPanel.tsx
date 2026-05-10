@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, Calculator, Save, GraduationCap, Heart } from "lucide-react";
+import { Users, Calculator, Save, GraduationCap, Heart, LineChart as LineChartIcon } from "lucide-react";
 import { useCommercialHR, useSaveCommercialHR, CommercialHRConfig } from "@/hooks/useEstruturacao";
+import { CompensationSimulator } from "@/components/wmi/CompensationSimulator";
 import { toast } from "sonner";
 
 export function CommercialHRPanel() {
