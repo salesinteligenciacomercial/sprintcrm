@@ -7,11 +7,17 @@ import {
   Zap,
   BookOpen,
   Library,
+  Stethoscope,
+  Bot,
+  ClipboardCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { NotionWorkspace } from "@/components/processos/notion/NotionWorkspace";
 import { CommercialIntelligenceDashboard } from "@/components/ia/CommercialIntelligenceDashboard";
 import { PlaybooksCatalog } from "@/components/processos/playbooks/PlaybooksCatalog";
+import { PlaybookChecklist } from "@/components/processos/PlaybookChecklist";
+import { AIMaturityCheck } from "@/components/processos/AIMaturityCheck";
+import { PrescriptiveDiagnosis } from "@/components/processos/PrescriptiveDiagnosis";
 
 
 interface Stats {
