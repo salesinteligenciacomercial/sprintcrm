@@ -98,6 +98,35 @@ export function PrescriptiveDiagnosis() {
               </CardTitle>
               <CardDescription>Priorize de cima para baixo (peso da metodologia GROW).</CardDescription>
             </CardHeader>
+            {matched.length > 0 && (
+              <CardContent className="pt-0">
+                <Button
+                  className="w-full"
+                  disabled={generatePlan.isPending}
+                  onClick={async () => {
+                    try {
+                      const n = await generatePlan.mutateAsync(
+                        matched.map((r) => ({
+                          sintoma_label: r.sintoma_label,
+                          causa_provavel: r.causa_provavel,
+                          acao_prescrita: r.acao_prescrita,
+                          modulo_destino: r.modulo_destino,
+                          prioridade: r.prioridade,
+                        }))
+                      );
+                      toast.success(`${n} tarefa(s) criada(s) no módulo Tarefas`, {
+                        action: { label: "Ver", onClick: () => navigate("/tarefas") },
+                      });
+                    } catch (e: any) {
+                      toast.error(e?.message || "Erro ao gerar plano");
+                    }
+                  }}
+                >
+                  <ListChecks className="h-4 w-4 mr-2" />
+                  {generatePlan.isPending ? "Gerando plano..." : "Gerar plano de ação no módulo Tarefas"}
+                </Button>
+              </CardContent>
+            )}
           </Card>
           <div className="space-y-3">
             {matched
