@@ -8,6 +8,7 @@ import { CallModal } from '@/components/discador/CallModal';
 import { PostCallNotesDialog } from '@/components/discador/PostCallNotesDialog';
 import { CallHistory } from '@/components/discador/CallHistory';
 import { SDRDashboard } from '@/components/discador/SDRDashboard';
+import { SDRSpecializationPanel } from '@/components/discador/SDRSpecializationPanel';
 import { StartCallFromLeadDialog } from '@/components/discador/StartCallFromLeadDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibility';
