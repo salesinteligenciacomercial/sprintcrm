@@ -159,13 +159,7 @@ export default function Maturidade() {
             <Zap className="h-4 w-4" /> Onboarding 7 Dias
           </TabsTrigger>
           <TabsTrigger value="diagnostico" className="gap-2">
-            <Sparkles className="h-4 w-4" /> Diagnóstico 360° + Plano de Ação IA
-          </TabsTrigger>
-          <TabsTrigger value="intelligence" className="gap-2">
-            <Calculator className="h-4 w-4" /> Grow Sales Intelligence
-          </TabsTrigger>
-          <TabsTrigger value="intelligence" className="gap-2">
-            <Calculator className="h-4 w-4" /> Grow Sales Intelligence
+            <Sparkles className="h-4 w-4" /> Diagnóstico 360° + Grow Sales Intelligence
           </TabsTrigger>
           <TabsTrigger value="pilares" className="gap-2">
             <TrendingUp className="h-4 w-4" /> Pilares & Evolução
