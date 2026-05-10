@@ -558,7 +558,7 @@ export function Diagnostico360() {
 
           <div className="flex justify-between pt-4 gap-2">
             <Button variant="outline" onClick={() => {
-              if (currentAlavanca === 0) setStep("swot");
+              if (currentAlavanca === 0) setStep("intel");
               else setCurrentAlavanca((i) => i - 1);
             }} className="gap-2">
               <ChevronLeft className="h-4 w-4" /> Voltar
