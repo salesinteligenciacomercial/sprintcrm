@@ -48,6 +48,7 @@ export function CommercialHRPanel() {
           <TabsTrigger value="selecao" className="gap-2"><GraduationCap className="h-4 w-4" /> Funil de Seleção</TabsTrigger>
           <TabsTrigger value="rampup" className="gap-2">⚡ Ramp-up 30/60/90</TabsTrigger>
           <TabsTrigger value="remuneracao" className="gap-2"><Calculator className="h-4 w-4" /> Remuneração</TabsTrigger>
+          <TabsTrigger value="simulador" className="gap-2"><LineChartIcon className="h-4 w-4" /> Simulador</TabsTrigger>
           <TabsTrigger value="retencao" className="gap-2"><Heart className="h-4 w-4" /> Retenção</TabsTrigger>
         </TabsList>
 
