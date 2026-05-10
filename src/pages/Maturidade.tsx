@@ -185,12 +185,16 @@ export default function Maturidade() {
           <Onboarding7Days />
         </TabsContent>
 
-        <TabsContent value="diagnostico">
+        <TabsContent value="diagnostico" className="space-y-6">
           <Diagnostico360 />
-        </TabsContent>
-
-        <TabsContent value="intelligence">
-          <GrowSalesIntelligence />
+          <div className="pt-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Calculator className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Grow Sales Intelligence</h3>
+              <Badge variant="secondary" className="text-[10px]">Use durante o diagnóstico</Badge>
+            </div>
+            <GrowSalesIntelligence />
+          </div>
         </TabsContent>
 
         <TabsContent value="crm-maturity">
