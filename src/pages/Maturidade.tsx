@@ -159,7 +159,7 @@ export default function Maturidade() {
             <Zap className="h-4 w-4" /> Onboarding 7 Dias
           </TabsTrigger>
           <TabsTrigger value="diagnostico" className="gap-2">
-            <Sparkles className="h-4 w-4" /> Diagnóstico 360° + Grow Sales Intelligence
+            <Sparkles className="h-4 w-4" /> Diagnóstico 360°
           </TabsTrigger>
           <TabsTrigger value="pilares" className="gap-2">
             <TrendingUp className="h-4 w-4" /> Pilares & Evolução
@@ -185,16 +185,8 @@ export default function Maturidade() {
           <Onboarding7Days />
         </TabsContent>
 
-        <TabsContent value="diagnostico" className="space-y-6">
+        <TabsContent value="diagnostico">
           <Diagnostico360 />
-          <div className="pt-2">
-            <div className="flex items-center gap-2 mb-3">
-              <Calculator className="h-5 w-5 text-primary" />
-              <h3 className="text-lg font-semibold">Grow Sales Intelligence</h3>
-              <Badge variant="secondary" className="text-[10px]">Use durante o diagnóstico</Badge>
-            </div>
-            <GrowSalesIntelligence />
-          </div>
         </TabsContent>
 
         <TabsContent value="crm-maturity">
