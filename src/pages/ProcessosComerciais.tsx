@@ -100,6 +100,18 @@ export default function ProcessosComerciais() {
             <BookOpen className="h-4 w-4" />
             <span className="hidden md:inline">Playbooks Comerciais</span>
           </TabsTrigger>
+          <TabsTrigger value="checklist" className="flex items-center gap-2 py-2">
+            <ClipboardCheck className="h-4 w-4" />
+            <span className="hidden md:inline">Checklist Playbook</span>
+          </TabsTrigger>
+          <TabsTrigger value="ia-maturity" className="flex items-center gap-2 py-2">
+            <Bot className="h-4 w-4" />
+            <span className="hidden md:inline">Maturidade IA</span>
+          </TabsTrigger>
+          <TabsTrigger value="diagnostico-prescritivo" className="flex items-center gap-2 py-2">
+            <Stethoscope className="h-4 w-4" />
+            <span className="hidden md:inline">Diagnóstico Prescritivo</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="intelligence">
@@ -112,6 +124,18 @@ export default function ProcessosComerciais() {
 
         <TabsContent value="ebooks">
           <PlaybooksCatalog />
+        </TabsContent>
+
+        <TabsContent value="checklist">
+          <PlaybookChecklist />
+        </TabsContent>
+
+        <TabsContent value="ia-maturity">
+          <AIMaturityCheck />
+        </TabsContent>
+
+        <TabsContent value="diagnostico-prescritivo">
+          <PrescriptiveDiagnosis />
         </TabsContent>
 
       </Tabs>
