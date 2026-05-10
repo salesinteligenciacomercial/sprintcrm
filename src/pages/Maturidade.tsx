@@ -11,9 +11,10 @@ import { WMIAlertsPanel } from "@/components/wmi/WMIAlertsPanel";
 import { SegmentBenchmarkCard } from "@/components/wmi/SegmentBenchmarkCard";
 import { PillarEvolutionChart } from "@/components/wmi/PillarEvolutionChart";
 import { Diagnostico360 } from "@/components/wmi/Diagnostico360";
+import { GrowSalesIntelligence } from "@/components/wmi/GrowSalesIntelligence";
 import {
   Activity, Trophy, Sparkles, ArrowRight, GraduationCap, AlertTriangle,
-  TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck,
+  TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck, Calculator,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { format } from "date-fns";
