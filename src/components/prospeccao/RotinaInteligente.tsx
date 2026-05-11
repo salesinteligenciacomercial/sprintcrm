@@ -146,11 +146,12 @@ export function RotinaInteligente() {
         }
       } catch {}
 
-      if (!companyId) { setLoading(false); return; }
+      if (!companyId || !userId) { setLoading(false); return; }
       const { data, error } = await supabase
         .from("prospeccao_smart_routines")
         .select("id, config, sdr_blocks, closer_blocks")
         .eq("company_id", companyId)
+        .eq("user_id", userId)
         .maybeSingle();
       if (cancelled) return;
       if (!error && data) {
@@ -160,11 +161,14 @@ export function RotinaInteligente() {
         }
         if (Array.isArray(data.sdr_blocks)) setSdrBlocks(data.sdr_blocks as any);
         if (Array.isArray(data.closer_blocks)) setCloserBlocks(data.closer_blocks as any);
+      } else if (!error && !data) {
+        // novo usuário: resetar estado para padrão para não herdar de outro
+        setRecordId(null);
       }
       setLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [companyId]);
+  }, [companyId, userId]);
 
   const update = (k: keyof Config, v: any) => setConfig((c) => ({ ...c, [k]: v }));
 
