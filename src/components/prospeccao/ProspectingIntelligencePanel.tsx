@@ -21,9 +21,8 @@ export function ProspectingIntelligencePanel() {
         <span className="text-sm text-muted-foreground">Camada de inteligência embutida na Prospecção</span>
       </div>
 
-      <Tabs defaultValue="leads" className="space-y-3">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full md:max-w-3xl">
-          <TabsTrigger value="leads" className="gap-1"><Brain className="h-3.5 w-3.5" /> Lead Score</TabsTrigger>
+      <Tabs defaultValue="icp" className="space-y-3">
+        <TabsList className="grid grid-cols-3 w-full md:max-w-3xl">
           <TabsTrigger value="icp" className="gap-1"><Target className="h-3.5 w-3.5" /> ICP</TabsTrigger>
           <TabsTrigger value="machine" className="gap-1"><Calculator className="h-3.5 w-3.5" /> Máquina</TabsTrigger>
           <TabsTrigger value="ote" className="gap-1">
@@ -31,7 +30,6 @@ export function ProspectingIntelligencePanel() {
             {!isManagerLike && <Lock className="h-3 w-3 ml-0.5" />}
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="leads"><LeadScorePanel /></TabsContent>
         <TabsContent value="icp"><ICPDualBuilder /></TabsContent>
         <TabsContent value="machine"><SalesMachineWizard /></TabsContent>
         <TabsContent value="ote">
