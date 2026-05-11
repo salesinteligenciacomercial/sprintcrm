@@ -390,7 +390,54 @@ export function RotinaInteligente() {
       return;
     }
     if (data?.id) setRecordId(data.id);
-    toast.success("Configuração e rotinas salvas.");
+    setUsedTemplate({ sdr: false, closer: false });
+    toast.success("Configuração e rotinas salvas (pessoal).");
+  };
+
+  const handleSaveAsTemplate = async (role: Role) => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem definir a rotina padrão da equipe.");
+      return;
+    }
+    if (!companyId || !userId) {
+      toast.error("Empresa não identificada.");
+      return;
+    }
+    const blocksToSave = role === "sdr" ? sdrBlocks : closerBlocks;
+    if (!blocksToSave.length) {
+      toast.error("Gere ou adicione blocos antes de salvar o template.");
+      return;
+    }
+
+    // upsert manual: busca existente do template, depois insere/atualiza
+    const { data: existing } = await supabase
+      .from("prospeccao_smart_routines")
+      .select("id")
+      .eq("company_id", companyId)
+      .eq("is_template", true)
+      .eq("template_role", role)
+      .maybeSingle();
+
+    const payload: any = {
+      company_id: companyId,
+      user_id: userId,
+      is_template: true,
+      template_role: role,
+      config: config as any,
+      sdr_blocks: role === "sdr" ? (sdrBlocks as any) : ([] as any),
+      closer_blocks: role === "closer" ? (closerBlocks as any) : ([] as any),
+    };
+
+    const { error } = existing
+      ? await supabase.from("prospeccao_smart_routines").update(payload).eq("id", existing.id)
+      : await supabase.from("prospeccao_smart_routines").insert(payload);
+
+    if (error) {
+      console.error("[RotinaInteligente] template save error", error);
+      toast.error("Erro ao salvar template: " + error.message);
+      return;
+    }
+    toast.success(`Template ${role === "sdr" ? "do SDR" : "do Closer"} salvo para toda a equipe.`);
   };
 
   const updateBlock = (role: Role, id: string, patch: Partial<RoutineBlock>) => {
