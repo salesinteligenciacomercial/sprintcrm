@@ -121,7 +121,7 @@ function diffMin(start: string, end: string): number {
 }
 
 export function RotinaInteligente() {
-  const { companyId } = usePlayerProfile();
+  const { companyId, userId } = usePlayerProfile();
   const [config, setConfig] = useState<Config>(() => {
     try { const s = localStorage.getItem(STORAGE_KEY); return s ? { ...DEFAULT_CONFIG, ...JSON.parse(s) } : DEFAULT_CONFIG; }
     catch { return DEFAULT_CONFIG; }
