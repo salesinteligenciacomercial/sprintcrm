@@ -1,10 +1,11 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Layers, Megaphone, Target } from "lucide-react";
+import { Sparkles, Layers, Megaphone, Target, FileText } from "lucide-react";
 import { ProductLadderBuilder } from "./ProductLadderBuilder";
 import { MarketingFunnelTracks } from "./MarketingFunnelTracks";
 import { ICPWizard } from "./ICPWizard";
+import { ICPManualText } from "../ICPManualText";
 
 export function EstrategiaComercialPanel() {
   return (
