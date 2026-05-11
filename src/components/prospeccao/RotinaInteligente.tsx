@@ -320,13 +320,14 @@ export function RotinaInteligente() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     localStorage.setItem(ROUTINE_KEY, JSON.stringify({ sdr: sdrBlocks, closer: closerBlocks }));
 
-    if (!companyId) {
-      toast.error("Empresa não identificada. Faça login novamente.");
+    if (!companyId || !userId) {
+      toast.error("Usuário/empresa não identificados. Faça login novamente.");
       return;
     }
 
     const payload = {
       company_id: companyId,
+      user_id: userId,
       config: config as any,
       sdr_blocks: sdrBlocks as any,
       closer_blocks: closerBlocks as any,
@@ -334,7 +335,7 @@ export function RotinaInteligente() {
 
     const { data, error } = await supabase
       .from("prospeccao_smart_routines")
-      .upsert(payload, { onConflict: "company_id" })
+      .upsert(payload, { onConflict: "company_id,user_id" })
       .select("id")
       .single();
 
