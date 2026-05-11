@@ -696,14 +696,38 @@ export function RotinaInteligente() {
       </Tabs>
 
       {/* AÇÕES GLOBAIS */}
-      <div className="flex justify-end gap-2 sticky bottom-2">
+      <div className="flex justify-end gap-2 sticky bottom-2 flex-wrap">
         <Button variant="outline" onClick={() => { setConfig(DEFAULT_CONFIG); toast.info("Padrões restaurados."); }}>
           <RefreshCw className="h-4 w-4 mr-1" /> Restaurar padrões
         </Button>
+        {isAdmin && (
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => handleSaveAsTemplate("sdr")}
+              title="Define a rotina padrão dos SDRs da empresa"
+            >
+              <Sparkles className="h-4 w-4 mr-1" /> Salvar como padrão SDR (equipe)
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => handleSaveAsTemplate("closer")}
+              title="Define a rotina padrão dos Closers da empresa"
+            >
+              <Sparkles className="h-4 w-4 mr-1" /> Salvar como padrão Closer (equipe)
+            </Button>
+          </>
+        )}
         <Button onClick={handleSave}>
-          <Save className="h-4 w-4 mr-1" /> Salvar configuração
+          <Save className="h-4 w-4 mr-1" /> Salvar minha rotina
         </Button>
       </div>
+
+      {isAdmin && (
+        <p className="text-[11px] text-muted-foreground -mt-3 text-right">
+          Como admin, você pode salvar a rotina atual como <b>padrão da equipe</b> por papel (SDR/Closer). Cada usuário ainda pode personalizar a sua.
+        </p>
+      )}
 
       {/* FILOSOFIA */}
       <Card className="bg-gradient-to-br from-emerald-500/5 to-transparent border-l-4 border-l-emerald-500">
