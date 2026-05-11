@@ -124,6 +124,7 @@ function diffMin(start: string, end: string): number {
 
 export function RotinaInteligente() {
   const { companyId, userId } = usePlayerProfile();
+  const { isAdmin } = usePermissions();
   const [config, setConfig] = useState<Config>(() => {
     try { const s = localStorage.getItem(STORAGE_KEY); return s ? { ...DEFAULT_CONFIG, ...JSON.parse(s) } : DEFAULT_CONFIG; }
     catch { return DEFAULT_CONFIG; }
@@ -133,8 +134,9 @@ export function RotinaInteligente() {
   const [closerBlocks, setCloserBlocks] = useState<RoutineBlock[]>([]);
   const [recordId, setRecordId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [usedTemplate, setUsedTemplate] = useState<{ sdr: boolean; closer: boolean }>({ sdr: false, closer: false });
 
-  // Carregar do Supabase (com fallback p/ localStorage)
+  // Carregar do Supabase (rotina pessoal → fallback: template da empresa por papel)
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -149,24 +151,65 @@ export function RotinaInteligente() {
       } catch {}
 
       if (!companyId || !userId) { setLoading(false); return; }
-      const { data, error } = await supabase
+
+      // 1) rotina pessoal
+      const { data: personal } = await supabase
         .from("prospeccao_smart_routines")
         .select("id, config, sdr_blocks, closer_blocks")
         .eq("company_id", companyId)
         .eq("user_id", userId)
+        .eq("is_template", false)
         .maybeSingle();
+
       if (cancelled) return;
-      if (!error && data) {
-        setRecordId(data.id);
-        if (data.config && Object.keys(data.config as any).length) {
-          setConfig({ ...DEFAULT_CONFIG, ...(data.config as any) });
+
+      let hasPersonalSdr = false;
+      let hasPersonalCloser = false;
+
+      if (personal) {
+        setRecordId(personal.id);
+        if (personal.config && Object.keys(personal.config as any).length) {
+          setConfig({ ...DEFAULT_CONFIG, ...(personal.config as any) });
         }
-        if (Array.isArray(data.sdr_blocks)) setSdrBlocks(data.sdr_blocks as any);
-        if (Array.isArray(data.closer_blocks)) setCloserBlocks(data.closer_blocks as any);
-      } else if (!error && !data) {
-        // novo usuário: resetar estado para padrão para não herdar de outro
+        if (Array.isArray(personal.sdr_blocks) && (personal.sdr_blocks as any[]).length) {
+          setSdrBlocks(personal.sdr_blocks as any);
+          hasPersonalSdr = true;
+        }
+        if (Array.isArray(personal.closer_blocks) && (personal.closer_blocks as any[]).length) {
+          setCloserBlocks(personal.closer_blocks as any);
+          hasPersonalCloser = true;
+        }
+      } else {
         setRecordId(null);
       }
+
+      // 2) fallback: templates da empresa por papel
+      if (!hasPersonalSdr || !hasPersonalCloser) {
+        const { data: tpls } = await supabase
+          .from("prospeccao_smart_routines")
+          .select("template_role, sdr_blocks, closer_blocks, config")
+          .eq("company_id", companyId)
+          .eq("is_template", true);
+
+        if (cancelled) return;
+        if (tpls && tpls.length) {
+          const sdrTpl = tpls.find((t: any) => t.template_role === "sdr");
+          const closerTpl = tpls.find((t: any) => t.template_role === "closer");
+          if (!hasPersonalSdr && sdrTpl && Array.isArray(sdrTpl.sdr_blocks) && (sdrTpl.sdr_blocks as any[]).length) {
+            setSdrBlocks(sdrTpl.sdr_blocks as any);
+            setUsedTemplate((u) => ({ ...u, sdr: true }));
+          }
+          if (!hasPersonalCloser && closerTpl && Array.isArray(closerTpl.closer_blocks) && (closerTpl.closer_blocks as any[]).length) {
+            setCloserBlocks(closerTpl.closer_blocks as any);
+            setUsedTemplate((u) => ({ ...u, closer: true }));
+          }
+          // Se ainda não tem config pessoal, herda do template SDR (mais completo)
+          if (!personal && sdrTpl?.config && Object.keys(sdrTpl.config as any).length) {
+            setConfig({ ...DEFAULT_CONFIG, ...(sdrTpl.config as any) });
+          }
+        }
+      }
+
       setLoading(false);
     })();
     return () => { cancelled = true; };
