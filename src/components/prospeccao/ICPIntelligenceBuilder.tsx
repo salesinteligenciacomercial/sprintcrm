@@ -62,7 +62,24 @@ export function ICPIntelligenceBuilder({ onApplied }: Props) {
     try {
       const result = await generate.mutateAsync({ niche: niche.trim(), segmento: segmento || undefined, produtos });
       setData(result);
-      toast.success("ICP Inteligente gerado");
+      // Salva automaticamente o ICP gerado (sem aplicar ao Lead Score) para persistir entre reloads
+      try {
+        await save.mutateAsync({
+          name: `ICP IA — ${result.niche}`,
+          is_default: false,
+          criteria: result.intelligence?.lead_score_criteria || [],
+          hot_threshold: 75,
+          warm_threshold: 50,
+          source: "ai",
+          niche: result.niche,
+          intelligence: result.intelligence,
+          fit_score: result.intelligence?.scoring?.fit_score,
+          generated_at: new Date().toISOString(),
+        } as any);
+      } catch (err) {
+        console.error("Falha ao salvar ICP gerado", err);
+      }
+      toast.success("ICP Inteligente gerado e salvo");
     } catch (e: any) {
       toast.error("Falha ao gerar ICP", { description: e.message });
     }
