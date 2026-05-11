@@ -974,9 +974,15 @@ function ResultadoDiagnostico({
         );
       })()}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={onRefazer} className="gap-2">
           <RotateCcw className="h-4 w-4" /> Refazer diagnóstico
+        </Button>
+        <Button
+          onClick={() => gerarPDFDiagnostico(result, alavancas, gargalos || [])}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" /> Baixar PDF do diagnóstico
         </Button>
       </div>
     </div>
