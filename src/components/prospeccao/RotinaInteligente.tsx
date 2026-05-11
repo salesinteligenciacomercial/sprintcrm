@@ -552,6 +552,19 @@ export function RotinaInteligente() {
         </CardContent>
       </Card>
 
+      {/* Aviso de escopo / fonte da rotina */}
+      {(usedTemplate.sdr || usedTemplate.closer) && (
+        <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs text-foreground flex items-center gap-2">
+          <Users className="h-4 w-4 text-blue-500" />
+          <span>
+            Você está vendo a <b>rotina padrão da equipe</b>
+            {usedTemplate.sdr && usedTemplate.closer ? " (SDR e Closer)"
+              : usedTemplate.sdr ? " (SDR)" : " (Closer)"}.
+            Edite e clique em <b>Salvar configuração</b> para criar a sua versão pessoal.
+          </span>
+        </div>
+      )}
+
       {/* TABS SDR / CLOSER */}
       <Tabs value={activeRole} onValueChange={(v) => setActiveRole(v as Role)}>
         <TabsList>
