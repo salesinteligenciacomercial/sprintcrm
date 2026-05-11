@@ -121,6 +121,7 @@ function diffMin(start: string, end: string): number {
 }
 
 export function RotinaInteligente() {
+  const { companyId } = usePlayerProfile();
   const [config, setConfig] = useState<Config>(() => {
     try { const s = localStorage.getItem(STORAGE_KEY); return s ? { ...DEFAULT_CONFIG, ...JSON.parse(s) } : DEFAULT_CONFIG; }
     catch { return DEFAULT_CONFIG; }
@@ -128,18 +129,42 @@ export function RotinaInteligente() {
   const [activeRole, setActiveRole] = useState<Role>("sdr");
   const [sdrBlocks, setSdrBlocks] = useState<RoutineBlock[]>([]);
   const [closerBlocks, setCloserBlocks] = useState<RoutineBlock[]>([]);
+  const [recordId, setRecordId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Carregar blocos salvos
+  // Carregar do Supabase (com fallback p/ localStorage)
   useEffect(() => {
-    try {
-      const s = localStorage.getItem(ROUTINE_KEY);
-      if (s) {
-        const parsed = JSON.parse(s);
-        setSdrBlocks(parsed.sdr || []);
-        setCloserBlocks(parsed.closer || []);
+    let cancelled = false;
+    (async () => {
+      // Fallback local imediato
+      try {
+        const s = localStorage.getItem(ROUTINE_KEY);
+        if (s) {
+          const parsed = JSON.parse(s);
+          setSdrBlocks(parsed.sdr || []);
+          setCloserBlocks(parsed.closer || []);
+        }
+      } catch {}
+
+      if (!companyId) { setLoading(false); return; }
+      const { data, error } = await supabase
+        .from("prospeccao_smart_routines")
+        .select("id, config, sdr_blocks, closer_blocks")
+        .eq("company_id", companyId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (!error && data) {
+        setRecordId(data.id);
+        if (data.config && Object.keys(data.config as any).length) {
+          setConfig({ ...DEFAULT_CONFIG, ...(data.config as any) });
+        }
+        if (Array.isArray(data.sdr_blocks)) setSdrBlocks(data.sdr_blocks as any);
+        if (Array.isArray(data.closer_blocks)) setCloserBlocks(data.closer_blocks as any);
       }
-    } catch {}
-  }, []);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [companyId]);
 
   const update = (k: keyof Config, v: any) => setConfig((c) => ({ ...c, [k]: v }));
 
