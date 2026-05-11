@@ -36,12 +36,50 @@ export function ICPIntelligenceBuilder({ onApplied }: Props) {
     })();
   }, [companyId]);
 
+  // Carrega ICP IA salvo (último gerado) para não perder ao atualizar página
+  useEffect(() => {
+    if (!companyId) return;
+    (async () => {
+      const { data: rows } = await supabase
+        .from("icp_profiles" as any)
+        .select("niche, intelligence, source, is_default, generated_at, created_at")
+        .eq("company_id", companyId)
+        .eq("source", "ai")
+        .order("is_default", { ascending: false })
+        .order("generated_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const row = (rows as any[])?.[0];
+      if (row?.intelligence && row?.niche) {
+        setData({ niche: row.niche, intelligence: row.intelligence });
+        setNiche(row.niche);
+      }
+    })();
+  }, [companyId]);
+
   const handleGenerate = async () => {
     if (!niche.trim()) { toast.error("Informe um nicho/segmento"); return; }
     try {
       const result = await generate.mutateAsync({ niche: niche.trim(), segmento: segmento || undefined, produtos });
       setData(result);
-      toast.success("ICP Inteligente gerado");
+      // Salva automaticamente o ICP gerado (sem aplicar ao Lead Score) para persistir entre reloads
+      try {
+        await save.mutateAsync({
+          name: `ICP IA — ${result.niche}`,
+          is_default: false,
+          criteria: result.intelligence?.lead_score_criteria || [],
+          hot_threshold: 75,
+          warm_threshold: 50,
+          source: "ai",
+          niche: result.niche,
+          intelligence: result.intelligence,
+          fit_score: result.intelligence?.scoring?.fit_score,
+          generated_at: new Date().toISOString(),
+        } as any);
+      } catch (err) {
+        console.error("Falha ao salvar ICP gerado", err);
+      }
+      toast.success("ICP Inteligente gerado e salvo");
     } catch (e: any) {
       toast.error("Falha ao gerar ICP", { description: e.message });
     }
