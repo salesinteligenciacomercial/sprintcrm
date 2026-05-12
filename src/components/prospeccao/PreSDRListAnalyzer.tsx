@@ -252,6 +252,11 @@ export function PreSDRListAnalyzer() {
                   <Loader2 className="h-4 w-4 animate-spin" /> Parar
                 </Button>
               )}
+              {!running && errors > 0 && (
+                <Button size="sm" variant="outline" onClick={retryErrors} className="gap-1 border-rose-300 text-rose-600 hover:bg-rose-50">
+                  <Loader2 className="h-4 w-4" /> Reanalisar erros ({errors})
+                </Button>
+              )}
               {enriched > 0 && (
                 <Button size="sm" variant="outline" onClick={exportCSV} className="gap-1">
                   <Download className="h-4 w-4" /> Exportar CSV
