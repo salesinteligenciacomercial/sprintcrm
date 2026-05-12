@@ -371,11 +371,11 @@ export function PreSDRListAnalyzer() {
     if (error) toast.error("Não foi possível salvar o status", { description: error.message });
   }
 
-  async function importToColdCall(row: Row) {
-    if (!companyId) return;
+  async function importToColdCall(row: Row): Promise<string | null> {
+    if (!companyId) return null;
     const phone = String(row.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Linha sem telefone — não dá para importar para Cold Call.");
-    if (row.__leadId) return toast.info("Esta empresa já foi importada.");
+    if (!phone) { toast.error("Linha sem telefone — não dá para importar para Cold Call."); return null; }
+    if (row.__leadId) { toast.info("Esta empresa já foi importada."); return row.__leadId; }
     setImportingId(row.__id);
     try {
       const name = String(row.fantasia || row.razao || "Empresa sem nome").trim();
@@ -411,8 +411,10 @@ export function PreSDRListAnalyzer() {
         .eq("row_key", key);
       setRows((prev) => prev.map((r) => (r.__id === row.__id ? { ...r, __leadId: lead!.id, __importedAt: importedAt } : r)));
       toast.success("Importado para Cold Call", { description: `${name} já está disponível na fila.` });
+      return lead!.id as string;
     } catch (e: any) {
       toast.error("Falha ao importar", { description: e?.message });
+      return null;
     } finally {
       setImportingId(null);
     }
