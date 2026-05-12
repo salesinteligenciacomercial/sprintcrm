@@ -334,9 +334,87 @@ export function PreSDRListAnalyzer() {
     setRows((prev) => prev.map((r) => (r.__id === id ? { ...r, __open: !r.__open } : r)));
   }
 
+  async function setOutcome(row: Row, outcome: Outcome) {
+    if (!companyId) return;
+    const key = row.__rowKey || rowKey(row);
+    setRows((prev) => prev.map((r) => (r.__id === row.__id ? { ...r, __outcome: outcome } : r)));
+    const { error } = await supabase
+      .from("pre_sdr_analyses" as any)
+      .update({ outcome, outcome_at: new Date().toISOString() } as any)
+      .eq("company_id", companyId)
+      .eq("row_key", key);
+    if (error) toast.error("Não foi possível salvar o status", { description: error.message });
+  }
+
+  async function importToColdCall(row: Row) {
+    if (!companyId) return;
+    const phone = String(row.telefone || "").replace(/\D/g, "");
+    if (!phone) return toast.error("Linha sem telefone — não dá para importar para Cold Call.");
+    if (row.__leadId) return toast.info("Esta empresa já foi importada.");
+    setImportingId(row.__id);
+    try {
+      const name = String(row.fantasia || row.razao || "Empresa sem nome").trim();
+      const company = String(row.razao || row.fantasia || "").trim();
+      const briefNote = row.__brief
+        ? `Decisor provável: ${row.__brief.decisor_provavel || "—"}\nGancho: ${row.__brief.gancho_abertura || "—"}\nOferta sugerida: ${row.__brief.oferta_recomendada || "—"}\nFit: ${row.__brief.fit_score ?? "—"}`
+        : null;
+      const { data: lead, error } = await supabase
+        .from("leads")
+        .insert({
+          company_id: companyId,
+          name,
+          phone,
+          telefone: phone,
+          email: row.email || null,
+          company: company || null,
+          source: "pre_sdr",
+          notes: briefNote,
+          to_prospect: true,
+          prospecting_priority: row.__brief?.fit_score ?? 1,
+          stage: "prospeccao",
+          status: "novo",
+        } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      const key = row.__rowKey || rowKey(row);
+      const importedAt = new Date().toISOString();
+      await supabase
+        .from("pre_sdr_analyses" as any)
+        .update({ lead_id: lead!.id, imported_to_coldcall_at: importedAt } as any)
+        .eq("company_id", companyId)
+        .eq("row_key", key);
+      setRows((prev) => prev.map((r) => (r.__id === row.__id ? { ...r, __leadId: lead!.id, __importedAt: importedAt } : r)));
+      toast.success("Importado para Cold Call", { description: `${name} já está disponível na fila.` });
+    } catch (e: any) {
+      toast.error("Falha ao importar", { description: e?.message });
+    } finally {
+      setImportingId(null);
+    }
+  }
+
+  async function importSelectedToColdCall() {
+    const candidates = visibleRows.filter((r) => !r.__leadId && (r.telefone || "").toString().replace(/\D/g, ""));
+    if (!candidates.length) return toast.info("Nada para importar (filtre uma lista com telefone).");
+    let ok = 0;
+    for (const r of candidates) {
+      // sequencial para não estourar rate limit
+      // eslint-disable-next-line no-await-in-loop
+      await importToColdCall(r);
+      ok++;
+    }
+    toast.success(`${ok} contato(s) enviados para Cold Call.`);
+  }
+
   const total = rows.length;
   const enriched = rows.filter((r) => r.__brief).length;
   const errors = rows.filter((r) => r.__status === "error").length;
+  const outcomeCounts = OUTCOME_ORDER.reduce<Record<string, number>>((acc, o) => {
+    acc[o] = rows.filter((r) => (r.__outcome || "pendente") === o).length;
+    return acc;
+  }, {});
+  const visibleRows = outcomeFilter === "all" ? rows : rows.filter((r) => (r.__outcome || "pendente") === outcomeFilter);
+  const importedCount = rows.filter((r) => r.__leadId).length;
 
   return (
     <Card className="border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-transparent">
