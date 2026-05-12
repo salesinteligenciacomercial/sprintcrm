@@ -94,6 +94,9 @@ function toRowFromSaved(item: SavedAnalysis): Row {
     __status: item.status === "pending" || item.status === "running" ? "idle" : item.status,
     __brief: item.brief || undefined,
     __error: item.error_message || undefined,
+    __outcome: (item.outcome as Outcome) || "pendente",
+    __leadId: item.lead_id || null,
+    __importedAt: item.imported_to_coldcall_at || null,
   };
 }
 
