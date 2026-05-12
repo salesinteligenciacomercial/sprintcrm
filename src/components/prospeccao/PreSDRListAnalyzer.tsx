@@ -272,8 +272,8 @@ export function PreSDRListAnalyzer() {
                     const fitColor =
                       fit == null ? "" : fit >= 75 ? "text-emerald-600" : fit >= 50 ? "text-amber-600" : "text-rose-600";
                     return (
-                      <>
-                        <tr key={r.__id} className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => b && toggleOpen(r.__id)}>
+                      <Fragment key={r.__id}>
+                        <tr className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => b && toggleOpen(r.__id)}>
                           <td className="px-2 py-1.5">
                             {b ? (r.__open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />) : null}
                           </td>
