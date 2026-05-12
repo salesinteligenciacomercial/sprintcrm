@@ -3,11 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight } from "lucide-react";
+import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight, PhoneCall, Check, CalendarClock, Flame, X, Trophy, Filter } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanySegmento } from "@/hooks/useCompanySegmento";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type Outcome = "pendente" | "prospectado" | "sem_resposta" | "oportunidade" | "agendamento" | "follow_up" | "ganho" | "descartado";
 
 type Row = Record<string, any> & {
   __id: string;
@@ -17,6 +20,9 @@ type Row = Record<string, any> & {
   __brief?: any;
   __error?: string;
   __open?: boolean;
+  __outcome?: Outcome;
+  __leadId?: string | null;
+  __importedAt?: string | null;
 };
 
 type SavedAnalysis = {
@@ -26,7 +32,22 @@ type SavedAnalysis = {
   brief: any;
   status: "pending" | "running" | "done" | "error";
   error_message: string | null;
+  outcome?: string | null;
+  lead_id?: string | null;
+  imported_to_coldcall_at?: string | null;
 };
+
+const OUTCOME_META: Record<Outcome, { label: string; className: string; icon?: any }> = {
+  pendente: { label: "Pendente", className: "text-muted-foreground" },
+  prospectado: { label: "Prospectado (OK)", className: "text-emerald-600", icon: Check },
+  sem_resposta: { label: "Sem resposta", className: "text-slate-500", icon: X },
+  oportunidade: { label: "Oportunidade", className: "text-amber-600", icon: Flame },
+  agendamento: { label: "Agendamento", className: "text-purple-600", icon: CalendarClock },
+  follow_up: { label: "Follow-up", className: "text-cyan-600", icon: PhoneCall },
+  ganho: { label: "Ganho", className: "text-emerald-700", icon: Trophy },
+  descartado: { label: "Descartado", className: "text-rose-600", icon: X },
+};
+const OUTCOME_ORDER: Outcome[] = ["pendente", "prospectado", "sem_resposta", "oportunidade", "agendamento", "follow_up", "ganho", "descartado"];
 
 const COL_MAP: Record<string, string[]> = {
   razao: ["razao", "razão", "razao social", "razão social", "razaosocial"],
