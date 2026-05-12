@@ -103,17 +103,18 @@ function fallbackBrief(empresa: any, produtos: any[] | undefined, motivo: string
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "LOVABLE_API_KEY ausente" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     const body = await req.json().catch(() => ({}));
     const { empresa, icp, segmento_vendedor, produtos } = body || {};
     if (!empresa || typeof empresa !== "object") {
       return new Response(JSON.stringify({ error: "empresa obrigatória" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!apiKey) {
+      return new Response(JSON.stringify({ brief: fallbackBrief(empresa, produtos, "LOVABLE_API_KEY ausente"), fallback: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -151,7 +152,8 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-3-flash-preview",
+          temperature: 0.2,
           messages: [
             { role: "system", content: SYSTEM },
             { role: "user", content: ctx.join("\n") },
@@ -164,8 +166,8 @@ Deno.serve(async (req) => {
       lastErrText = await resp.text().catch(() => "");
       // 402 = sem créditos; não adianta tentar de novo
       if (resp.status === 402) {
-        return new Response(JSON.stringify({ error: "Sem créditos no Lovable AI. Adicione créditos em Settings → Workspace → Usage." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        return new Response(JSON.stringify({ brief: fallbackBrief(empresa, produtos, "sem créditos no Lovable AI"), fallback: true, warning: "Sem créditos no Lovable AI; gerado briefing básico para não perder o contato." }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       // 429 ou 5xx → espera e tenta de novo
