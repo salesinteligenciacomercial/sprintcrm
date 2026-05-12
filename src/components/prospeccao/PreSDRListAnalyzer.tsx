@@ -533,22 +533,26 @@ export function PreSDRListAnalyzer() {
                     <th className="px-2 py-1.5">Telefone</th>
                     <th className="px-2 py-1.5">Decisor (IA)</th>
                     <th className="px-2 py-1.5">Fit</th>
-                    <th className="px-2 py-1.5">Status</th>
+                    <th className="px-2 py-1.5">IA</th>
+                    <th className="px-2 py-1.5">Resultado da prospecção</th>
+                    <th className="px-2 py-1.5">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => {
+                  {visibleRows.map((r) => {
                     const b = r.__brief;
                     const fit = b?.fit_score;
                     const fitColor =
                       fit == null ? "" : fit >= 75 ? "text-emerald-600" : fit >= 50 ? "text-amber-600" : "text-rose-600";
+                    const outcome = (r.__outcome || "pendente") as Outcome;
+                    const oMeta = OUTCOME_META[outcome];
                     return (
                       <Fragment key={r.__id}>
-                        <tr className="border-t hover:bg-muted/40 cursor-pointer" onClick={() => b && toggleOpen(r.__id)}>
-                          <td className="px-2 py-1.5">
+                        <tr className="border-t hover:bg-muted/40">
+                          <td className="px-2 py-1.5 cursor-pointer" onClick={() => b && toggleOpen(r.__id)}>
                             {b ? (r.__open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />) : null}
                           </td>
-                          <td className="px-2 py-1.5">
+                          <td className="px-2 py-1.5 cursor-pointer" onClick={() => b && toggleOpen(r.__id)}>
                             <div className="font-medium">{r.fantasia || r.razao || "—"}</div>
                             {r.razao && r.fantasia && <div className="text-[10px] text-muted-foreground">{r.razao}</div>}
                           </td>
@@ -563,10 +567,56 @@ export function PreSDRListAnalyzer() {
                             {r.__status === "error" && <Badge variant="outline" className="text-rose-600" title={r.__error}>erro</Badge>}
                             {r.__status === "idle" && <span className="text-muted-foreground">—</span>}
                           </td>
+                          <td className="px-2 py-1.5">
+                            <Select value={outcome} onValueChange={(v) => setOutcome(r, v as Outcome)}>
+                              <SelectTrigger className={`h-7 w-[170px] text-xs ${oMeta.className}`}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {OUTCOME_ORDER.map((o) => (
+                                  <SelectItem key={o} value={o} className={OUTCOME_META[o].className}>
+                                    {OUTCOME_META[o].label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <div className="flex items-center gap-1">
+                              {outcome !== "prospectado" && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 text-emerald-600 hover:bg-emerald-50"
+                                  onClick={() => setOutcome(r, "prospectado")}
+                                  title="Marcar como prospectado"
+                                >
+                                  <Check className="h-3.5 w-3.5" /> OK
+                                </Button>
+                              )}
+                              {r.__leadId ? (
+                                <Badge variant="outline" className="text-emerald-700 border-emerald-300 gap-1">
+                                  <PhoneCall className="h-3 w-3" /> Cold Call
+                                </Badge>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2"
+                                  disabled={importingId === r.__id || !r.telefone}
+                                  onClick={() => importToColdCall(r)}
+                                  title={r.telefone ? "Importar para a aba Cold Call" : "Sem telefone"}
+                                >
+                                  {importingId === r.__id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <PhoneCall className="h-3.5 w-3.5" />}
+                                  <span className="ml-1">Cold Call</span>
+                                </Button>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                         {r.__open && b && (
                           <tr className="bg-muted/20 border-t">
-                            <td colSpan={6} className="px-3 py-3 space-y-2">
+                            <td colSpan={8} className="px-3 py-3 space-y-2">
                               <div className="grid md:grid-cols-2 gap-3">
                                 <Field k="Resumo da empresa" v={b.empresa_resumo} />
                                 <Field k="Site" v={b.site_resumo} />
