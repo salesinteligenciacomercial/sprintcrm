@@ -184,25 +184,24 @@ Deno.serve(async (req) => {
     }
 
     if (!resp || !resp.ok) {
-      const status = resp?.status === 429 ? 429 : 500;
-      return new Response(JSON.stringify({ error: `AI Gateway ${resp?.status ?? "?"} após ${maxAttempts} tentativas: ${lastErrText.slice(0, 200)}` }), {
-        status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ brief: fallbackBrief(empresa, produtos, `AI Gateway ${resp?.status ?? "?"}`), fallback: true, warning: `IA instável após ${maxAttempts} tentativas; gerado briefing básico.` }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     const data = await resp.json();
     const call = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!call) {
-      return new Response(JSON.stringify({ error: "Sem tool_call na resposta" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ brief: fallbackBrief(empresa, produtos, "resposta sem estrutura"), fallback: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     let brief: any;
     try {
       brief = JSON.parse(call.function.arguments);
     } catch (e) {
-      return new Response(JSON.stringify({ error: "Resposta da IA inválida (JSON malformado)" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ brief: fallbackBrief(empresa, produtos, "JSON malformado"), fallback: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     return new Response(JSON.stringify({ brief }), {
