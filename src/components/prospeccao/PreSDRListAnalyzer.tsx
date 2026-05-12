@@ -116,7 +116,7 @@ export function PreSDRListAnalyzer() {
           .order("updated_at", { ascending: false })
           .range(from, from + 999);
         if (error) break;
-        all.push(...((data as SavedAnalysis[]) || []));
+        all.push(...(((data as unknown as SavedAnalysis[]) || [])));
         if (!data || data.length < 1000) break;
       }
       if (all.length) setRows(all.map(toRowFromSaved));
