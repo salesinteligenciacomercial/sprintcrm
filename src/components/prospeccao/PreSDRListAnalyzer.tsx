@@ -212,7 +212,7 @@ export function PreSDRListAnalyzer() {
     setRunning(true);
     setProgress({ done: 0, total: targetIdxs.length });
 
-    const concurrency = 2;
+    const concurrency = 1;
     let cursor = 0;
     let done = 0;
 
@@ -226,8 +226,8 @@ export function PreSDRListAnalyzer() {
         setRows((prev) => prev.map((r, j) => (j === idx ? result : r)));
         done++;
         setProgress({ done, total: targetIdxs.length });
-        // pequeno respiro entre requests para evitar 429
-        await new Promise((r) => setTimeout(r, 250));
+        // respiro entre requests para evitar 429 e quedas por excesso de chamadas simultâneas
+        await new Promise((r) => setTimeout(r, 900));
       }
     };
     await Promise.all(Array.from({ length: concurrency }, next));
