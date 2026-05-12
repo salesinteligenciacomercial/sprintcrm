@@ -645,6 +645,17 @@ export function PreSDRListAnalyzer() {
                                   <Check className="h-3.5 w-3.5" /> OK
                                 </Button>
                               )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2 text-emerald-600 hover:bg-emerald-50"
+                                disabled={!r.telefone}
+                                onClick={() => openWhatsApp(r)}
+                                title={r.telefone ? "Enviar mensagem no WhatsApp" : "Sem telefone"}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                <span className="ml-1">Conversa</span>
+                              </Button>
                               {r.__leadId ? (
                                 <Badge variant="outline" className="text-emerald-700 border-emerald-300 gap-1">
                                   <PhoneCall className="h-3 w-3" /> Cold Call
