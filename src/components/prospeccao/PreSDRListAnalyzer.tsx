@@ -139,51 +139,26 @@ export function PreSDRListAnalyzer() {
   const [importingId, setImportingId] = useState<string | null>(null);
   const [waOpen, setWaOpen] = useState(false);
   const [waRow, setWaRow] = useState<Row | null>(null);
-  const [waMessage, setWaMessage] = useState("");
-  const [waSending, setWaSending] = useState(false);
+  const [waLeadId, setWaLeadId] = useState<string | null>(null);
+  const [waOpening, setWaOpening] = useState<string | null>(null);
 
-  function openWhatsApp(r: Row) {
-    const phone = String(r.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Linha sem telefone para WhatsApp.");
-    const b = r.__brief || {};
-    const nomeEmpresa = r.fantasia || r.razao || "";
-    const decisor = b.decisor_provavel || "";
-    const hook = (b.ganchos_abertura && b.ganchos_abertura[0]) || b.gancho_abertura || "";
-    const saudacao = decisor ? `Olá, ${decisor}!` : `Olá!`;
-    const empresa = nomeEmpresa ? ` Sou da equipe comercial e vi que a ${nomeEmpresa} pode se beneficiar do nosso trabalho.` : "";
-    const linha = hook ? ` ${hook}` : "";
-    const msg = `${saudacao}${empresa}${linha}\n\nFaz sentido conversarmos rapidamente sobre estruturação comercial?`;
+  async function openConversa(r: Row) {
+    if (!r.telefone) return toast.error("Linha sem telefone para WhatsApp.");
+    let leadId = r.__leadId || null;
+    if (!leadId) {
+      setWaOpening(r.__id);
+      try {
+        await importToColdCall(r);
+        // pega leadId atualizado do estado
+        leadId = (rowsRef.current.find((x) => x.__id === r.__id)?.__leadId) || null;
+      } finally {
+        setWaOpening(null);
+      }
+      if (!leadId) return;
+    }
     setWaRow(r);
-    setWaMessage(msg);
+    setWaLeadId(leadId);
     setWaOpen(true);
-  }
-
-  async function sendWhatsApp(viaApi: boolean) {
-    if (!waRow) return;
-    const phone = String(waRow.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Sem telefone.");
-    const numero = phone.length <= 11 ? `55${phone}` : phone;
-    if (!viaApi) {
-      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(waMessage)}`, "_blank");
-      setWaOpen(false);
-      // marca como prospectado
-      await setOutcome(waRow, "prospectado");
-      return;
-    }
-    setWaSending(true);
-    try {
-      const { error } = await supabase.functions.invoke("enviar-whatsapp", {
-        body: { company_id: companyId, numero, mensagem: waMessage, tipo_mensagem: "text" },
-      });
-      if (error) throw error;
-      toast.success("Mensagem enviada via WhatsApp.");
-      await setOutcome(waRow, "prospectado");
-      setWaOpen(false);
-    } catch (e: any) {
-      toast.error("Falha ao enviar pela API. Use 'Abrir WhatsApp' como alternativa.", { description: e?.message });
-    } finally {
-      setWaSending(false);
-    }
   }
 
 
