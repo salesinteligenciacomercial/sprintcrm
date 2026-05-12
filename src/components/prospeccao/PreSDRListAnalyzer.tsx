@@ -623,11 +623,11 @@ export function PreSDRListAnalyzer() {
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 px-2 text-emerald-600 hover:bg-emerald-50"
-                                disabled={!r.telefone}
-                                onClick={() => openWhatsApp(r)}
-                                title={r.telefone ? "Enviar mensagem no WhatsApp" : "Sem telefone"}
+                                disabled={!r.telefone || waOpening === r.__id}
+                                onClick={() => openConversa(r)}
+                                title={r.telefone ? "Abrir conversa (popup do funil)" : "Sem telefone"}
                               >
-                                <MessageCircle className="h-3.5 w-3.5" />
+                                {waOpening === r.__id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
                                 <span className="ml-1">Conversa</span>
                               </Button>
                               {r.__leadId ? (
