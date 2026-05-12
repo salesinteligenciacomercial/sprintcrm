@@ -3,14 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight, PhoneCall, Check, CalendarClock, Flame, X, Trophy, Filter, MessageCircle, Send, ExternalLink } from "lucide-react";
+import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight, PhoneCall, Check, CalendarClock, Flame, X, Trophy, Filter, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { ConversaPopup } from "@/components/leads/ConversaPopup";
 
 type Outcome = "pendente" | "prospectado" | "sem_resposta" | "oportunidade" | "agendamento" | "follow_up" | "ganho" | "descartado";
 
@@ -140,51 +139,24 @@ export function PreSDRListAnalyzer() {
   const [importingId, setImportingId] = useState<string | null>(null);
   const [waOpen, setWaOpen] = useState(false);
   const [waRow, setWaRow] = useState<Row | null>(null);
-  const [waMessage, setWaMessage] = useState("");
-  const [waSending, setWaSending] = useState(false);
+  const [waLeadId, setWaLeadId] = useState<string | null>(null);
+  const [waOpening, setWaOpening] = useState<string | null>(null);
 
-  function openWhatsApp(r: Row) {
-    const phone = String(r.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Linha sem telefone para WhatsApp.");
-    const b = r.__brief || {};
-    const nomeEmpresa = r.fantasia || r.razao || "";
-    const decisor = b.decisor_provavel || "";
-    const hook = (b.ganchos_abertura && b.ganchos_abertura[0]) || b.gancho_abertura || "";
-    const saudacao = decisor ? `Olá, ${decisor}!` : `Olá!`;
-    const empresa = nomeEmpresa ? ` Sou da equipe comercial e vi que a ${nomeEmpresa} pode se beneficiar do nosso trabalho.` : "";
-    const linha = hook ? ` ${hook}` : "";
-    const msg = `${saudacao}${empresa}${linha}\n\nFaz sentido conversarmos rapidamente sobre estruturação comercial?`;
+  async function openConversa(r: Row) {
+    if (!r.telefone) return toast.error("Linha sem telefone para WhatsApp.");
+    let leadId = r.__leadId || null;
+    if (!leadId) {
+      setWaOpening(r.__id);
+      try {
+        leadId = await importToColdCall(r);
+      } finally {
+        setWaOpening(null);
+      }
+      if (!leadId) return;
+    }
     setWaRow(r);
-    setWaMessage(msg);
+    setWaLeadId(leadId);
     setWaOpen(true);
-  }
-
-  async function sendWhatsApp(viaApi: boolean) {
-    if (!waRow) return;
-    const phone = String(waRow.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Sem telefone.");
-    const numero = phone.length <= 11 ? `55${phone}` : phone;
-    if (!viaApi) {
-      window.open(`https://wa.me/${numero}?text=${encodeURIComponent(waMessage)}`, "_blank");
-      setWaOpen(false);
-      // marca como prospectado
-      await setOutcome(waRow, "prospectado");
-      return;
-    }
-    setWaSending(true);
-    try {
-      const { error } = await supabase.functions.invoke("enviar-whatsapp", {
-        body: { company_id: companyId, numero, mensagem: waMessage, tipo_mensagem: "text" },
-      });
-      if (error) throw error;
-      toast.success("Mensagem enviada via WhatsApp.");
-      await setOutcome(waRow, "prospectado");
-      setWaOpen(false);
-    } catch (e: any) {
-      toast.error("Falha ao enviar pela API. Use 'Abrir WhatsApp' como alternativa.", { description: e?.message });
-    } finally {
-      setWaSending(false);
-    }
   }
 
 
@@ -397,11 +369,11 @@ export function PreSDRListAnalyzer() {
     if (error) toast.error("Não foi possível salvar o status", { description: error.message });
   }
 
-  async function importToColdCall(row: Row) {
-    if (!companyId) return;
+  async function importToColdCall(row: Row): Promise<string | null> {
+    if (!companyId) return null;
     const phone = String(row.telefone || "").replace(/\D/g, "");
-    if (!phone) return toast.error("Linha sem telefone — não dá para importar para Cold Call.");
-    if (row.__leadId) return toast.info("Esta empresa já foi importada.");
+    if (!phone) { toast.error("Linha sem telefone — não dá para importar para Cold Call."); return null; }
+    if (row.__leadId) { toast.info("Esta empresa já foi importada."); return row.__leadId; }
     setImportingId(row.__id);
     try {
       const name = String(row.fantasia || row.razao || "Empresa sem nome").trim();
@@ -437,8 +409,10 @@ export function PreSDRListAnalyzer() {
         .eq("row_key", key);
       setRows((prev) => prev.map((r) => (r.__id === row.__id ? { ...r, __leadId: lead!.id, __importedAt: importedAt } : r)));
       toast.success("Importado para Cold Call", { description: `${name} já está disponível na fila.` });
+      return lead!.id as string;
     } catch (e: any) {
       toast.error("Falha ao importar", { description: e?.message });
+      return null;
     } finally {
       setImportingId(null);
     }
@@ -649,11 +623,11 @@ export function PreSDRListAnalyzer() {
                                 size="sm"
                                 variant="ghost"
                                 className="h-7 px-2 text-emerald-600 hover:bg-emerald-50"
-                                disabled={!r.telefone}
-                                onClick={() => openWhatsApp(r)}
-                                title={r.telefone ? "Enviar mensagem no WhatsApp" : "Sem telefone"}
+                                disabled={!r.telefone || waOpening === r.__id}
+                                onClick={() => openConversa(r)}
+                                title={r.telefone ? "Abrir conversa (popup do funil)" : "Sem telefone"}
                               >
-                                <MessageCircle className="h-3.5 w-3.5" />
+                                {waOpening === r.__id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MessageCircle className="h-3.5 w-3.5" />}
                                 <span className="ml-1">Conversa</span>
                               </Button>
                               {r.__leadId ? (
@@ -708,41 +682,15 @@ export function PreSDRListAnalyzer() {
         )}
       </CardContent>
 
-      <Dialog open={waOpen} onOpenChange={setWaOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-emerald-600" />
-              Enviar mensagem no WhatsApp
-            </DialogTitle>
-            <DialogDescription>
-              {waRow ? (
-                <span>
-                  Para <strong>{waRow.fantasia || waRow.razao || "—"}</strong> · {waRow.telefone || "—"}
-                  {waRow.__brief?.decisor_provavel && <> · Decisor: <strong>{waRow.__brief.decisor_provavel}</strong></>}
-                </span>
-              ) : null}
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={waMessage}
-            onChange={(e) => setWaMessage(e.target.value)}
-            rows={8}
-            className="text-sm"
-            placeholder="Digite a mensagem..."
-          />
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setWaOpen(false)}>Cancelar</Button>
-            <Button variant="outline" onClick={() => sendWhatsApp(false)} className="gap-1">
-              <ExternalLink className="h-4 w-4" /> Abrir WhatsApp Web
-            </Button>
-            <Button onClick={() => sendWhatsApp(true)} disabled={waSending} className="gap-1 bg-emerald-600 hover:bg-emerald-700">
-              {waSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Enviar pelo CRM
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {waLeadId && (
+        <ConversaPopup
+          open={waOpen}
+          onOpenChange={setWaOpen}
+          leadId={waLeadId}
+          leadName={waRow?.fantasia || waRow?.razao || "Lead"}
+          leadPhone={waRow?.telefone || ""}
+        />
+      )}
     </Card>
   );
 }
