@@ -76,6 +76,31 @@ function toRowFromSaved(item: SavedAnalysis): Row {
   };
 }
 
+function fallbackBrief(row: Row, produtos: any[], motivo: string) {
+  const nome = row.fantasia || row.razao || "empresa";
+  const decisor = String(row.socios || "").split(/[,;|\n•]+/).map((p) => p.trim()).filter(Boolean)[0] || "a confirmar";
+  const fit = Math.min(82, 42 + (row.site ? 12 : 0) + (row.socios ? 16 : 0) + (row.telefone ? 10 : 0) + (row.email ? 6 : 0));
+  return {
+    empresa_resumo: `${nome} deve ser tratado como prospect B2B; confirme segmento, porte e momento comercial na abertura.`,
+    site_resumo: row.site ? `Site informado: ${row.site}. Confirmar posicionamento e serviços antes da abordagem.` : "Site não informado; confirmar presença digital na ligação.",
+    porte_estimado: "a confirmar",
+    decisor_provavel: decisor,
+    cargo_decisor: decisor === "a confirmar" ? "a confirmar" : "sócio / diretor provável",
+    outros_decisores: [],
+    gatekeeper_esperado: "recepção, atendimento ou administrativo",
+    melhor_horario_ligar: "09h às 11h ou 14h às 17h",
+    gancho_abertura: `Olá, falo com ${decisor}? Vi a ${nome} e queria entender rapidamente como vocês estruturam hoje a captação e atendimento comercial de novos clientes.`,
+    perguntas_qualificacao: ["Vocês têm alguém dedicado à prospecção?", "Quais canais geram mais oportunidades hoje?", "Existe sistema para acompanhar retornos e propostas?", "Qual gargalo comercial mais incomoda hoje?"],
+    dores_provaveis: ["perda de oportunidades por falta de follow-up", "baixa previsibilidade comercial", "atendimento descentralizado"],
+    objecoes_provaveis: ["não é prioridade agora", "já usamos planilha ou sistema simples", "já temos indicações suficientes"],
+    oferta_recomendada: produtos?.[0]?.nome ? `Iniciar por ${produtos[0].nome}, validando aderência na ligação.` : "Diagnóstico de estruturação comercial e implantação do sistema.",
+    fit_score: fit,
+    prioridade: fit >= 70 ? "alta" : fit >= 55 ? "média" : "baixa",
+    risco_descarte: row.telefone ? [] : ["telefone não informado na lista"],
+    observacoes: `Briefing básico gerado porque a IA não respondeu com estabilidade (${motivo}). Validar decisor e contexto na primeira ligação.`,
+  };
+}
+
 export function PreSDRListAnalyzer() {
   const [rows, setRows] = useState<Row[]>([]);
   const [running, setRunning] = useState(false);
