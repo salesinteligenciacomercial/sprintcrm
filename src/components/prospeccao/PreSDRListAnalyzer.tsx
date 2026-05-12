@@ -148,9 +148,7 @@ export function PreSDRListAnalyzer() {
     if (!leadId) {
       setWaOpening(r.__id);
       try {
-        await importToColdCall(r);
-        // pega leadId atualizado do estado
-        leadId = (rowsRef.current.find((x) => x.__id === r.__id)?.__leadId) || null;
+        leadId = await importToColdCall(r);
       } finally {
         setWaOpening(null);
       }
