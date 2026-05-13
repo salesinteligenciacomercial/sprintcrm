@@ -494,7 +494,7 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto !z-[300]">
         <DialogHeader className="pb-3">
           <DialogTitle>Agendar Compromisso - {lead.nome}</DialogTitle>
         </DialogHeader>
