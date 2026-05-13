@@ -688,7 +688,7 @@ export function PreSDRListAnalyzer() {
           onOpenChange={setWaOpen}
           leadId={waLeadId}
           leadName={waRow?.fantasia || waRow?.razao || "Lead"}
-          leadPhone={waRow?.telefone || ""}
+          leadPhone={String(waRow?.telefone ?? "")}
         />
       )}
     </Card>

@@ -152,7 +152,7 @@ export function ConversaPopup({
   // Normaliza número para padrão BR com DDI 55 e somente dígitos
   const normalizePhoneBR = (raw?: string): string | null => {
     if (!raw) return null;
-    let n = raw.replace(/\D/g, "");
+    let n = String(raw).replace(/\D/g, "");
     if (n.startsWith("55")) return n;
     // Se vier local (10/11 dígitos), prefixar 55
     if (n.length === 10 || n.length === 11) return "55" + n;
@@ -199,7 +199,7 @@ export function ConversaPopup({
   // Carregar mensagens agendadas
   const carregarMensagensAgendadas = async () => {
     if (!leadPhone) return;
-    const numero = (leadPhone || "").replace(/\D/g, "");
+    const numero = String(leadPhone || "").replace(/\D/g, "");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
@@ -698,8 +698,8 @@ export function ConversaPopup({
           const newMsg = payload.new;
           
           // Verificar se a mensagem é para este número
-          const msgNumero = (newMsg.numero || newMsg.telefone_formatado || '').replace(/\D/g, '').replace('@s.whatsapp.net', '').replace('@c.us', '');
-          const leadNumero = telefoneNormalizado.replace(/\D/g, '');
+          const msgNumero = String(newMsg.numero || newMsg.telefone_formatado || '').replace(/\D/g, '').replace('@s.whatsapp.net', '').replace('@c.us', '');
+          const leadNumero = String(telefoneNormalizado).replace(/\D/g, '');
           
           if (!msgNumero.includes(leadNumero) && !leadNumero.includes(msgNumero)) {
             return; // Mensagem não é desta conversa
