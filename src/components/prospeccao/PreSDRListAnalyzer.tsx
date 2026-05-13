@@ -142,6 +142,8 @@ export function PreSDRListAnalyzer() {
   const [waRow, setWaRow] = useState<Row | null>(null);
   const [waLeadId, setWaLeadId] = useState<string | null>(null);
   const [waOpening, setWaOpening] = useState<string | null>(null);
+  const [scriptOpen, setScriptOpen] = useState(false);
+  const [scriptRow, setScriptRow] = useState<Row | null>(null);
 
   async function openConversa(r: Row) {
     if (!r.telefone) return toast.error("Linha sem telefone para WhatsApp.");
