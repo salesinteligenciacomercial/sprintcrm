@@ -199,7 +199,7 @@ export function ConversaPopup({
   // Carregar mensagens agendadas
   const carregarMensagensAgendadas = async () => {
     if (!leadPhone) return;
-    const numero = (leadPhone || "").replace(/\D/g, "");
+    const numero = String(leadPhone || "").replace(/\D/g, "");
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
