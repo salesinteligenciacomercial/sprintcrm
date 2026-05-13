@@ -835,6 +835,7 @@ export function PreSDRListAnalyzer() {
                                                   </div>
                                                   <div className="text-[10px] text-muted-foreground">
                                                     {new Date(a.at).toLocaleString("pt-BR")}
+                                                    {a.user_name && <span className="ml-1">· por <strong>{a.user_name}</strong></span>}
                                                   </div>
                                                   {a.note && <div className="text-[11px] mt-0.5">{a.note}</div>}
                                                 </div>
