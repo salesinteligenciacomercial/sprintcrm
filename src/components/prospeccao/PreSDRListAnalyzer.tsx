@@ -3,8 +3,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight, PhoneCall, Check, CalendarClock, Flame, X, Trophy, Filter, MessageCircle, FileText } from "lucide-react";
+import { Phone, Upload, Loader2, Sparkles, FileSpreadsheet, Download, Trash2, Brain, ChevronDown, ChevronRight, PhoneCall, Check, CalendarClock, Flame, X, Trophy, Filter, MessageCircle, FileText, PhoneOff, Voicemail, RotateCcw, Plus, History } from "lucide-react";
 import { ScriptViewerDialog } from "./ScriptViewerDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +15,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ConversaPopup } from "@/components/leads/ConversaPopup";
 
 type Outcome = "pendente" | "prospectado" | "sem_resposta" | "oportunidade" | "agendamento" | "follow_up" | "ganho" | "descartado";
+
+type AttemptType =
+  | "primeiro_contato"
+  | "nao_atendeu"
+  | "caixa_postal"
+  | "ocupado"
+  | "numero_invalido"
+  | "follow_up"
+  | "whatsapp_enviado"
+  | "retornar_depois";
+
+type Attempt = { at: string; type: AttemptType; note?: string };
+
+const ATTEMPT_META: Record<AttemptType, { label: string; icon: any; className: string }> = {
+  primeiro_contato: { label: "Primeiro contato", icon: PhoneCall, className: "text-cyan-600" },
+  nao_atendeu: { label: "Não atendeu", icon: PhoneOff, className: "text-amber-600" },
+  caixa_postal: { label: "Caixa postal", icon: Voicemail, className: "text-amber-700" },
+  ocupado: { label: "Ocupado", icon: PhoneOff, className: "text-orange-600" },
+  numero_invalido: { label: "Número inválido", icon: X, className: "text-rose-600" },
+  follow_up: { label: "Follow-up", icon: RotateCcw, className: "text-indigo-600" },
+  whatsapp_enviado: { label: "WhatsApp enviado", icon: MessageCircle, className: "text-emerald-600" },
+  retornar_depois: { label: "Retornar depois", icon: CalendarClock, className: "text-purple-600" },
+};
 
 type Row = Record<string, any> & {
   __id: string;
@@ -25,6 +50,9 @@ type Row = Record<string, any> & {
   __outcome?: Outcome;
   __leadId?: string | null;
   __importedAt?: string | null;
+  __attempts?: Attempt[];
+  __attemptsCount?: number;
+  __lastAttemptAt?: string | null;
 };
 
 type SavedAnalysis = {
@@ -37,6 +65,9 @@ type SavedAnalysis = {
   outcome?: string | null;
   lead_id?: string | null;
   imported_to_coldcall_at?: string | null;
+  attempts?: Attempt[] | null;
+  attempts_count?: number | null;
+  last_attempt_at?: string | null;
 };
 
 const OUTCOME_META: Record<Outcome, { label: string; className: string; icon?: any }> = {
@@ -99,6 +130,9 @@ function toRowFromSaved(item: SavedAnalysis): Row {
     __outcome: (item.outcome as Outcome) || "pendente",
     __leadId: item.lead_id || null,
     __importedAt: item.imported_to_coldcall_at || null,
+    __attempts: Array.isArray(item.attempts) ? item.attempts : [],
+    __attemptsCount: item.attempts_count ?? (Array.isArray(item.attempts) ? item.attempts.length : 0),
+    __lastAttemptAt: item.last_attempt_at || null,
   };
 }
 
@@ -190,7 +224,7 @@ export function PreSDRListAnalyzer() {
       const all: SavedAnalysis[] = [];
       for (let from = 0; ; from += 1000) {
         const { data, error } = await supabase.from("pre_sdr_analyses" as any)
-          .select("id,row_key,raw_row,brief,status,error_message,outcome,lead_id,imported_to_coldcall_at")
+          .select("id,row_key,raw_row,brief,status,error_message,outcome,lead_id,imported_to_coldcall_at,attempts,attempts_count,last_attempt_at")
           .eq("company_id", companyId)
           .order("updated_at", { ascending: false })
           .range(from, from + 999);
@@ -370,6 +404,49 @@ export function PreSDRListAnalyzer() {
       .eq("company_id", companyId)
       .eq("row_key", key);
     if (error) toast.error("Não foi possível salvar o status", { description: error.message });
+  }
+
+  async function addAttempt(row: Row, type: AttemptType, note?: string) {
+    if (!companyId) return;
+    const key = row.__rowKey || rowKey(row);
+    const at = new Date().toISOString();
+    const newAttempt: Attempt = { at, type, note };
+    const prevAttempts = Array.isArray(row.__attempts) ? row.__attempts : [];
+    const attempts = [...prevAttempts, newAttempt];
+    const attempts_count = attempts.length;
+    setRows((prev) => prev.map((r) =>
+      r.__id === row.__id ? { ...r, __attempts: attempts, __attemptsCount: attempts_count, __lastAttemptAt: at } : r
+    ));
+    const { error } = await supabase
+      .from("pre_sdr_analyses" as any)
+      .update({ attempts, attempts_count, last_attempt_at: at } as any)
+      .eq("company_id", companyId)
+      .eq("row_key", key);
+    if (error) {
+      toast.error("Não foi possível registrar a tentativa", { description: error.message });
+    } else {
+      toast.success(`Tentativa registrada: ${ATTEMPT_META[type].label}`, {
+        description: `Total de abordagens: ${attempts_count}`,
+      });
+    }
+  }
+
+  async function removeLastAttempt(row: Row) {
+    if (!companyId) return;
+    const prevAttempts = Array.isArray(row.__attempts) ? row.__attempts : [];
+    if (!prevAttempts.length) return;
+    const key = row.__rowKey || rowKey(row);
+    const attempts = prevAttempts.slice(0, -1);
+    const attempts_count = attempts.length;
+    const last_attempt_at = attempts.length ? attempts[attempts.length - 1].at : null;
+    setRows((prev) => prev.map((r) =>
+      r.__id === row.__id ? { ...r, __attempts: attempts, __attemptsCount: attempts_count, __lastAttemptAt: last_attempt_at } : r
+    ));
+    await supabase
+      .from("pre_sdr_analyses" as any)
+      .update({ attempts, attempts_count, last_attempt_at } as any)
+      .eq("company_id", companyId)
+      .eq("row_key", key);
   }
 
   async function importToColdCall(row: Row): Promise<string | null> {
@@ -563,6 +640,7 @@ export function PreSDRListAnalyzer() {
                     <th className="px-2 py-1.5">Fit</th>
                     <th className="px-2 py-1.5">IA</th>
                     <th className="px-2 py-1.5">Resultado da prospecção</th>
+                    <th className="px-2 py-1.5">Abordagens</th>
                     <th className="px-2 py-1.5">Ações</th>
                   </tr>
                 </thead>
@@ -608,6 +686,107 @@ export function PreSDRListAnalyzer() {
                                 ))}
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="px-2 py-1.5">
+                            {(() => {
+                              const attempts = r.__attempts || [];
+                              const count = r.__attemptsCount ?? attempts.length;
+                              const last = attempts[attempts.length - 1];
+                              const lastMeta = last ? ATTEMPT_META[last.type] : null;
+                              const nextNumber = count + 1;
+                              return (
+                                <div className="flex items-center gap-1">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-7 px-2 gap-1"
+                                        title="Registrar nova abordagem / tentativa"
+                                      >
+                                        <Plus className="h-3 w-3" />
+                                        <span className="text-[11px]">
+                                          {count === 0 ? "Registrar" : `Tentativa ${nextNumber}`}
+                                        </span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start" className="w-56">
+                                      <DropdownMenuLabel>
+                                        {count === 0 ? "Primeira abordagem" : `Registrar tentativa #${nextNumber}`}
+                                      </DropdownMenuLabel>
+                                      <DropdownMenuSeparator />
+                                      {(Object.keys(ATTEMPT_META) as AttemptType[]).map((t) => {
+                                        const m = ATTEMPT_META[t];
+                                        const Icon = m.icon;
+                                        return (
+                                          <DropdownMenuItem
+                                            key={t}
+                                            onClick={() => addAttempt(r, t)}
+                                            className={`gap-2 ${m.className}`}
+                                          >
+                                            <Icon className="h-3.5 w-3.5" />
+                                            <span>{m.label}</span>
+                                          </DropdownMenuItem>
+                                        );
+                                      })}
+                                      {count > 0 && (
+                                        <>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            onClick={() => removeLastAttempt(r)}
+                                            className="gap-2 text-rose-600"
+                                          >
+                                            <X className="h-3.5 w-3.5" />
+                                            Desfazer última
+                                          </DropdownMenuItem>
+                                        </>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                  {count > 0 && (
+                                    <Popover>
+                                      <PopoverTrigger asChild>
+                                        <button
+                                          type="button"
+                                          className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[11px] ${lastMeta?.className || "text-muted-foreground"} hover:bg-muted`}
+                                          title="Ver histórico de abordagens"
+                                        >
+                                          <History className="h-3 w-3" />
+                                          <strong>{count}</strong>
+                                          {lastMeta && <span className="hidden xl:inline">· {lastMeta.label}</span>}
+                                        </button>
+                                      </PopoverTrigger>
+                                      <PopoverContent align="start" className="w-72 p-2">
+                                        <p className="text-[11px] uppercase font-medium text-muted-foreground px-1 pb-1">
+                                          Histórico ({count})
+                                        </p>
+                                        <ol className="space-y-1 max-h-60 overflow-y-auto">
+                                          {attempts.slice().reverse().map((a, i) => {
+                                            const m = ATTEMPT_META[a.type];
+                                            const Icon = m?.icon || PhoneCall;
+                                            const num = count - i;
+                                            return (
+                                              <li key={i} className="flex items-start gap-2 text-xs px-1 py-1 rounded hover:bg-muted">
+                                                <Icon className={`h-3.5 w-3.5 mt-0.5 ${m?.className || ""}`} />
+                                                <div className="flex-1">
+                                                  <div className={`font-medium ${m?.className || ""}`}>
+                                                    #{num} · {m?.label || a.type}
+                                                  </div>
+                                                  <div className="text-[10px] text-muted-foreground">
+                                                    {new Date(a.at).toLocaleString("pt-BR")}
+                                                  </div>
+                                                  {a.note && <div className="text-[11px] mt-0.5">{a.note}</div>}
+                                                </div>
+                                              </li>
+                                            );
+                                          })}
+                                        </ol>
+                                      </PopoverContent>
+                                    </Popover>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                           <td className="px-2 py-1.5">
                             <div className="flex items-center gap-1">
@@ -665,7 +844,7 @@ export function PreSDRListAnalyzer() {
                         </tr>
                         {r.__open && b && (
                           <tr className="bg-muted/20 border-t">
-                            <td colSpan={8} className="px-3 py-3 space-y-2">
+                            <td colSpan={9} className="px-3 py-3 space-y-2">
                               <div className="grid md:grid-cols-2 gap-3">
                                 <Field k="Resumo da empresa" v={b.empresa_resumo} />
                                 <Field k="Site" v={b.site_resumo} />

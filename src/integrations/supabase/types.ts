@@ -6571,6 +6571,8 @@ export type Database = {
       pre_sdr_analyses: {
         Row: {
           analyzed_at: string | null
+          attempts: Json
+          attempts_count: number
           brief: Json | null
           cnpj: string | null
           company_id: string
@@ -6579,6 +6581,7 @@ export type Database = {
           error_message: string | null
           id: string
           imported_to_coldcall_at: string | null
+          last_attempt_at: string | null
           lead_id: string | null
           outcome: string | null
           outcome_at: string | null
@@ -6593,6 +6596,8 @@ export type Database = {
         }
         Insert: {
           analyzed_at?: string | null
+          attempts?: Json
+          attempts_count?: number
           brief?: Json | null
           cnpj?: string | null
           company_id: string
@@ -6601,6 +6606,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           imported_to_coldcall_at?: string | null
+          last_attempt_at?: string | null
           lead_id?: string | null
           outcome?: string | null
           outcome_at?: string | null
@@ -6615,6 +6621,8 @@ export type Database = {
         }
         Update: {
           analyzed_at?: string | null
+          attempts?: Json
+          attempts_count?: number
           brief?: Json | null
           cnpj?: string | null
           company_id?: string
@@ -6623,6 +6631,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           imported_to_coldcall_at?: string | null
+          last_attempt_at?: string | null
           lead_id?: string | null
           outcome?: string | null
           outcome_at?: string | null
