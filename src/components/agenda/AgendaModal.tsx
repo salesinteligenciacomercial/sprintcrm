@@ -12,6 +12,7 @@ import { format, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { HorarioSeletor } from "./HorarioSeletor";
 import { HorarioComercial, criarHorarioPadrao } from "./HorarioComercialConfig";
+import { ProfissionalSelector } from "./ProfissionalSelector";
 
 interface AgendaModalProps {
   open: boolean;
@@ -32,6 +33,9 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
   const [todasAgendas, setTodasAgendas] = useState<any[]>([]);
   const [agendaIdSelecionada, setAgendaIdSelecionada] = useState<string>("");
   
+  const [leadEmail, setLeadEmail] = useState<string | null>(null);
+  const [profissionalId, setProfissionalId] = useState<string>("");
+
   const [formData, setFormData] = useState({
     descricao: "",
     data: format(new Date(), "yyyy-MM-dd"),
@@ -46,8 +50,21 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
     horas_antecedencia: "",
     horas_antecedencia_horas: "1",
     horas_antecedencia_minutos: "0",
-    destinatario_lembrete: "lead" as "lead" | "responsavel" | "ambos"
+    destinatario_lembrete: "lead" as "lead" | "responsavel" | "ambos",
+    lembrete_whatsapp_24h: false,
+    lembrete_email_24h: false,
+    convidar_lead_email: false,
+    email_convidado: "",
   });
+
+  // Buscar email do lead ao abrir
+  useEffect(() => {
+    if (!open || !lead?.id) return;
+    (async () => {
+      const { data } = await supabase.from("leads").select("email").eq("id", lead.id).maybeSingle();
+      setLeadEmail((data as any)?.email || null);
+    })();
+  }, [open, lead?.id]);
 
   // Carregar todas as agendas quando o modal abrir
   useEffect(() => {
@@ -280,6 +297,10 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
 
       const companyId = userRole?.company_id;
 
+      // Profissional efetivo: explícito > responsável da agenda
+      const profEfetivo = profissionalId || agendaSelecionada?.responsavel_id || null;
+      const emailConvidadoFinal = (formData.email_convidado?.trim() || leadEmail || "").trim();
+
       // Criar compromisso no banco de dados
       const { data: compromisso, error: compromissoError } = await supabase
         .from("compromissos")
@@ -290,12 +311,15 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
             usuario_responsavel_id: session.user.id,
             owner_id: session.user.id,
             agenda_id: agendaIdSelecionada || null,
+            profissional_id: profEfetivo,
             data_hora_inicio: inicioISO,
             data_hora_fim: fimISO,
             tipo_servico: formData.tipo_servico,
             observacoes: formData.observacoes,
             custo_estimado: formData.custo_estimado ? parseFloat(formData.custo_estimado) : 0,
-          },
+            convidar_lead_email: !!formData.convidar_lead_email,
+            email_convidado: formData.convidar_lead_email && emailConvidadoFinal ? emailConvidadoFinal : null,
+          } as any,
         ])
         .select()
         .single();
@@ -385,6 +409,57 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
           }
         } else {
           toast.warning("Não foi possível agendar o lembrete, pois a data é retroativa.");
+        }
+      }
+
+      // 🔁 Lembretes ADICIONAIS — WhatsApp 24h e/ou E-mail 24h antes
+      try {
+        const dataEnvio24h = new Date(dataHoraInicio.getTime() - 24 * 3600000);
+        if (dataEnvio24h > new Date()) {
+          const baseMsg = `Olá ${lead.nome}! Lembrete: você tem ${formData.tipo_servico} agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.`;
+          const extras: any[] = [];
+          if (formData.lembrete_whatsapp_24h && lead.telefone) {
+            extras.push({
+              compromisso_id: compromisso.id,
+              canal: "whatsapp",
+              horas_antecedencia: 24,
+              mensagem: baseMsg,
+              status_envio: "pendente",
+              data_envio: dataEnvio24h.toISOString(),
+              destinatario: "lead",
+              telefone_responsavel: normalizePhoneBR(lead.telefone),
+              company_id: companyId,
+            });
+          }
+          if (formData.lembrete_email_24h && leadEmail) {
+            extras.push({
+              compromisso_id: compromisso.id,
+              canal: "email",
+              horas_antecedencia: 24,
+              mensagem: baseMsg,
+              status_envio: "pendente",
+              data_envio: dataEnvio24h.toISOString(),
+              destinatario: "lead",
+              company_id: companyId,
+            });
+          }
+          if (extras.length > 0) {
+            const { error: extrasErr } = await supabase.from("lembretes").insert(extras);
+            if (extrasErr) console.warn("⚠️ [LEMBRETE] Falha ao criar lembretes 24h:", extrasErr);
+          }
+        }
+      } catch (err) {
+        console.warn("⚠️ [LEMBRETE] Erro ao criar lembretes adicionais:", err);
+      }
+
+      // 📧 Convite Google Calendar para o lead
+      if (formData.convidar_lead_email && emailConvidadoFinal) {
+        try {
+          await supabase.functions.invoke("google-calendar-event", {
+            body: { action: "create", compromisso_id: compromisso.id },
+          });
+        } catch (err) {
+          console.warn("⚠️ [GCAL] Falha ao enviar convite Google Calendar:", err);
         }
       }
 
@@ -482,7 +557,11 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
         horas_antecedencia: "",
         horas_antecedencia_horas: "1",
         horas_antecedencia_minutos: "0",
-        destinatario_lembrete: "lead"
+        destinatario_lembrete: "lead",
+        lembrete_whatsapp_24h: false,
+        lembrete_email_24h: false,
+        convidar_lead_email: false,
+        email_convidado: "",
       });
     } catch (error: any) {
       console.error("Erro ao criar compromisso:", error);
@@ -523,6 +602,13 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
               </Select>
             </div>
           )}
+
+          {/* Profissional Responsável */}
+          <ProfissionalSelector
+            value={profissionalId}
+            onChange={setProfissionalId}
+            agendaId={agendaIdSelecionada}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -727,6 +813,62 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
                 </div>
               </div>
             )}
+
+            {/* Lembretes adicionais 24h + Convite Google Calendar */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <Label htmlFor="lembrete_wa_24h" className="text-sm">
+                Lembrete WhatsApp 24h antes
+                {!lead.telefone && <span className="block text-[10px] text-muted-foreground">Lead sem telefone</span>}
+              </Label>
+              <Switch
+                id="lembrete_wa_24h"
+                checked={formData.lembrete_whatsapp_24h && !!lead.telefone}
+                disabled={!lead.telefone}
+                onCheckedChange={(c) => setFormData({ ...formData, lembrete_whatsapp_24h: c })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="lembrete_email_24h" className="text-sm">
+                Lembrete por e-mail 24h antes
+                <span className="block text-[10px] text-muted-foreground">
+                  {leadEmail ? `Será enviado para ${leadEmail}` : "Lead sem e-mail cadastrado"}
+                </span>
+              </Label>
+              <Switch
+                id="lembrete_email_24h"
+                checked={formData.lembrete_email_24h && !!leadEmail}
+                disabled={!leadEmail}
+                onCheckedChange={(c) => setFormData({ ...formData, lembrete_email_24h: c })}
+              />
+            </div>
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="convidar_email" className="text-sm">
+                  Convidar por e-mail (Google Agenda)
+                  <span className="block text-[10px] text-muted-foreground">Convite nativo do Google Calendar</span>
+                </Label>
+                <Switch
+                  id="convidar_email"
+                  checked={formData.convidar_lead_email}
+                  onCheckedChange={(c) =>
+                    setFormData({
+                      ...formData,
+                      convidar_lead_email: c,
+                      email_convidado: c && !formData.email_convidado && leadEmail ? leadEmail : formData.email_convidado,
+                    })
+                  }
+                />
+              </div>
+              {formData.convidar_lead_email && (
+                <Input
+                  type="email"
+                  placeholder={leadEmail || "exemplo@email.com"}
+                  value={formData.email_convidado}
+                  onChange={(e) => setFormData({ ...formData, email_convidado: e.target.value })}
+                  className="h-9"
+                />
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t">
