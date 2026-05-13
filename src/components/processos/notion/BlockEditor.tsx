@@ -180,7 +180,31 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
   const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<Block | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const blockRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map());
+
+  const reorderBlocks = async (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    const fromIdx = blocks.findIndex(b => b.id === fromId);
+    const toIdx = blocks.findIndex(b => b.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const newBlocks = [...blocks];
+    const [moved] = newBlocks.splice(fromIdx, 1);
+    newBlocks.splice(toIdx, 0, moved);
+    const updated = newBlocks.map((b, idx) => ({ ...b, position: idx }));
+    onBlocksChange(updated);
+    try {
+      await Promise.all(
+        updated.map(b =>
+          supabase.from('process_blocks').update({ position: b.position }).eq('id', b.id)
+        )
+      );
+    } catch (e) {
+      console.error('Error reordering blocks:', e);
+      toast.error('Erro ao reordenar blocos');
+    }
+  };
 
   const createBlock = async (type: string, position: number, content?: any) => {
     try {
