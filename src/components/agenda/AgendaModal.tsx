@@ -412,6 +412,57 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
         }
       }
 
+      // 🔁 Lembretes ADICIONAIS — WhatsApp 24h e/ou E-mail 24h antes
+      try {
+        const dataEnvio24h = new Date(dataHoraInicio.getTime() - 24 * 3600000);
+        if (dataEnvio24h > new Date()) {
+          const baseMsg = `Olá ${lead.nome}! Lembrete: você tem ${formData.tipo_servico} agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}.`;
+          const extras: any[] = [];
+          if (formData.lembrete_whatsapp_24h && lead.telefone) {
+            extras.push({
+              compromisso_id: compromisso.id,
+              canal: "whatsapp",
+              horas_antecedencia: 24,
+              mensagem: baseMsg,
+              status_envio: "pendente",
+              data_envio: dataEnvio24h.toISOString(),
+              destinatario: "lead",
+              telefone_responsavel: normalizePhoneBR(lead.telefone),
+              company_id: companyId,
+            });
+          }
+          if (formData.lembrete_email_24h && leadEmail) {
+            extras.push({
+              compromisso_id: compromisso.id,
+              canal: "email",
+              horas_antecedencia: 24,
+              mensagem: baseMsg,
+              status_envio: "pendente",
+              data_envio: dataEnvio24h.toISOString(),
+              destinatario: "lead",
+              company_id: companyId,
+            });
+          }
+          if (extras.length > 0) {
+            const { error: extrasErr } = await supabase.from("lembretes").insert(extras);
+            if (extrasErr) console.warn("⚠️ [LEMBRETE] Falha ao criar lembretes 24h:", extrasErr);
+          }
+        }
+      } catch (err) {
+        console.warn("⚠️ [LEMBRETE] Erro ao criar lembretes adicionais:", err);
+      }
+
+      // 📧 Convite Google Calendar para o lead
+      if (formData.convidar_lead_email && emailConvidadoFinal) {
+        try {
+          await supabase.functions.invoke("google-calendar-event", {
+            body: { action: "create", compromisso_id: compromisso.id },
+          });
+        } catch (err) {
+          console.warn("⚠️ [GCAL] Falha ao enviar convite Google Calendar:", err);
+        }
+      }
+
       // Enviar mensagem de confirmação imediata se solicitado
       if (formData.enviar_confirmacao && lead.telefone) {
         console.log('📱 [AgendaModal] Iniciando envio de confirmação...');
