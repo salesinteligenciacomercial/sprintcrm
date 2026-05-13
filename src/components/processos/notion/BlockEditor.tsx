@@ -594,9 +594,29 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
       {blocks.map((block, index) => (
         <div
           key={block.id}
+          onDragOver={(e) => {
+            if (draggingId && draggingId !== block.id) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              if (dragOverId !== block.id) setDragOverId(block.id);
+            }
+          }}
+          onDragLeave={() => {
+            if (dragOverId === block.id) setDragOverId(null);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (draggingId && draggingId !== block.id) {
+              reorderBlocks(draggingId, block.id);
+            }
+            setDraggingId(null);
+            setDragOverId(null);
+          }}
           className={cn(
             "group relative flex items-start gap-1 py-1 px-2 rounded transition-colors",
-            focusedBlockId === block.id && "bg-muted/30"
+            focusedBlockId === block.id && "bg-muted/30",
+            draggingId === block.id && "opacity-40",
+            dragOverId === block.id && draggingId && draggingId !== block.id && "border-t-2 border-primary"
           )}
         >
           {/* Block Controls */}
