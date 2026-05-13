@@ -915,7 +915,7 @@ export function PreSDRListAnalyzer() {
                         </tr>
                         {r.__open && b && (
                           <tr className="bg-muted/20 border-t">
-                            <td colSpan={9} className="px-3 py-3 space-y-2">
+                            <td colSpan={8} className="px-3 py-3 space-y-2">
                               <div className="grid md:grid-cols-2 gap-3">
                                 <Field k="Resumo da empresa" v={b.empresa_resumo} />
                                 <Field k="Site" v={b.site_resumo} />
