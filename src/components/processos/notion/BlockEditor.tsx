@@ -180,7 +180,31 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
   const [showBlockMenu, setShowBlockMenu] = useState<string | null>(null);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [expandedBlock, setExpandedBlock] = useState<Block | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
   const blockRefs = useRef<Map<string, HTMLTextAreaElement>>(new Map());
+
+  const reorderBlocks = async (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    const fromIdx = blocks.findIndex(b => b.id === fromId);
+    const toIdx = blocks.findIndex(b => b.id === toId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const newBlocks = [...blocks];
+    const [moved] = newBlocks.splice(fromIdx, 1);
+    newBlocks.splice(toIdx, 0, moved);
+    const updated = newBlocks.map((b, idx) => ({ ...b, position: idx }));
+    onBlocksChange(updated);
+    try {
+      await Promise.all(
+        updated.map(b =>
+          supabase.from('process_blocks').update({ position: b.position }).eq('id', b.id)
+        )
+      );
+    } catch (e) {
+      console.error('Error reordering blocks:', e);
+      toast.error('Erro ao reordenar blocos');
+    }
+  };
 
   const createBlock = async (type: string, position: number, content?: any) => {
     try {
@@ -570,9 +594,29 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
       {blocks.map((block, index) => (
         <div
           key={block.id}
+          onDragOver={(e) => {
+            if (draggingId && draggingId !== block.id) {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              if (dragOverId !== block.id) setDragOverId(block.id);
+            }
+          }}
+          onDragLeave={() => {
+            if (dragOverId === block.id) setDragOverId(null);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (draggingId && draggingId !== block.id) {
+              reorderBlocks(draggingId, block.id);
+            }
+            setDraggingId(null);
+            setDragOverId(null);
+          }}
           className={cn(
             "group relative flex items-start gap-1 py-1 px-2 rounded transition-colors",
-            focusedBlockId === block.id && "bg-muted/30"
+            focusedBlockId === block.id && "bg-muted/30",
+            draggingId === block.id && "opacity-40",
+            dragOverId === block.id && draggingId && draggingId !== block.id && "border-t-2 border-primary"
           )}
         >
           {/* Block Controls */}
@@ -626,7 +670,21 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
               </PopoverContent>
             </Popover>
             
-            <button className="p-1 hover:bg-muted rounded cursor-grab">
+            <button
+              className="p-1 hover:bg-muted rounded cursor-grab active:cursor-grabbing"
+              draggable
+              onDragStart={(e) => {
+                setDraggingId(block.id);
+                e.dataTransfer.effectAllowed = 'move';
+                try { e.dataTransfer.setData('text/plain', block.id); } catch {}
+              }}
+              onDragEnd={() => {
+                setDraggingId(null);
+                setDragOverId(null);
+              }}
+              aria-label="Arrastar para reordenar"
+              title="Arrastar para mover"
+            >
               <GripVertical className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
