@@ -26,7 +26,7 @@ type AttemptType =
   | "whatsapp_enviado"
   | "retornar_depois";
 
-type Attempt = { at: string; type: AttemptType; note?: string };
+type Attempt = { at: string; type: AttemptType; note?: string; user_id?: string | null; user_name?: string | null };
 
 const ATTEMPT_META: Record<AttemptType, { label: string; icon: any; className: string }> = {
   primeiro_contato: { label: "Primeiro contato", icon: PhoneCall, className: "text-cyan-600" },
