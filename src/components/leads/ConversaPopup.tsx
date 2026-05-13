@@ -152,7 +152,7 @@ export function ConversaPopup({
   // Normaliza número para padrão BR com DDI 55 e somente dígitos
   const normalizePhoneBR = (raw?: string): string | null => {
     if (!raw) return null;
-    let n = raw.replace(/\D/g, "");
+    let n = String(raw).replace(/\D/g, "");
     if (n.startsWith("55")) return n;
     // Se vier local (10/11 dígitos), prefixar 55
     if (n.length === 10 || n.length === 11) return "55" + n;
