@@ -335,7 +335,7 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
   const autoResize = useCallback((el: HTMLTextAreaElement | null) => {
     if (el) {
       el.style.height = 'auto';
-      el.style.height = `${Math.min(el.scrollHeight, 200)}px`; // Max 200px, then show expand button
+      el.style.height = `${el.scrollHeight}px`;
     }
   }, []);
 
