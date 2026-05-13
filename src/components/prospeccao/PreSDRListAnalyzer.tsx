@@ -16,6 +16,29 @@ import { ConversaPopup } from "@/components/leads/ConversaPopup";
 
 type Outcome = "pendente" | "prospectado" | "sem_resposta" | "oportunidade" | "agendamento" | "follow_up" | "ganho" | "descartado";
 
+type AttemptType =
+  | "primeiro_contato"
+  | "nao_atendeu"
+  | "caixa_postal"
+  | "ocupado"
+  | "numero_invalido"
+  | "follow_up"
+  | "whatsapp_enviado"
+  | "retornar_depois";
+
+type Attempt = { at: string; type: AttemptType; note?: string };
+
+const ATTEMPT_META: Record<AttemptType, { label: string; icon: any; className: string }> = {
+  primeiro_contato: { label: "Primeiro contato", icon: PhoneCall, className: "text-cyan-600" },
+  nao_atendeu: { label: "Não atendeu", icon: PhoneOff, className: "text-amber-600" },
+  caixa_postal: { label: "Caixa postal", icon: Voicemail, className: "text-amber-700" },
+  ocupado: { label: "Ocupado", icon: PhoneOff, className: "text-orange-600" },
+  numero_invalido: { label: "Número inválido", icon: X, className: "text-rose-600" },
+  follow_up: { label: "Follow-up", icon: RotateCcw, className: "text-indigo-600" },
+  whatsapp_enviado: { label: "WhatsApp enviado", icon: MessageCircle, className: "text-emerald-600" },
+  retornar_depois: { label: "Retornar depois", icon: CalendarClock, className: "text-purple-600" },
+};
+
 type Row = Record<string, any> & {
   __id: string;
   __rowKey?: string;
@@ -27,6 +50,9 @@ type Row = Record<string, any> & {
   __outcome?: Outcome;
   __leadId?: string | null;
   __importedAt?: string | null;
+  __attempts?: Attempt[];
+  __attemptsCount?: number;
+  __lastAttemptAt?: string | null;
 };
 
 type SavedAnalysis = {
@@ -39,6 +65,9 @@ type SavedAnalysis = {
   outcome?: string | null;
   lead_id?: string | null;
   imported_to_coldcall_at?: string | null;
+  attempts?: Attempt[] | null;
+  attempts_count?: number | null;
+  last_attempt_at?: string | null;
 };
 
 const OUTCOME_META: Record<Outcome, { label: string; className: string; icon?: any }> = {
