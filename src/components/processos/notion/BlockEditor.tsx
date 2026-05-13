@@ -648,7 +648,7 @@ export function BlockEditor({ pageId, blocks, onBlocksChange, companyId }: Block
 
       {/* Add new block at end */}
       {blocks.length > 0 && (
-        <div className="flex items-center gap-2 py-2 px-2 text-muted-foreground opacity-0 hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 py-2 px-2 text-muted-foreground">
           <Popover>
             <PopoverTrigger asChild>
               <button className="flex items-center gap-2 hover:bg-muted/50 rounded p-1">
