@@ -697,8 +697,7 @@ export function PreSDRListAnalyzer() {
                     <th className="px-2 py-1.5">Decisor (IA)</th>
                     <th className="px-2 py-1.5">Fit</th>
                     <th className="px-2 py-1.5">IA</th>
-                    <th className="px-2 py-1.5">Resultado da prospecção</th>
-                    <th className="px-2 py-1.5">Abordagens</th>
+                    <th className="px-2 py-1.5">Registrar / Resultado</th>
                     <th className="px-2 py-1.5">Ações</th>
                   </tr>
                 </thead>
