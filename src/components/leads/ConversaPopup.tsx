@@ -698,8 +698,8 @@ export function ConversaPopup({
           const newMsg = payload.new;
           
           // Verificar se a mensagem é para este número
-          const msgNumero = (newMsg.numero || newMsg.telefone_formatado || '').replace(/\D/g, '').replace('@s.whatsapp.net', '').replace('@c.us', '');
-          const leadNumero = telefoneNormalizado.replace(/\D/g, '');
+          const msgNumero = String(newMsg.numero || newMsg.telefone_formatado || '').replace(/\D/g, '').replace('@s.whatsapp.net', '').replace('@c.us', '');
+          const leadNumero = String(telefoneNormalizado).replace(/\D/g, '');
           
           if (!msgNumero.includes(leadNumero) && !leadNumero.includes(msgNumero)) {
             return; // Mensagem não é desta conversa
