@@ -449,6 +449,7 @@ export function PreSDRListAnalyzer() {
       .eq("row_key", key);
   }
 
+  async function importToColdCall(row: Row): Promise<string | null> {
     if (!companyId) return null;
     const phone = String(row.telefone || "").replace(/\D/g, "");
     if (!phone) { toast.error("Linha sem telefone — não dá para importar para Cold Call."); return null; }
