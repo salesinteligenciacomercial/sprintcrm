@@ -33,6 +33,9 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
   const [todasAgendas, setTodasAgendas] = useState<any[]>([]);
   const [agendaIdSelecionada, setAgendaIdSelecionada] = useState<string>("");
   
+  const [leadEmail, setLeadEmail] = useState<string | null>(null);
+  const [profissionalId, setProfissionalId] = useState<string>("");
+
   const [formData, setFormData] = useState({
     descricao: "",
     data: format(new Date(), "yyyy-MM-dd"),
@@ -47,8 +50,21 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
     horas_antecedencia: "",
     horas_antecedencia_horas: "1",
     horas_antecedencia_minutos: "0",
-    destinatario_lembrete: "lead" as "lead" | "responsavel" | "ambos"
+    destinatario_lembrete: "lead" as "lead" | "responsavel" | "ambos",
+    lembrete_whatsapp_24h: false,
+    lembrete_email_24h: false,
+    convidar_lead_email: false,
+    email_convidado: "",
   });
+
+  // Buscar email do lead ao abrir
+  useEffect(() => {
+    if (!open || !lead?.id) return;
+    (async () => {
+      const { data } = await supabase.from("leads").select("email").eq("id", lead.id).maybeSingle();
+      setLeadEmail((data as any)?.email || null);
+    })();
+  }, [open, lead?.id]);
 
   // Carregar todas as agendas quando o modal abrir
   useEffect(() => {
