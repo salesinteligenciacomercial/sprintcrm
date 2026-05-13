@@ -603,6 +603,13 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
             </div>
           )}
 
+          {/* Profissional Responsável */}
+          <ProfissionalSelector
+            value={profissionalId}
+            onChange={setProfissionalId}
+            agendaId={agendaIdSelecionada}
+          />
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="tipo_servico" className="text-sm">Tipo de Serviço *</Label>
