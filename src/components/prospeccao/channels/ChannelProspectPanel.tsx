@@ -203,7 +203,7 @@ export function ChannelProspectPanel({ channel }: Props) {
                         ))}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                       <Button
                         size="sm"
                         variant={channel === "coldcall" ? "default" : "outline"}
@@ -214,6 +214,9 @@ export function ChannelProspectPanel({ channel }: Props) {
                          <Send className="h-3.5 w-3.5 mr-1" />}
                         {meta.cta}
                       </Button>
+                      {channel === "coldcall" && (
+                        <ColdCallActions lead={lead} />
+                      )}
                       <Button size="icon" variant="ghost" onClick={() => setHandoffLead({ id: lead.id, name: lead.name || "Lead" })} title="Passar para Closer">
                         <ArrowRightLeft className="h-3.5 w-3.5" />
                       </Button>
