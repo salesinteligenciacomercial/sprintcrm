@@ -38,6 +38,7 @@ import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
 import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
 import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
 import { ChannelProspectPanel } from "@/components/prospeccao/channels/ChannelProspectPanel";
+import { EmailProspectPanel } from "@/components/prospeccao/channels/EmailProspectPanel";
 import { ProspectingIntelligencePanel } from "@/components/prospeccao/ProspectingIntelligencePanel";
 import { GoalProgressHUD } from "@/components/prospeccao/comercial/GoalProgressHUD";
 import { CloserInbox } from "@/components/prospeccao/comercial/CloserInbox";
@@ -59,7 +60,7 @@ export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
   const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_KEY) === "true");
-  const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena" | "performance" | "coldcall" | "instagram" | "whatsapp" | "funil" | "closer" | "comando" | "fila" | "intel" | "social" | "rotina" | "estrategia">("followup");
+  const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena" | "performance" | "coldcall" | "instagram" | "whatsapp" | "email" | "funil" | "closer" | "comando" | "fila" | "intel" | "social" | "rotina" | "estrategia">("followup");
   const [subTab, setSubTab] = useState<"registros" | "interacoes">("registros");
   const [channelView, setChannelView] = useState<"prospect" | "chat" | "funil">("prospect");
   const [instagramSub, setInstagramSub] = useState<"chat" | "social" | "prospect">("chat");
@@ -175,6 +176,7 @@ export default function Prospeccao() {
     coldcall: "Cold Call",
     instagram: "Instagram",
     whatsapp: "WhatsApp",
+    email: "E-mail",
     funil: "Funil de Vendas",
     closer: "Leads Qualificados",
     comando: "Painel do Gestor",
@@ -263,6 +265,7 @@ export default function Prospeccao() {
               <TabsTrigger value="coldcall">{labels.coldcall}</TabsTrigger>
               <TabsTrigger value="instagram">{labels.instagram}</TabsTrigger>
               <TabsTrigger value="whatsapp">{labels.whatsapp}</TabsTrigger>
+              <TabsTrigger value="email">✉️ {labels.email}</TabsTrigger>
               {/* Funil de Vendas e Leads Qualificados ocultos */}
               {isManagerLike && <TabsTrigger value="comando">{labels.comando}</TabsTrigger>}
               <TabsTrigger value="intel">🎯 {labels.intel}</TabsTrigger>
@@ -317,6 +320,10 @@ export default function Prospeccao() {
                 {gamificationCfg?.shop_enabled && (
                   <RewardShop companyId={companyId} userCoins={profile?.coins ?? 0} />
                 )}
+              </div>
+            ) : activeTab === "email" ? (
+              <div className="mt-4">
+                <EmailProspectPanel />
               </div>
             ) : isChannelTab ? (
               <div className="mt-4 space-y-3">
