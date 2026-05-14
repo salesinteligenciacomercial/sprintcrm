@@ -224,19 +224,21 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
 
   return (
     <div className="w-full">
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        onClick={() => setShowComments((v) => !v)}
-        className="flex items-center gap-2 text-xs w-full justify-between"
-      >
-        <span className="flex items-center gap-2">
-          <MessageCircle className="h-3 w-3" />
-          Comentários ({comments.length})
-        </span>
-        {showComments ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-      </Button>
+      {!hideToggle && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowComments(!showComments)}
+          className="flex items-center gap-2 text-xs w-full justify-between"
+        >
+          <span className="flex items-center gap-2">
+            <MessageCircle className="h-3 w-3" />
+            Comentários ({comments.length})
+          </span>
+          {showComments ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+        </Button>
+      )}
 
       {showComments && (
         <div className="mt-2 space-y-3 border-t pt-3">
