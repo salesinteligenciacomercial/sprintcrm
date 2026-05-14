@@ -65,6 +65,7 @@ export function ChannelProspectPanel({ channel }: Props) {
     attemptsList: any[];
   };
   const [leadStates, setLeadStates] = useState<Record<string, LeadCallState>>({});
+  const [companyIdGlobal, setCompanyIdGlobal] = useState<string | null>(null);
   const [currentUserGlobal, setCurrentUserGlobal] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
