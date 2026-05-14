@@ -70,7 +70,13 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
   const [conversaOpen, setConversaOpen] = useState(false);
   const [scriptOpen, setScriptOpen] = useState(false);
 
-  // Sincroniza com o estado externo (parent é fonte da verdade quando fornecido)
+  // Sincroniza com props externas (pai é fonte da verdade quando fornecido)
+  useEffect(() => {
+    if (externalCompanyId) setCompanyId(externalCompanyId);
+  }, [externalCompanyId]);
+  useEffect(() => {
+    if (externalUser) setCurrentUser(externalUser);
+  }, [externalUser?.id]);
   useEffect(() => {
     if (!externalState) return;
     setAttempts(Array.isArray(externalState.attempts) ? externalState.attempts! : []);
