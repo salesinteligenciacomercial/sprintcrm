@@ -186,7 +186,9 @@ export function ChannelProspectPanel({ channel }: Props) {
   const stats = useMemo(() => {
     const total = filteredData.length;
     const marked = filteredData.filter((l: any) => l.to_prospect).length;
-    const contactedToday = filteredData.filter((l: any) => l.last_prospected_at && new Date(l.last_prospected_at).toDateString() === new Date().toDateString()).length;
+    const contactedToday = channel === "coldcall"
+      ? filteredData.filter((l: any) => isToday(leadStates[l.id]?.last_attempt_at || null)).length
+      : filteredData.filter((l: any) => l.last_prospected_at && new Date(l.last_prospected_at).toDateString() === new Date().toDateString()).length;
     return { total, marked, contactedToday };
   }, [filteredData]);
 
