@@ -235,6 +235,8 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
 
+  useEffect(() => { autoResize(editingRef.current); }, [editingText]);
+
   const startEdit = (c: Comment) => {
     setEditingId(c.id);
     setEditingText(c.comment);
