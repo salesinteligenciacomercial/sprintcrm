@@ -25,6 +25,8 @@ const CHANNELS = [
   { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
   { key: "instagram", label: "Instagram", icon: Instagram },
   { key: "coldcall", label: "Cold Call", icon: Phone },
+  { key: "email", label: "Email", icon: Mail },
+  { key: "followup", label: "Follow up", icon: Repeat },
 ] as const;
 
 const OUTCOMES = [
