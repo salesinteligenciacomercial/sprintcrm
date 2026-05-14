@@ -272,12 +272,19 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
 
       {showComments && (
         <div className="mt-2 space-y-3 border-t pt-3">
-          <form onSubmit={addComment} className="flex gap-2">
-            <Input
+          <form onSubmit={addComment} className="flex gap-2 items-end">
+            <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Digite seu comentário..."
-              className="flex-1 text-foreground bg-background h-8 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  addComment(e as any);
+                }
+              }}
+              placeholder="Digite seu comentário... (Enter envia, Shift+Enter quebra linha)"
+              rows={1}
+              className="flex-1 text-foreground bg-background text-xs min-h-[32px] max-h-40 resize-none py-1.5"
             />
             <Button
               type="submit"
@@ -315,18 +322,60 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
                           })}
                         </span>
                       </div>
-                      <p className="text-xs text-foreground break-words whitespace-pre-wrap">
-                        {comment.comment}
-                      </p>
+                      {editingId === comment.id ? (
+                        <div className="flex flex-col gap-1.5">
+                          <Textarea
+                            value={editingText}
+                            onChange={(e) => setEditingText(e.target.value)}
+                            rows={1}
+                            className="text-xs min-h-[32px] max-h-40 resize-none py-1.5 bg-background"
+                            autoFocus
+                          />
+                          <div className="flex gap-1 justify-end">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={cancelEdit}
+                            >
+                              <X className="h-3 w-3 mr-1" /> Cancelar
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="h-6 px-2 text-xs"
+                              onClick={saveEdit}
+                              disabled={!editingText.trim()}
+                            >
+                              <Check className="h-3 w-3 mr-1" /> Salvar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-foreground break-words whitespace-pre-wrap">
+                          {comment.comment}
+                        </p>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 flex-shrink-0 hover:bg-destructive/10"
-                      onClick={() => deleteComment(comment.id)}
-                    >
-                      <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                    </Button>
+                    {editingId !== comment.id && (
+                      <div className="flex flex-col gap-1 flex-shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-primary/10"
+                          onClick={() => startEdit(comment)}
+                        >
+                          <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-destructive/10"
+                          onClick={() => deleteComment(comment.id)}
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
