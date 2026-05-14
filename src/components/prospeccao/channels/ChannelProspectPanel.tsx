@@ -57,9 +57,30 @@ export function ChannelProspectPanel({ channel }: Props) {
   const callCenter = useCallCenter();
   const callOpen = channel === "coldcall" && callCenter.callState.isActive && callCenter.callState.status !== "finalizado";
 
-  // Estado por lead (apenas Cold Call) — sincronizado em tempo real
-  type LeadCallState = { outcome: string; attempts: number; last_attempt_at: string | null };
+  // Estado por lead (apenas Cold Call) — sincronizado em tempo real (fonte da verdade global)
+  type LeadCallState = {
+    outcome: string;
+    attempts: number;
+    last_attempt_at: string | null;
+    attemptsList: any[];
+  };
   const [leadStates, setLeadStates] = useState<Record<string, LeadCallState>>({});
+  const [currentUserGlobal, setCurrentUserGlobal] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    if (channel !== "coldcall") return;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: prof } = await supabase
+        .from("profiles").select("full_name").eq("id", user.id).maybeSingle();
+      setCurrentUserGlobal({
+        id: user.id,
+        name: (prof as any)?.full_name || user.email?.split("@")[0] || "Usuário",
+      });
+    })();
+  }, [channel]);
+
   useEffect(() => {
     if (channel !== "coldcall") return;
     let cancelled = false;
