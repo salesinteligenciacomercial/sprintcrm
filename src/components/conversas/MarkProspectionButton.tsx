@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Target, Phone, Instagram, MessageSquare, Trophy, Calendar, DollarSign } from "lucide-react";
+import { Target, Phone, Instagram, MessageSquare, Trophy, Calendar, DollarSign, Mail, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +25,8 @@ const CHANNELS = [
   { key: "whatsapp", label: "WhatsApp", icon: MessageSquare },
   { key: "instagram", label: "Instagram", icon: Instagram },
   { key: "coldcall", label: "Cold Call", icon: Phone },
+  { key: "email", label: "Email", icon: Mail },
+  { key: "followup", label: "Follow up", icon: Repeat },
 ] as const;
 
 const OUTCOMES = [
