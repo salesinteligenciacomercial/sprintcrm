@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 import { AlertCircle, RefreshCw, Eye, EyeOff } from "lucide-react";
@@ -104,20 +105,26 @@ export default function Auth() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+        extraParams: {
+          prompt: "select_account"
         }
       });
-      if (error) {
-        console.error("❌ Erro ao fazer login com Google:", error);
+
+      if (result.redirected) return;
+
+      if (result.error) {
+        console.error("❌ Erro ao fazer login com Google:", result.error);
         toast({
           variant: "destructive",
           title: "Erro ao fazer login com Google",
-          description: error.message
+          description: result.error.message
         });
+        return;
       }
+
+      navigate("/dashboard");
     } catch (err: any) {
       console.error("❌ Exceção ao fazer login com Google:", err);
       toast({
