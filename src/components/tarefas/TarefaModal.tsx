@@ -212,7 +212,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o quadro" />
                 </SelectTrigger>
-                <SelectContent className="z-[500]">
+                <SelectContent className="!z-[500]">
                   {boards.map((board) => (
                     <SelectItem key={board.id} value={board.id}>
                       {board.nome}
@@ -234,7 +234,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a etapa" />
                 </SelectTrigger>
-                <SelectContent className="z-[500]">
+                <SelectContent className="!z-[500]">
                   {columns
                     .filter(c => c.board_id === formData.board_id)
                     .map((column) => (
@@ -289,7 +289,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a prioridade" />
               </SelectTrigger>
-              <SelectContent className="z-[500]">
+              <SelectContent className="!z-[500]">
                 <SelectItem value="baixa">Baixa</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="alta">Alta</SelectItem>
@@ -307,7 +307,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
-              <SelectContent className="z-[500]">
+              <SelectContent className="!z-[500]">
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name}
@@ -326,7 +326,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
-              <SelectContent className="z-[500]">
+              <SelectContent className="!z-[500]">
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
                 <SelectItem value="concluida">Concluída</SelectItem>
