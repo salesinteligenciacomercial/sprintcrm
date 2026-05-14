@@ -9559,6 +9559,27 @@ function Conversas() {
                       <PenLine className="h-5 w-5" />
                     </Button>
                     
+                    {/* Botão Enviar Template (ao lado do raio) */}
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-primary hover:bg-primary/10 border-primary/40"
+                      title="Enviar Template"
+                      onClick={() => setTemplateDialogOpen(true)}
+                    >
+                      <FileText className="h-5 w-5" />
+                    </Button>
+                    {userCompanyId && selectedConv && (
+                      <ConversaTemplateSender
+                        open={templateDialogOpen}
+                        onOpenChange={setTemplateDialogOpen}
+                        companyId={userCompanyId}
+                        contactName={selectedConv.contactName || ""}
+                        contactPhone={selectedConv.phoneNumber || selectedConv.id}
+                        origemApi={selectedConv.origemApi}
+                      />
+                    )}
+
                     {/* Botão de Respostas Rápidas */}
                     <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
                       <DialogTrigger asChild>
@@ -10269,19 +10290,6 @@ function Conversas() {
                       <h4 className="text-foreground font-medium mb-3">Ações Rápidas</h4>
                       <div className="space-y-2">
                         {/* Quick Messages */}
-                        <Button variant="outline" className="w-full justify-start" onClick={() => setTemplateDialogOpen(true)}>
-                          <FileText className="h-4 w-4 mr-2" /> Enviar Template
-                        </Button>
-                        {userCompanyId && selectedConv && (
-                          <ConversaTemplateSender
-                            open={templateDialogOpen}
-                            onOpenChange={setTemplateDialogOpen}
-                            companyId={userCompanyId}
-                            contactName={selectedConv.contactName || ""}
-                            contactPhone={selectedConv.phoneNumber || selectedConv.id}
-                            origemApi={selectedConv.origemApi}
-                          />
-                        )}
                         {/* Roteiros Comerciais */}
                         <Button
                           variant="outline"
