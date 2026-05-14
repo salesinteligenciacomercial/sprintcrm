@@ -57,8 +57,9 @@ export function ChannelProspectPanel({ channel }: Props) {
   const callCenter = useCallCenter();
   const callOpen = channel === "coldcall" && callCenter.callState.isActive && callCenter.callState.status !== "finalizado";
 
-  // Outcomes por lead (apenas Cold Call) — sincronizado em tempo real
-  const [outcomes, setOutcomes] = useState<Record<string, string>>({});
+  // Estado por lead (apenas Cold Call) — sincronizado em tempo real
+  type LeadCallState = { outcome: string; attempts: number; last_attempt_at: string | null };
+  const [leadStates, setLeadStates] = useState<Record<string, LeadCallState>>({});
   useEffect(() => {
     if (channel !== "coldcall") return;
     let companyIdLocal: string | null = null;
@@ -66,30 +67,55 @@ export function ChannelProspectPanel({ channel }: Props) {
       const { data: cid } = await supabase.rpc("get_my_company_id");
       if (!cid) return;
       companyIdLocal = cid as string;
-      const { data: rows } = await supabase
-        .from("pre_sdr_analyses" as any)
-        .select("row_key,outcome,lead_id")
-        .eq("company_id", companyIdLocal)
-        .like("row_key", "lead:%");
-      const map: Record<string, string> = {};
-      (rows || []).forEach((r: any) => {
-        const id = r.lead_id || (r.row_key?.startsWith("lead:") ? r.row_key.slice(5) : null);
-        if (id && r.outcome) map[id] = r.outcome;
-      });
-      setOutcomes(map);
+      // pagina (evita limite de 1000)
+      const map: Record<string, LeadCallState> = {};
+      const PAGE = 1000;
+      let from = 0;
+      while (true) {
+        const { data: rows, error } = await supabase
+          .from("pre_sdr_analyses" as any)
+          .select("row_key,outcome,lead_id,attempts_count,last_attempt_at")
+          .eq("company_id", companyIdLocal)
+          .like("row_key", "lead:%")
+          .range(from, from + PAGE - 1);
+        if (error || !rows || rows.length === 0) break;
+        rows.forEach((r: any) => {
+          const id = r.lead_id || (r.row_key?.startsWith("lead:") ? r.row_key.slice(5) : null);
+          if (!id) return;
+          map[id] = {
+            outcome: r.outcome || "pendente",
+            attempts: r.attempts_count || 0,
+            last_attempt_at: r.last_attempt_at || null,
+          };
+        });
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      setLeadStates(map);
     })();
     const ch = supabase
-      .channel(`coldcall_outcomes_${channel}`)
+      .channel(`coldcall_states_${channel}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses" }, (payload) => {
         const n: any = payload.new || payload.old;
         if (!n) return;
         const id = n.lead_id || (n.row_key?.startsWith("lead:") ? n.row_key.slice(5) : null);
         if (!id) return;
-        setOutcomes((prev) => ({ ...prev, [id]: (payload.new as any)?.outcome || "pendente" }));
+        const nn: any = payload.new || {};
+        setLeadStates((prev) => ({
+          ...prev,
+          [id]: {
+            outcome: nn.outcome || "pendente",
+            attempts: nn.attempts_count || 0,
+            last_attempt_at: nn.last_attempt_at || null,
+          },
+        }));
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [channel]);
+
+  const isToday = (iso: string | null) =>
+    !!iso && new Date(iso).toDateString() === new Date().toDateString();
 
   // Aplicar filtros de tag + (cold call) outcome
   const tagFiltered = useMemo(() => {
@@ -101,20 +127,32 @@ export function ChannelProspectPanel({ channel }: Props) {
   const filteredData = useMemo(() => {
     if (channel !== "coldcall" || outcomeFilter === "all") return tagFiltered;
     return tagFiltered.filter((l: any) => {
-      const o = outcomes[l.id] || "pendente";
+      const s = leadStates[l.id];
+      if (outcomeFilter === "contactados_hoje") return !!s && isToday(s.last_attempt_at);
+      if (outcomeFilter === "abordados") return !!s && s.attempts > 0;
+      const o = s?.outcome || "pendente";
       return o === outcomeFilter;
     });
-  }, [tagFiltered, outcomeFilter, outcomes, channel]);
+  }, [tagFiltered, outcomeFilter, leadStates, channel]);
 
   // Contagens por outcome (sobre tagFiltered)
   const outcomeCounts = useMemo(() => {
-    const c: Record<string, number> = { all: tagFiltered.length, pendente: 0, prospectado: 0, sem_resposta: 0, oportunidade: 0, agendamento: 0, follow_up: 0, ganho: 0, descartado: 0 };
+    const c: Record<string, number> = {
+      all: tagFiltered.length,
+      contactados_hoje: 0, abordados: 0,
+      pendente: 0, prospectado: 0, sem_resposta: 0, oportunidade: 0,
+      agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
+    };
     tagFiltered.forEach((l: any) => {
-      const o = outcomes[l.id] || "pendente";
+      const s = leadStates[l.id];
+      const o = s?.outcome || "pendente";
       c[o] = (c[o] || 0) + 1;
+      if (s && s.attempts > 0) c.abordados++;
+      if (s && isToday(s.last_attempt_at)) c.contactados_hoje++;
     });
     return c;
-  }, [tagFiltered, outcomes]);
+  }, [tagFiltered, leadStates]);
+
 
 
   const handleAction = async (lead: any) => {
@@ -148,9 +186,11 @@ export function ChannelProspectPanel({ channel }: Props) {
   const stats = useMemo(() => {
     const total = filteredData.length;
     const marked = filteredData.filter((l: any) => l.to_prospect).length;
-    const contactedToday = filteredData.filter((l: any) => l.last_prospected_at && new Date(l.last_prospected_at).toDateString() === new Date().toDateString()).length;
+    const contactedToday = channel === "coldcall"
+      ? filteredData.filter((l: any) => isToday(leadStates[l.id]?.last_attempt_at || null)).length
+      : filteredData.filter((l: any) => l.last_prospected_at && new Date(l.last_prospected_at).toDateString() === new Date().toDateString()).length;
     return { total, marked, contactedToday };
-  }, [filteredData]);
+  }, [filteredData, channel, leadStates]);
 
   return (
     <div className="space-y-4">
@@ -207,7 +247,9 @@ export function ChannelProspectPanel({ channel }: Props) {
             <span className="text-[11px] text-muted-foreground mr-1">Filtrar:</span>
             {([
               { v: "all", label: "Todos", cls: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
-              { v: "pendente", label: "Pendente", cls: "bg-muted text-muted-foreground border-border" },
+              { v: "contactados_hoje", label: "Contactados hoje", cls: "bg-cyan-500/15 text-cyan-600 border-cyan-500/40" },
+              { v: "abordados", label: "Já abordados", cls: "bg-indigo-500/10 text-indigo-600 border-indigo-500/30" },
+              { v: "pendente", label: "Pendente (sem tentativa)", cls: "bg-muted text-muted-foreground border-border" },
               { v: "prospectado", label: "Prospectado (OK)", cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
               { v: "sem_resposta", label: "Sem resposta", cls: "bg-slate-500/10 text-slate-500 border-slate-500/30" },
               { v: "oportunidade", label: "Oportunidade", cls: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
