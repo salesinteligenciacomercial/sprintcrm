@@ -77,7 +77,7 @@ serve(async (req) => {
   }
 
   try {
-    const { company_id, to, subject, body, is_html, lead_id } = await req.json();
+    const { company_id, to, subject, body, is_html, lead_id, thread_id, in_reply_to, references } = await req.json();
 
     if (!company_id || !to || !subject || !body) {
       return new Response(
