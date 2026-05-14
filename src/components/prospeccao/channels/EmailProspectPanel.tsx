@@ -373,6 +373,8 @@ export function EmailProspectPanel() {
           )}
         </ScrollArea>
       </Card>
+        </TopTabsContent>
+      </TopTabs>
 
       {/* Composer individual */}
       {composerLead && companyId && (
