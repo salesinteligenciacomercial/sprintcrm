@@ -112,6 +112,16 @@ function parseComments(notes?: string | null): Comment[] {
 export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpenChange, hideToggle }: LeadCommentsProps) {
   const [comments, setComments] = useState<Comment[]>(() => parseComments(initialNotes));
   const [newComment, setNewComment] = useState("");
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  const editingRef = useRef<HTMLTextAreaElement>(null);
+
+  const autoResize = (el: HTMLTextAreaElement | null) => {
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 160) + "px";
+  };
+
+  useEffect(() => { autoResize(newCommentRef.current); }, [newComment]);
   const [loading, setLoading] = useState(false);
   const [internalOpen, setInternalOpen] = useState(false);
   const showComments = open !== undefined ? open : internalOpen;
