@@ -1,0 +1,3 @@
+ALTER TABLE public.lead_value_history DROP CONSTRAINT lead_value_history_old_etapa_id_fkey, DROP CONSTRAINT lead_value_history_new_etapa_id_fkey;
+ALTER TABLE public.lead_value_history ADD CONSTRAINT lead_value_history_old_etapa_id_fkey FOREIGN KEY (old_etapa_id) REFERENCES public.etapas(id) ON DELETE SET NULL;
+ALTER TABLE public.lead_value_history ADD CONSTRAINT lead_value_history_new_etapa_id_fkey FOREIGN KEY (new_etapa_id) REFERENCES public.etapas(id) ON DELETE SET NULL;
