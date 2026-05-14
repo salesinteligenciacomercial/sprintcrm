@@ -1183,10 +1183,19 @@ serve(async (req) => {
             // 🔥 PROCESSAR REFERRAL (Click-to-WhatsApp Ads)
             let leadId = existingLead?.id || null;
             const referral = msg.referral;
-            
-            if (referral) {
-              console.log('🎯 [CTWA] Processando lead de anúncio Click-to-WhatsApp');
-              
+
+            // ✅ Só processar se for REALMENTE um anúncio (source_type === 'ad' e tem source_id)
+            // Antes: qualquer objeto referral truthy adicionava as tags, inclusive {} ou referrals herdados
+            const isRealAdReferral = !!(
+              referral &&
+              typeof referral === 'object' &&
+              (referral.source_type === 'ad' || referral.source_type === 'post') &&
+              referral.source_id
+            );
+
+            if (isRealAdReferral) {
+              console.log('🎯 [CTWA] Processando lead de anúncio Click-to-WhatsApp', referral.source_id);
+
               // Se não existe lead, criar automaticamente
               if (!leadId) {
                 const newLeadData = {
@@ -1197,52 +1206,45 @@ serve(async (req) => {
                   utm_source: 'facebook',
                   utm_medium: 'cpc',
                   utm_campaign: referral.headline || 'Click-to-WhatsApp',
-                  ad_id: referral.source_id || null,
+                  ad_id: referral.source_id,
                   tags: ['Click-to-WhatsApp', 'Anúncio', 'Meta Ads'],
                   notes: `Lead gerado via anúncio: ${referral.headline || 'Click-to-WhatsApp'}`,
                   conversion_timestamp: new Date().toISOString(),
                 };
-                
-                console.log('🆕 Criando novo lead de CTWA:', JSON.stringify(newLeadData, null, 2));
-                
+
                 const { data: newLead, error: leadError } = await supabase
                   .from('leads')
                   .insert(newLeadData)
                   .select('id')
                   .single();
-                
+
                 if (leadError) {
                   console.error('❌ Erro ao criar lead CTWA:', leadError);
                 } else {
                   leadId = newLead?.id;
                   console.log('✅ Lead CTWA criado com sucesso:', leadId);
                 }
-              } else {
-                // Lead existe - atualizar com dados do anúncio se não tiver
-                const updateData: any = {};
-                
-                if (!existingLead?.lead_source_type) {
-                  updateData.lead_source_type = 'ctwa';
-                  updateData.utm_source = 'facebook';
-                  updateData.utm_medium = 'cpc';
-                  updateData.utm_campaign = referral.headline || 'Click-to-WhatsApp';
-                  updateData.ad_id = referral.source_id || null;
-                  updateData.conversion_timestamp = new Date().toISOString();
-                  
-                  // Adicionar tags sem sobrescrever existentes
-                  const existingTags = existingLead?.tags || [];
-                  const newTags = ['Click-to-WhatsApp', 'Anúncio', 'Meta Ads'];
-                  updateData.tags = [...new Set([...existingTags, ...newTags])];
-                }
-                
-                if (Object.keys(updateData).length > 0) {
-                  console.log('📝 Atualizando lead existente com dados CTWA:', leadId);
-                  await supabase
-                    .from('leads')
-                    .update(updateData)
-                    .eq('id', leadId);
-                }
+              } else if (!existingLead?.lead_source_type) {
+                // Lead existe mas ainda não tem source — marcar como CTWA SOMENTE nesse caso
+                const existingTags = existingLead?.tags || [];
+                const newTags = ['Click-to-WhatsApp', 'Anúncio', 'Meta Ads'];
+                const mergedTags = [...new Set([...existingTags, ...newTags])];
+
+                await supabase
+                  .from('leads')
+                  .update({
+                    lead_source_type: 'ctwa',
+                    utm_source: 'facebook',
+                    utm_medium: 'cpc',
+                    utm_campaign: referral.headline || 'Click-to-WhatsApp',
+                    ad_id: referral.source_id,
+                    conversion_timestamp: new Date().toISOString(),
+                    tags: mergedTags,
+                  })
+                  .eq('id', leadId);
+                console.log('📝 Lead existente marcado como CTWA:', leadId);
               }
+              // Se lead já tem outro lead_source_type, NÃO sobrescrever nem re-adicionar tags
             }
 
             const conversaData: any = {
