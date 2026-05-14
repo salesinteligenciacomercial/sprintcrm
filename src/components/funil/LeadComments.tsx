@@ -222,6 +222,36 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
     }
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+
+  const startEdit = (c: Comment) => {
+    setEditingId(c.id);
+    setEditingText(c.comment);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editingText.trim()) return;
+    try {
+      const updated = comments.map((c) =>
+        c.id === editingId ? { ...c, comment: editingText.trim() } : c
+      );
+      await persistComments(updated);
+      setComments(updated);
+      toast.success("Comentário atualizado");
+      cancelEdit();
+      onCommentAdded?.();
+    } catch (error: any) {
+      console.error("Erro ao editar comentário:", error);
+      toast.error(`Erro ao editar comentário: ${error?.message || 'Erro desconhecido'}`);
+    }
+  };
+
   return (
     <div className="w-full">
       {!hideToggle && (
