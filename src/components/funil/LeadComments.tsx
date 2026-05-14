@@ -109,11 +109,16 @@ function parseComments(notes?: string | null): Comment[] {
   return [];
 }
 
-export function LeadComments({ leadId, initialNotes, onCommentAdded }: LeadCommentsProps) {
+export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpenChange, hideToggle }: LeadCommentsProps) {
   const [comments, setComments] = useState<Comment[]>(() => parseComments(initialNotes));
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showComments, setShowComments] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const showComments = open !== undefined ? open : internalOpen;
+  const setShowComments = (v: boolean) => {
+    if (onOpenChange) onOpenChange(v);
+    else setInternalOpen(v);
+  };
 
   useEffect(() => {
     setComments(parseComments(initialNotes));
