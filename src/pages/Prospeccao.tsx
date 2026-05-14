@@ -176,6 +176,7 @@ export default function Prospeccao() {
     coldcall: "Cold Call",
     instagram: "Instagram",
     whatsapp: "WhatsApp",
+    email: "E-mail",
     funil: "Funil de Vendas",
     closer: "Leads Qualificados",
     comando: "Painel do Gestor",
