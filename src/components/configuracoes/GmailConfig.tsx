@@ -56,37 +56,26 @@ export function GmailConfig({ companyId }: GmailConfigProps) {
     }
   };
 
-  const handleConnect = () => {
-    setConnecting(true);
-    
-    // Gerar URL de autorização do Google
-    const clientId = import.meta.env.VITE_GMAIL_CLIENT_ID;
-    
-    if (!clientId) {
+  const handleConnect = async () => {
+    try {
+      setConnecting(true);
+      const redirectUri = `${window.location.origin}/oauth/gmail/callback`;
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-start', {
+        body: { company_id: companyId, redirect_uri: redirectUri },
+      });
+
+      if (error) throw error;
+      if (!data?.auth_url) throw new Error('URL de autorização não gerada');
+
+      window.location.href = data.auth_url;
+    } catch (error: any) {
       toast({
         title: "Erro de Configuração",
-        description: "GMAIL_CLIENT_ID não está configurado. Configure nas variáveis de ambiente.",
+        description: error?.message || "Não foi possível iniciar a conexão com o Gmail.",
         variant: "destructive",
       });
       setConnecting(false);
-      return;
     }
-
-    const redirectUri = `${window.location.origin}/oauth/gmail/callback`;
-    const scope = encodeURIComponent('https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email');
-    const state = encodeURIComponent(JSON.stringify({ company_id: companyId }));
-
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=${clientId}` +
-      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&response_type=code` +
-      `&scope=${scope}` +
-      `&access_type=offline` +
-      `&prompt=consent` +
-      `&state=${state}`;
-
-    // Abrir em nova janela ou redirecionar
-    window.location.href = authUrl;
   };
 
   const handleDisconnect = async () => {
