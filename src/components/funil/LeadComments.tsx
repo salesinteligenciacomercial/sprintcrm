@@ -30,6 +30,9 @@ interface LeadCommentsProps {
   leadId: string;
   initialNotes?: string | null;
   onCommentAdded?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideToggle?: boolean;
 }
 
 function generateId() {
