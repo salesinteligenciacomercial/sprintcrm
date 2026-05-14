@@ -377,6 +377,7 @@ export function ChannelProspectPanel({ channel }: Props) {
                       {channel === "coldcall" && (
                         <ColdCallActions
                           lead={lead}
+                          externalCompanyId={companyIdGlobal}
                           externalUser={currentUserGlobal}
                           externalState={{
                             outcome: leadStates[lead.id]?.outcome,
