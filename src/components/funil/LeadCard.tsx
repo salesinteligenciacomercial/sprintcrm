@@ -1292,12 +1292,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
 
             {/* Origem do lead já é exibida permanentemente no cabeçalho */}
 
-            {/* ✅ CRÍTICO: Passa notes do lead ao LeadComments - Se retroceder, verificar se passa initialNotes */}
-            <LeadComments
-              leadId={lead.id}
-              initialNotes={lead.notes ?? null} // ✅ IMPORTANTE: Passa notes do lead
-              onCommentAdded={() => onLeadMoved?.()}
-            />
+            {/* Comentários movidos para botão na fileira de ações (renderizados acima) */}
           </div>
         )}
 
