@@ -118,7 +118,10 @@ serve(async (req) => {
     const accessToken = await refreshTokenIfNeeded(supabase, company_id, integration);
 
     // Criar e enviar email
-    const rawEmail = createEmail(to, integration.gmail_email, subject, body, is_html);
+    const rawEmail = createEmail(to, integration.gmail_email, subject, body, is_html, in_reply_to, references);
+
+    const sendBody: any = { raw: rawEmail };
+    if (thread_id) sendBody.threadId = thread_id;
 
     const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
       method: 'POST',
@@ -126,7 +129,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ raw: rawEmail }),
+      body: JSON.stringify(sendBody),
     });
 
     if (!sendResponse.ok) {
