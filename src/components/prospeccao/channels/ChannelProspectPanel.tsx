@@ -201,6 +201,35 @@ export function ChannelProspectPanel({ channel }: Props) {
             </div>
           </div>
         </div>
+
+        {channel === "coldcall" && (
+          <div className="flex items-center gap-1.5 flex-wrap mt-3 pt-3 border-t border-border">
+            <span className="text-[11px] text-muted-foreground mr-1">Filtrar:</span>
+            {([
+              { v: "all", label: "Todos", cls: "bg-emerald-500/15 text-emerald-600 border-emerald-500/30" },
+              { v: "pendente", label: "Pendente", cls: "bg-muted text-muted-foreground border-border" },
+              { v: "prospectado", label: "Prospectado (OK)", cls: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" },
+              { v: "sem_resposta", label: "Sem resposta", cls: "bg-slate-500/10 text-slate-500 border-slate-500/30" },
+              { v: "oportunidade", label: "Oportunidade", cls: "bg-amber-500/10 text-amber-600 border-amber-500/30" },
+              { v: "agendamento", label: "Agendamento", cls: "bg-purple-500/10 text-purple-600 border-purple-500/30" },
+              { v: "follow_up", label: "Follow-up", cls: "bg-cyan-500/10 text-cyan-600 border-cyan-500/30" },
+              { v: "ganho", label: "Ganho", cls: "bg-emerald-600/10 text-emerald-700 border-emerald-600/30" },
+              { v: "descartado", label: "Descartado", cls: "bg-rose-500/10 text-rose-600 border-rose-500/30" },
+            ] as const).map((o) => {
+              const active = outcomeFilter === o.v;
+              const count = outcomeCounts[o.v] ?? 0;
+              return (
+                <button
+                  key={o.v}
+                  onClick={() => setOutcomeFilter(o.v)}
+                  className={`text-[11px] px-2 py-0.5 rounded-full border transition-all ${o.cls} ${active ? "ring-2 ring-offset-1 ring-offset-background ring-current font-semibold" : "opacity-80 hover:opacity-100"}`}
+                >
+                  {o.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+        )}
       </Card>
 
       {/* List */}
