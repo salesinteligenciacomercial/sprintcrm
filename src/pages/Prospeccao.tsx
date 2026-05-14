@@ -38,6 +38,7 @@ import { ArenaTopBar } from "@/components/prospeccao/rpg/ArenaTopBar";
 import { TeamLobbyPanel } from "@/components/prospeccao/rpg/TeamLobbyPanel";
 import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
 import { ChannelProspectPanel } from "@/components/prospeccao/channels/ChannelProspectPanel";
+import { EmailProspectPanel } from "@/components/prospeccao/channels/EmailProspectPanel";
 import { ProspectingIntelligencePanel } from "@/components/prospeccao/ProspectingIntelligencePanel";
 import { GoalProgressHUD } from "@/components/prospeccao/comercial/GoalProgressHUD";
 import { CloserInbox } from "@/components/prospeccao/comercial/CloserInbox";
