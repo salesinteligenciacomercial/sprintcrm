@@ -373,7 +373,14 @@ export function ChannelProspectPanel({ channel }: Props) {
                         {meta.cta}
                       </Button>
                       {channel === "coldcall" && (
-                        <ColdCallActions lead={lead} />
+                        <ColdCallActions
+                          lead={lead}
+                          externalUser={currentUserGlobal}
+                          externalState={{
+                            outcome: leadStates[lead.id]?.outcome,
+                            attempts: leadStates[lead.id]?.attemptsList || [],
+                          }}
+                        />
                       )}
                       <Button size="icon" variant="ghost" onClick={() => setHandoffLead({ id: lead.id, name: lead.name || "Lead" })} title="Passar para Closer">
                         <ArrowRightLeft className="h-3.5 w-3.5" />
