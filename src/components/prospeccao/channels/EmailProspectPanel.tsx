@@ -19,6 +19,8 @@ import {
 import { toast } from "sonner";
 import { useTagsManager } from "@/hooks/useTagsManager";
 import { EmailComposer } from "@/components/email/EmailComposer";
+import { EmailInbox } from "./EmailInbox";
+import { Tabs as TopTabs, TabsList as TopTabsList, TabsTrigger as TopTabsTrigger, TabsContent as TopTabsContent } from "@/components/ui/tabs";
 
 interface Lead {
   id: string;
@@ -233,6 +235,19 @@ export function EmailProspectPanel() {
         </div>
       </Card>
 
+      <TopTabs defaultValue="inbox" className="w-full">
+        <TopTabsList>
+          <TopTabsTrigger value="inbox">📥 Caixa de e-mails</TopTabsTrigger>
+          <TopTabsTrigger value="campaign">📣 Prospecção & Campanhas</TopTabsTrigger>
+        </TopTabsList>
+
+        <TopTabsContent value="inbox" className="mt-4">
+          {companyId && (
+            <EmailInbox companyId={companyId} gmailEmail={gmailEmail} isConnected={isConnected} />
+          )}
+        </TopTabsContent>
+
+        <TopTabsContent value="campaign" className="mt-4 space-y-4">
       {/* Header */}
       <Card className="p-4 bg-gradient-to-r from-background to-muted/40 border-border">
         <div className="flex items-center justify-between flex-wrap gap-3">
@@ -358,6 +373,8 @@ export function EmailProspectPanel() {
           )}
         </ScrollArea>
       </Card>
+        </TopTabsContent>
+      </TopTabs>
 
       {/* Composer individual */}
       {composerLead && companyId && (

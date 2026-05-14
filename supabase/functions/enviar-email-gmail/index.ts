@@ -54,21 +54,20 @@ async function refreshTokenIfNeeded(supabase: any, companyId: string, integratio
 }
 
 // Função para criar email no formato MIME
-function createEmail(to: string, from: string, subject: string, body: string, isHtml: boolean = false): string {
+function createEmail(to: string, from: string, subject: string, body: string, isHtml: boolean = false, inReplyTo?: string, references?: string): string {
   const mimeType = isHtml ? 'text/html' : 'text/plain';
-  
-  const email = [
+  const lines = [
     `From: ${from}`,
     `To: ${to}`,
     `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(subject)))}?=`,
     `MIME-Version: 1.0`,
     `Content-Type: ${mimeType}; charset=UTF-8`,
     `Content-Transfer-Encoding: base64`,
-    '',
-    btoa(unescape(encodeURIComponent(body))),
-  ].join('\r\n');
-
-  // Converter para base64url
+  ];
+  if (inReplyTo) lines.push(`In-Reply-To: ${inReplyTo}`);
+  if (references) lines.push(`References: ${references}`);
+  lines.push('', btoa(unescape(encodeURIComponent(body))));
+  const email = lines.join('\r\n');
   return btoa(email).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
@@ -78,7 +77,7 @@ serve(async (req) => {
   }
 
   try {
-    const { company_id, to, subject, body, is_html, lead_id } = await req.json();
+    const { company_id, to, subject, body, is_html, lead_id, thread_id, in_reply_to, references } = await req.json();
 
     if (!company_id || !to || !subject || !body) {
       return new Response(
@@ -119,7 +118,10 @@ serve(async (req) => {
     const accessToken = await refreshTokenIfNeeded(supabase, company_id, integration);
 
     // Criar e enviar email
-    const rawEmail = createEmail(to, integration.gmail_email, subject, body, is_html);
+    const rawEmail = createEmail(to, integration.gmail_email, subject, body, is_html, in_reply_to, references);
+
+    const sendBody: any = { raw: rawEmail };
+    if (thread_id) sendBody.threadId = thread_id;
 
     const sendResponse = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
       method: 'POST',
@@ -127,7 +129,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ raw: rawEmail }),
+      body: JSON.stringify(sendBody),
     });
 
     if (!sendResponse.ok) {
