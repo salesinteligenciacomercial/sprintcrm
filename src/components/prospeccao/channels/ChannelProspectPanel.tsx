@@ -90,6 +90,7 @@ export function ChannelProspectPanel({ channel }: Props) {
       const { data: cid } = await supabase.rpc("get_my_company_id");
       if (!cid || cancelled) return;
       companyIdLocal = cid as string;
+      setCompanyIdGlobal(companyIdLocal);
       const map: Record<string, LeadCallState> = {};
       const PAGE = 1000;
       let from = 0;
