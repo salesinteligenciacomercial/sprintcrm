@@ -62,25 +62,29 @@ export function ChannelProspectPanel({ channel }: Props) {
   const [leadStates, setLeadStates] = useState<Record<string, LeadCallState>>({});
   useEffect(() => {
     if (channel !== "coldcall") return;
+    let cancelled = false;
     let companyIdLocal: string | null = null;
     (async () => {
       const { data: cid } = await supabase.rpc("get_my_company_id");
-      if (!cid) return;
+      if (!cid || cancelled) return;
       companyIdLocal = cid as string;
-      // pagina (evita limite de 1000)
       const map: Record<string, LeadCallState> = {};
       const PAGE = 1000;
       let from = 0;
-      while (true) {
+      while (!cancelled) {
         const { data: rows, error } = await supabase
           .from("pre_sdr_analyses" as any)
           .select("row_key,outcome,lead_id,attempts_count,last_attempt_at")
           .eq("company_id", companyIdLocal)
-          .like("row_key", "lead:%")
+          .not("lead_id", "is", null)
           .range(from, from + PAGE - 1);
-        if (error || !rows || rows.length === 0) break;
+        if (error) {
+          console.error("[ChannelProspectPanel] erro carregando estados:", error);
+          break;
+        }
+        if (!rows || rows.length === 0) break;
         rows.forEach((r: any) => {
-          const id = r.lead_id || (r.row_key?.startsWith("lead:") ? r.row_key.slice(5) : null);
+          const id = r.lead_id || (typeof r.row_key === "string" && r.row_key.startsWith("lead:") ? r.row_key.slice(5) : null);
           if (!id) return;
           map[id] = {
             outcome: r.outcome || "pendente",
@@ -91,28 +95,32 @@ export function ChannelProspectPanel({ channel }: Props) {
         if (rows.length < PAGE) break;
         from += PAGE;
       }
-      setLeadStates(map);
+      if (!cancelled) setLeadStates(map);
     })();
     const ch = supabase
-      .channel(`coldcall_states_${channel}`)
+      .channel(`coldcall_states_${channel}_${Date.now()}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses" }, (payload) => {
         const n: any = payload.new || payload.old;
         if (!n) return;
-        const id = n.lead_id || (n.row_key?.startsWith("lead:") ? n.row_key.slice(5) : null);
+        const id = n.lead_id || (typeof n.row_key === "string" && n.row_key.startsWith("lead:") ? n.row_key.slice(5) : null);
         if (!id) return;
         const nn: any = payload.new || {};
-        setLeadStates((prev) => ({
-          ...prev,
-          [id]: {
-            outcome: nn.outcome || "pendente",
-            attempts: nn.attempts_count || 0,
-            last_attempt_at: nn.last_attempt_at || null,
-          },
-        }));
+        setLeadStates((prev) => {
+          const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null };
+          return {
+            ...prev,
+            [id]: {
+              outcome: nn.outcome ?? old.outcome,
+              attempts: nn.attempts_count ?? old.attempts,
+              last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
+            },
+          };
+        });
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [channel]);
+
 
   const isToday = (iso: string | null) =>
     !!iso && new Date(iso).toDateString() === new Date().toDateString();
