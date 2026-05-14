@@ -10257,6 +10257,13 @@ function Conversas() {
                       </Dialog>
                     </div>
 
+                    {/* Histórico do Lead (timeline) */}
+                    <LeadActivityTimeline
+                      leadId={leadVinculado?.id}
+                      leadCreatedAt={leadVinculado?.created_at}
+                      leadName={leadVinculado?.name || selectedConv?.contactName}
+                    />
+
                     {/* Quick Actions */}
                     <div>
                       <h4 className="text-foreground font-medium mb-3">Ações Rápidas</h4>
