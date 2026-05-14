@@ -321,6 +321,10 @@ export default function Prospeccao() {
                   <RewardShop companyId={companyId} userCoins={profile?.coins ?? 0} />
                 )}
               </div>
+            ) : activeTab === "email" ? (
+              <div className="mt-4">
+                <EmailProspectPanel />
+              </div>
             ) : isChannelTab ? (
               <div className="mt-4 space-y-3">
                 {activeTab === "instagram" ? (
