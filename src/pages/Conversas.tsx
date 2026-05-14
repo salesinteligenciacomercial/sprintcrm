@@ -9559,14 +9559,6 @@ function Conversas() {
                       <PenLine className="h-5 w-5" />
                     </Button>
                     
-                    {/* Botão de Respostas Rápidas */}
-                    <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300" title="Respostas Rápidas">
-                          <Zap className="h-5 w-5" />
-                        </Button>
-                      </DialogTrigger>
-
                     {/* Botão Enviar Template (ao lado do raio) */}
                     <Button
                       variant="outline"
@@ -9588,9 +9580,10 @@ function Conversas() {
                       />
                     )}
 
+                    {/* Botão de Respostas Rápidas */}
                     <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300 hidden" title="Respostas Rápidas (oculto)">
+                        <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300" title="Respostas Rápidas">
                           <Zap className="h-5 w-5" />
                         </Button>
                       </DialogTrigger>
