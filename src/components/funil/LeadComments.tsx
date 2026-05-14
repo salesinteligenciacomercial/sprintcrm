@@ -10,18 +10,11 @@
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Send, Trash2, User } from "lucide-react";
+import { MessageCircle, Send, Trash2, User, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Comment {
@@ -222,80 +215,77 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded }: LeadComme
   };
 
   return (
-    <Dialog open={showComments} onOpenChange={setShowComments}>
-      <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex items-center gap-2 text-xs"
-        >
+    <div className="w-full">
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setShowComments((v) => !v)}
+        className="flex items-center gap-2 text-xs w-full justify-between"
+      >
+        <span className="flex items-center gap-2">
           <MessageCircle className="h-3 w-3" />
           Comentários ({comments.length})
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-background">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4" />
-            Comentários do Lead
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
+        </span>
+        {showComments ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+      </Button>
+
+      {showComments && (
+        <div className="mt-2 space-y-3 border-t pt-3">
           <form onSubmit={addComment} className="flex gap-2">
             <Input
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Digite seu comentário..."
-              className="flex-1 text-foreground bg-background"
+              className="flex-1 text-foreground bg-background h-8 text-xs"
             />
             <Button
               type="submit"
               size="sm"
               disabled={loading || !newComment.trim()}
-              className="px-3"
+              className="px-3 h-8"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3 w-3" />
             </Button>
           </form>
 
-          <ScrollArea className="h-64">
-            <div className="flex flex-col gap-2 pr-4">
+          <ScrollArea className="max-h-48">
+            <div className="flex flex-col gap-2 pr-2">
               {comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-xs text-muted-foreground text-center py-3">
                   Nenhum comentário ainda
                 </p>
               ) : (
                 comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-2 p-3 bg-muted/50 rounded-md">
+                  <div key={comment.id} className="flex gap-2 p-2 bg-muted/50 rounded-md">
                     <div className="flex-shrink-0">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
+                      <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="h-3 w-3 text-primary" />
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-xs font-medium text-foreground">
                           {comment.user_name || "Usuário"}
                         </span>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(comment.created_at), {
                             addSuffix: true,
                             locale: ptBR,
                           })}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground break-words whitespace-pre-wrap">
+                      <p className="text-xs text-foreground break-words whitespace-pre-wrap">
                         {comment.comment}
                       </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 flex-shrink-0 hover:bg-destructive/10"
+                      className="h-6 w-6 flex-shrink-0 hover:bg-destructive/10"
                       onClick={() => deleteComment(comment.id)}
                     >
-                      <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                      <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Button>
                   </div>
                 ))
@@ -303,7 +293,7 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded }: LeadComme
             </div>
           </ScrollArea>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </div>
   );
 }
