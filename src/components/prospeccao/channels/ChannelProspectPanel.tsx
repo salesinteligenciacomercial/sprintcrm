@@ -95,7 +95,7 @@ export function ChannelProspectPanel({ channel }: Props) {
       while (!cancelled) {
         const { data: rows, error } = await supabase
           .from("pre_sdr_analyses" as any)
-          .select("row_key,outcome,lead_id,attempts_count,last_attempt_at")
+          .select("row_key,outcome,lead_id,attempts,attempts_count,last_attempt_at")
           .eq("company_id", companyIdLocal)
           .not("lead_id", "is", null)
           .range(from, from + PAGE - 1);
@@ -111,6 +111,7 @@ export function ChannelProspectPanel({ channel }: Props) {
             outcome: r.outcome || "pendente",
             attempts: r.attempts_count || 0,
             last_attempt_at: r.last_attempt_at || null,
+            attemptsList: Array.isArray(r.attempts) ? r.attempts : [],
           };
         });
         if (rows.length < PAGE) break;
@@ -127,13 +128,14 @@ export function ChannelProspectPanel({ channel }: Props) {
         if (!id) return;
         const nn: any = payload.new || {};
         setLeadStates((prev) => {
-          const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null };
+          const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null, attemptsList: [] };
           return {
             ...prev,
             [id]: {
               outcome: nn.outcome ?? old.outcome,
               attempts: nn.attempts_count ?? old.attempts,
               last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
+              attemptsList: Array.isArray(nn.attempts) ? nn.attempts : old.attemptsList,
             },
           };
         });
