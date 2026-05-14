@@ -286,6 +286,7 @@ export function LeadComments({ leadId, initialNotes, onCommentAdded, open, onOpe
         <div className="mt-2 space-y-3 border-t pt-3">
           <form onSubmit={addComment} className="flex gap-2 items-end">
             <Textarea
+              ref={newCommentRef}
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               onKeyDown={(e) => {
