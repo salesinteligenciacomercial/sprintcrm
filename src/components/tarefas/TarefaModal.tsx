@@ -196,7 +196,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col !z-[300]">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col !z-[350]">
         <DialogHeader>
           <DialogTitle>Nova Tarefa</DialogTitle>
         </DialogHeader>
@@ -212,7 +212,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o quadro" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="!z-[500]">
                   {boards.map((board) => (
                     <SelectItem key={board.id} value={board.id}>
                       {board.nome}
@@ -234,7 +234,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a etapa" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="!z-[500]">
                   {columns
                     .filter(c => c.board_id === formData.board_id)
                     .map((column) => (
@@ -289,7 +289,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione a prioridade" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[500]">
                 <SelectItem value="baixa">Baixa</SelectItem>
                 <SelectItem value="normal">Normal</SelectItem>
                 <SelectItem value="alta">Alta</SelectItem>
@@ -307,7 +307,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[500]">
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.full_name}
@@ -326,7 +326,7 @@ export function TarefaModal({ open, onOpenChange, lead, onTarefaCriada }: Tarefa
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="!z-[500]">
                 <SelectItem value="pendente">Pendente</SelectItem>
                 <SelectItem value="em_andamento">Em Andamento</SelectItem>
                 <SelectItem value="concluida">Concluída</SelectItem>

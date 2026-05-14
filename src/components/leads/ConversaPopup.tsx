@@ -1714,7 +1714,7 @@ export function ConversaPopup({
         </div>
       {/* Dialog: Mensagens Rápidas - CÓPIA EXATA do menu Conversas */}
       <UIDialog open={quickOpen} onOpenChange={setQuickOpen}>
-        <UIDialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0">
+        <UIDialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 !z-[350]">
           <UIDialogHeader className="flex-shrink-0 p-6 pb-2">
             <UIDialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-yellow-500" />
@@ -1841,7 +1841,7 @@ export function ConversaPopup({
 
       {/* Dialog: Agendar Mensagem */}
       <UIDialog open={scheduledOpen} onOpenChange={(o) => { setScheduledOpen(o); if (o) carregarMensagensAgendadas(); }}>
-        <UIDialogContent className="max-w-lg">
+        <UIDialogContent className="max-w-lg !z-[350]">
           <UIDialogHeader>
             <UIDialogTitle>Agendar Mensagem</UIDialogTitle>
           </UIDialogHeader>
@@ -1876,7 +1876,7 @@ export function ConversaPopup({
 
       {/* Dialog: Valor da Venda Rápido */}
       <UIDialog open={valorVendaOpen} onOpenChange={setValorVendaOpen}>
-        <UIDialogContent className="max-w-sm">
+        <UIDialogContent className="max-w-sm !z-[350]">
           <UIDialogHeader>
             <UIDialogTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-green-600" />
