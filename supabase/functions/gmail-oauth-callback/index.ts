@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { code, company_id, redirect_uri } = await req.json();
+    const { code, company_id, redirect_uri, state } = await req.json();
 
     if (!code) {
       return new Response(
@@ -21,8 +21,8 @@ serve(async (req) => {
       );
     }
 
-    const clientId = Deno.env.get('GMAIL_CLIENT_ID');
-    const clientSecret = Deno.env.get('GMAIL_CLIENT_SECRET');
+    const clientId = Deno.env.get('GMAIL_CLIENT_ID') || Deno.env.get('GOOGLE_OAUTH_CLIENT_ID');
+    const clientSecret = Deno.env.get('GMAIL_CLIENT_SECRET') || Deno.env.get('GOOGLE_OAUTH_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
       console.error('❌ [GMAIL-OAUTH] Credenciais não configuradas');
@@ -31,6 +31,35 @@ serve(async (req) => {
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnon = createClient(
+      supabaseUrl,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: userData, error: userError } = await supabaseAnon.auth.getUser();
+    if (userError || !userData.user) throw new Error('Usuário não autenticado');
+
+    let stateCompanyId = company_id;
+    if (state) {
+      try {
+        const parsedState = JSON.parse(atob(state));
+        stateCompanyId = parsedState.company_id || stateCompanyId;
+      } catch (_) {
+        // Compatível com estados antigos enviados em JSON URI-encoded.
+      }
+    }
+
+    const { data: role, error: roleError } = await supabaseAnon
+      .from('user_roles')
+      .select('company_id')
+      .eq('user_id', userData.user.id)
+      .eq('company_id', stateCompanyId)
+      .maybeSingle();
+
+    if (roleError || !role) throw new Error('Usuário sem permissão para esta empresa');
 
     console.log('🔄 [GMAIL-OAUTH] Trocando código por tokens...');
 
@@ -79,21 +108,20 @@ serve(async (req) => {
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
     // Salvar no banco
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { error: updateError } = await supabase
       .from('tenant_integrations')
-      .update({
+      .upsert({
+        company_id: stateCompanyId,
         gmail_access_token: tokens.access_token,
         gmail_refresh_token: tokens.refresh_token,
         gmail_token_expires_at: expiresAt.toISOString(),
         gmail_email: userInfo.email,
         gmail_status: 'connected',
         updated_at: new Date().toISOString(),
-      })
-      .eq('company_id', company_id);
+      }, { onConflict: 'company_id' });
 
     if (updateError) {
       console.error('❌ [GMAIL-OAUTH] Erro ao salvar tokens:', updateError);
