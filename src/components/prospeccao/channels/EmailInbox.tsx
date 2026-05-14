@@ -36,6 +36,7 @@ interface ThreadMessage {
   unread: boolean;
   messageId?: string;
   references?: string;
+  internalDate?: string;
 }
 
 interface Props {
