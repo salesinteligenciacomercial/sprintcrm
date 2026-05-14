@@ -84,7 +84,7 @@ function SortableColumn({
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="min-w-[280px] md:min-w-[320px] flex-shrink-0 relative group">
+    <div ref={setNodeRef} style={style} className="min-w-[280px] md:min-w-[320px] flex-1 flex-shrink-0 relative group">
       {/* Drag handle */}
       <div
         {...attributes}
