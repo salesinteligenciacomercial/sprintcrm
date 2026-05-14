@@ -10996,7 +10996,7 @@ function Conversas() {
                         {/* Compromissos e Reuniões */}
                         <Dialog open={reunioesDialogOpen} onOpenChange={setReunioesDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start" onClick={async () => {
+                            <Button variant="outline" size="icon" title="Compromissos" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
                           setSyncStatus('syncing');
@@ -11327,7 +11327,7 @@ function Conversas() {
                         {/* Tarefas do Lead */}
                         <Dialog open={tarefasDialogOpen} onOpenChange={setTarefasDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start" onClick={async () => {
+                            <Button variant="outline" size="icon" title="Tarefas" className="relative" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
                           setSyncStatus('syncing');
@@ -11350,8 +11350,8 @@ function Conversas() {
                         }
                         setTarefasDialogOpen(true);
                       }} type="button">
-                              <CheckSquare className="h-4 w-4 mr-2" /> Tarefas
-                              {leadTasks.length > 0 && <Badge variant="secondary" className="ml-auto">
+                              <CheckSquare className="h-4 w-4" />
+                              {leadTasks.length > 0 && <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
                                   {leadTasks.filter(t => t.status !== 'concluida').length}
                                 </Badge>}
                             </Button>
@@ -11545,7 +11545,9 @@ function Conversas() {
                         {/* Prontuário / Ficha Técnica */}
                         <Button 
                           variant="outline" 
-                          className="w-full justify-start"
+                          size="icon"
+                          title="Prontuário / Ficha Técnica"
+                          className="relative"
                           onClick={() => {
                             if (leadVinculado?.id) {
                               setAttachmentsOpen(true);
@@ -11554,9 +11556,9 @@ function Conversas() {
                             }
                           }}
                         >
-                          <Paperclip className="h-4 w-4 mr-2" /> Prontuário / Ficha Técnica
+                          <Paperclip className="h-4 w-4" />
                           {attachmentsCount > 0 && (
-                            <Badge variant="secondary" className="ml-auto">
+                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
                               {attachmentsCount}
                             </Badge>
                           )}
