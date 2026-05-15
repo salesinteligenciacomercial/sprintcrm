@@ -100,6 +100,10 @@ export function AgendaColaboradores() {
   const criarAgenda = async () => {
     // Validar campos obrigatórios para colaborador
     if (formData.tipo === "colaborador") {
+      if (!formData.nome?.trim()) {
+        toast.error("Informe o nome do profissional");
+        return;
+      }
       if (!formData.email || !formData.senha) {
         toast.error("Preencha o e-mail e senha do profissional");
         return;
