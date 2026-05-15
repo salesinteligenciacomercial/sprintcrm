@@ -225,11 +225,11 @@ export function AudioRecorder({ onSendAudio, onTranscribed }: AudioRecorderProps
   if (audioBlob) {
     const busy = isSending || isTranscribing;
     return (
-      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg">
-        <audio controls className="flex-1 h-8">
+      <div className="flex items-center gap-2 bg-muted p-2 rounded-lg w-full sm:w-auto order-first sm:order-none">
+        <audio controls className="flex-1 min-w-0 h-8">
           <source src={URL.createObjectURL(audioBlob)} type={audioBlob.type || 'audio/webm'} />
         </audio>
-        <Button size="icon" variant="ghost" onClick={cancelRecording} disabled={busy} title="Cancelar">
+        <Button size="icon" variant="ghost" onClick={cancelRecording} disabled={busy} title="Cancelar" className="flex-shrink-0">
           <X className="h-4 w-4" />
         </Button>
         {onTranscribed && (
@@ -239,11 +239,12 @@ export function AudioRecorder({ onSendAudio, onTranscribed }: AudioRecorderProps
             onClick={transcribeAndUseAsText}
             disabled={busy}
             title="Transcrever áudio em texto"
+            className="flex-shrink-0"
           >
             {isTranscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
           </Button>
         )}
-        <Button size="icon" onClick={sendAudio} disabled={busy} className="bg-[#25D366] hover:bg-[#128C7E]" title="Enviar áudio">
+        <Button size="icon" onClick={sendAudio} disabled={busy} className="bg-[#25D366] hover:bg-[#128C7E] flex-shrink-0" title="Enviar áudio">
           <Send className="h-4 w-4" />
         </Button>
       </div>
@@ -252,11 +253,11 @@ export function AudioRecorder({ onSendAudio, onTranscribed }: AudioRecorderProps
 
   if (isRecording) {
     return (
-      <div className="flex items-center gap-3 bg-red-500/10 p-2 rounded-lg animate-pulse">
-        <Mic className="h-5 w-5 text-red-500" />
-        <span className="text-sm font-medium text-red-500">{formatTime(recordingTime)}</span>
+      <div className="flex items-center gap-3 bg-red-500/10 p-2 rounded-lg animate-pulse w-full sm:w-auto order-first sm:order-none">
+        <Mic className="h-5 w-5 text-red-500 flex-shrink-0" />
+        <span className="text-sm font-medium text-red-500 flex-shrink-0">{formatTime(recordingTime)}</span>
         <div className="flex-1" />
-        <Button size="icon" variant="destructive" onClick={stopRecording}>
+        <Button size="icon" variant="destructive" onClick={stopRecording} className="flex-shrink-0">
           <Square className="h-4 w-4" />
         </Button>
       </div>
