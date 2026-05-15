@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
   Flame, Target, AlertTriangle, Settings, BarChart3, Zap, Link2, Sparkles,
-  TrendingUp, FileText,
+  TrendingUp, FileText, Rocket, Map, ListChecks, Package,
 } from "lucide-react";
 
 interface Section {
@@ -20,26 +20,94 @@ const ICONS: Record<string, { icon: any; gradient: string; tone: string }> = {
   "🎯": { icon: Target, gradient: "from-primary/15 to-primary/5", tone: "text-primary border-primary/30" },
   "🚨": { icon: AlertTriangle, gradient: "from-orange-500/15 to-orange-500/5", tone: "text-orange-500 border-orange-500/30" },
   "⚙️": { icon: Settings, gradient: "from-blue-500/15 to-blue-500/5", tone: "text-blue-500 border-blue-500/30" },
+  "⚙": { icon: Settings, gradient: "from-blue-500/15 to-blue-500/5", tone: "text-blue-500 border-blue-500/30" },
   "📊": { icon: BarChart3, gradient: "from-violet-500/15 to-violet-500/5", tone: "text-violet-500 border-violet-500/30" },
   "⚡": { icon: Zap, gradient: "from-amber-500/15 to-amber-500/5", tone: "text-amber-500 border-amber-500/30" },
   "🔗": { icon: Link2, gradient: "from-cyan-500/15 to-cyan-500/5", tone: "text-cyan-500 border-cyan-500/30" },
   "🔥": { icon: Sparkles, gradient: "from-fuchsia-500/15 to-fuchsia-500/5", tone: "text-fuchsia-500 border-fuchsia-500/30" },
   "📈": { icon: TrendingUp, gradient: "from-emerald-500/15 to-emerald-500/5", tone: "text-emerald-500 border-emerald-500/30" },
+  "🚀": { icon: Rocket, gradient: "from-indigo-500/15 to-indigo-500/5", tone: "text-indigo-500 border-indigo-500/30" },
+  "🗺️": { icon: Map, gradient: "from-teal-500/15 to-teal-500/5", tone: "text-teal-500 border-teal-500/30" },
+  "📋": { icon: ListChecks, gradient: "from-sky-500/15 to-sky-500/5", tone: "text-sky-500 border-sky-500/30" },
+  "📦": { icon: Package, gradient: "from-amber-600/15 to-amber-600/5", tone: "text-amber-600 border-amber-600/30" },
+  "📌": { icon: FileText, gradient: "from-muted to-muted/50", tone: "text-muted-foreground border-border" },
 };
+
+// Regex que detecta um cabeçalho de seção:
+// 1) "## Título"
+// 2) "💸 1. Título"  (emoji + número + ponto)
+// 3) "1. Título"     (apenas número + ponto, em linha curta)
+const HEAD_RE = /^(?:##\s+.+|(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})\s*\d+\.\s+.+|\d+\.\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{3,80})$/u;
 
 function parseSections(md: string): Section[] {
   if (!md) return [];
-  // Divide nos H2 (##)
-  const parts = md.split(/^##\s+/m).filter(Boolean);
-  return parts.map((p) => {
-    const [headLine, ...rest] = p.split("\n");
-    const head = headLine.replace(/^#+\s*/, "").trim();
-    // Extrai emoji inicial (primeiro caractere não-letra/dígito)
-    const emojiMatch = head.match(/^([^\w\s]+|\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
-    const emoji = emojiMatch ? emojiMatch[0].trim() : "📌";
-    const title = head.replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
-    return { title, emoji, body: rest.join("\n").trim() };
-  });
+  const lines = md.split("\n");
+  const sections: Section[] = [];
+  let current: { head: string; body: string[] } | null = null;
+  let preamble: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (HEAD_RE.test(trimmed)) {
+      if (current) sections.push(toSection(current));
+      current = { head: trimmed.replace(/^##\s+/, ""), body: [] };
+    } else if (current) {
+      current.body.push(line);
+    } else {
+      preamble.push(line);
+    }
+  }
+  if (current) sections.push(toSection(current));
+
+  // Se temos preâmbulo relevante, vira a primeira seção "Resumo"
+  const preambleText = preamble.join("\n").trim();
+  if (preambleText && sections.length) {
+    sections.unshift({ title: "Resumo", emoji: "📌", body: preambleText });
+  }
+
+  return sections;
+}
+
+function toSection(c: { head: string; body: string[] }): Section {
+  const head = c.head.replace(/^#+\s*/, "").trim();
+  const emojiMatch = head.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation})/u);
+  const emoji = emojiMatch ? emojiMatch[0] : "📌";
+  const title = head.replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
+  return { title, emoji, body: normalizeBody(c.body.join("\n")) };
+}
+
+// Garante que cada linha "Label: valor" vire um bullet/parágrafo próprio (legibilidade).
+function normalizeBody(body: string): string {
+  const raw = body.trim();
+  if (!raw) return "";
+  const lines = raw.split("\n").map((l) => l.trim());
+  const out: string[] = [];
+  let inList = false;
+  for (const line of lines) {
+    if (!line) {
+      inList = false;
+      out.push("");
+      continue;
+    }
+    if (/^[#>\-\*\|]/.test(line) || /^\d+\.\s/.test(line)) {
+      inList = false;
+      out.push(line);
+      continue;
+    }
+    const kv = line.match(/^\*{0,2}([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^:*\n]{1,60})\*{0,2}\s*:\s*(.+)$/);
+    if (kv) {
+      if (!inList) {
+        if (out.length && out[out.length - 1] !== "") out.push("");
+        inList = true;
+      }
+      out.push(`- **${kv[1].trim()}:** ${kv[2].trim()}`);
+      continue;
+    }
+    inList = false;
+    if (out.length && out[out.length - 1] !== "") out.push("");
+    out.push(line);
+  }
+  return out.join("\n").trim();
 }
 
 export function PlanoIARenderer({ markdown }: { markdown: string }) {
