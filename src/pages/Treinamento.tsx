@@ -26,14 +26,14 @@ export default function Treinamento() {
 
   const [selectedModule, setSelectedModule] = useState<TrainingModule | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<TrainingLesson | null>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canManage, setCanManage] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("training");
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       const { data } = await supabase.rpc('get_my_role');
-      // Apenas super_admin pode gerenciar treinamentos (são globais para todas as subcontas)
-      setIsSuperAdmin(data === 'super_admin');
+      // super_admin, company_admin e gestor podem gerenciar treinamentos da própria empresa
+      setCanManage(['super_admin', 'company_admin', 'gestor'].includes(data as string));
     };
     checkAdminStatus();
   }, []);
