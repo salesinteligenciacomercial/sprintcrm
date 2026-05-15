@@ -215,6 +215,7 @@ export function TrainingAdminPanel({
         }}
         onSubmit={handleModuleSubmit}
         editingModule={editingModule}
+        canCreateGlobal={canCreateGlobal}
       />
 
       {/* Create Lesson Dialog */}
