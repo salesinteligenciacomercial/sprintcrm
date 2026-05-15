@@ -39,7 +39,7 @@ const ICONS: Record<string, { icon: any; gradient: string; tone: string }> = {
 // 2) "💸 1. Título"  (emoji + número + ponto)
 // 3) "1. Título"     (apenas número + ponto, em linha curta)
 const SECTION_START_RE = /(?:^|\n)\s*(?:#{1,3}\s*)?(?=(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b)/gu;
-const HEAD_RE = /^(?:#{1,3}\s*)?(?:(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*)?\d+\.\s+.+$/u;
+const HEAD_RE = /^(?:#{1,3}\s*)?(?:(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+.+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b.+)$/u;
 
 function prepareMarkdown(md: string): string {
   return md
@@ -79,7 +79,7 @@ function parseSections(md: string): Section[] {
 
 function toSection(c: { head: string; body: string[] }): Section {
   const head = c.head.replace(/^#+\s*/, "").trim();
-  const emojiMatch = head.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation})/u);
+  const emojiMatch = head.match(/^((?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?)/u);
   const emoji = emojiMatch ? emojiMatch[0] : "📌";
   const title = head.replace(/^#{1,3}\s*/, "").replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
   return { title, emoji, body: normalizeBody(c.body.join("\n")), kind: "topic" };
@@ -109,7 +109,7 @@ function normalizeBody(body: string): string {
     }
     if (/^[#>\-\*\|]/.test(line) || /^\d+\.\s/.test(line)) {
       inList = false;
-      out.push(line);
+      out.push(/^(Fase|Ação|Meta|KPI|Módulo GROW|Métrica)\b/i.test(line) ? `### ${line}` : line);
       continue;
     }
     const kv = line.match(/^\*{0,2}([A-ZÁÉÍÓÚÂÊÔÃÕÇ][^:*\n]{1,60})\*{0,2}\s*:\s*(.+)$/);
@@ -137,11 +137,9 @@ const markdownComponents = {
   ul: ({ children }: any) => <ul className="space-y-2 my-3">{children}</ul>,
   ol: ({ children }: any) => <ol className="space-y-2 my-3 list-decimal pl-5">{children}</ol>,
   li: ({ children }: any) => (
-    <li className="text-sm leading-6 text-foreground/90 pl-0 marker:text-primary">
-      <span className="inline-flex align-top gap-2">
+    <li className="flex gap-2 text-sm leading-6 text-foreground/90">
         <CheckCircle2 className="h-4 w-4 text-primary mt-1 shrink-0" />
-        <span>{children}</span>
-      </span>
+        <div className="min-w-0 [&>p]:m-0">{children}</div>
     </li>
   ),
   table: ({ children }: any) => (
