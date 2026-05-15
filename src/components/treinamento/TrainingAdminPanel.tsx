@@ -122,9 +122,14 @@ export function TrainingAdminPanel({
                       ) : (
                         <ChevronRight className="h-4 w-4" />
                       )}
-                      <CardTitle className="text-base flex-1">
-                        {module.title}
-                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                      <CardTitle className="text-base flex-1 flex items-center gap-2 flex-wrap">
+                        <span>{module.title}</span>
+                        {module.scope === 'global' ? (
+                          <Badge variant="secondary" className="gap-1"><Globe className="h-3 w-3" />Global</Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1"><Building2 className="h-3 w-3" />Empresa</Badge>
+                        )}
+                        <span className="text-sm font-normal text-muted-foreground">
                           ({module.lessons?.length || 0} aulas)
                         </span>
                       </CardTitle>
