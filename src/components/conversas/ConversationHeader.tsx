@@ -220,27 +220,6 @@ import { MarkProspectionButton } from "./MarkProspectionButton";
             {/* Ações - Versão Desktop (apenas ícones com tooltip) */}
               <TooltipProvider delayDuration={0}>
               <div className="hidden md:flex items-center gap-1">
-               {/* Botão Restaurar Histórico do WhatsApp */}
-               {onRestoreConversation && (
-                 <Tooltip>
-                   <TooltipTrigger asChild>
-                     <Button
-                       variant="outline"
-                       size="icon"
-                       onClick={onRestoreConversation}
-                       disabled={restoringConversation}
-                       className="h-8 w-8"
-                     >
-                       {restoringConversation ? (
-                         <Loader2 className="h-4 w-4 animate-spin" />
-                       ) : (
-                         <RotateCcw className="h-4 w-4" />
-                       )}
-                     </Button>
-                   </TooltipTrigger>
-                    <TooltipContent>Puxar Histórico</TooltipContent>
-                  </Tooltip>
-                )}
                 {/* Botão Enviar Protocolo */}
                 <Tooltip>
                   <TooltipTrigger asChild>
