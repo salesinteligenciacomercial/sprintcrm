@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
-import { Calendar as CalendarIcon, Plus, Clock, User, Filter, Settings, Bell, CheckCircle2, XCircle, AlertCircle, Trash2, Search, CalendarDays, Copy, Download } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Clock, User, Filter, Settings, Bell, CheckCircle2, XCircle, AlertCircle, Trash2, Search, CalendarDays, Copy, Download, RefreshCw, Link2, Sparkles, TrendingUp, Send, Repeat, Hourglass } from "lucide-react";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -118,6 +119,7 @@ export default function Agenda() {
 
   // Hook de notificações para escutar lembretes enviados e enviar push notifications
   useNotifications();
+  const googleCal = useGoogleCalendar();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -2276,11 +2278,46 @@ export default function Agenda() {
   };
   return <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Agenda Individual e Muti-Agendas</h1>
-          <p className="text-muted-foreground">Gerencie seus compromissos e agendamentos</p>
-        </div>
+      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-sm">
+        <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/15 ring-1 ring-primary/20">
+              <CalendarDays className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground">Agenda</h1>
+                <Badge variant="secondary" className="gap-1 text-[10px] uppercase tracking-wide">
+                  <Sparkles className="h-3 w-3" /> Multi-agendas
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Gerencie compromissos, lembretes e a sincronização com o Google Calendar.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Google Calendar status pill */}
+            <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs ${googleCal.isConnected ? 'border-primary/30 bg-primary/5' : 'border-border bg-muted/40'}`}>
+              <span className={`h-2 w-2 rounded-full ${googleCal.isConnected ? 'bg-primary animate-pulse' : 'bg-muted-foreground/40'}`} />
+              <span className="font-medium text-foreground">Google Calendar</span>
+              <span className="text-muted-foreground hidden sm:inline">
+                {googleCal.isConnected ? (googleCal.integration?.google_email || 'Conectado') : 'Desconectado'}
+              </span>
+              {googleCal.isConnected ? (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1" disabled={googleCal.busy} onClick={() => googleCal.sync()}>
+                  <RefreshCw className={`h-3 w-3 ${googleCal.busy ? 'animate-spin' : ''}`} />
+                  Sincronizar
+                </Button>
+              ) : (
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-xs gap-1" disabled={googleCal.busy} onClick={() => googleCal.connect()}>
+                  <Link2 className="h-3 w-3" />
+                  Conectar
+                </Button>
+              )}
+            </div>
         <div className="flex gap-2">
           <Dialog open={configuracoesOpen} onOpenChange={open => {
           setConfiguracoesOpen(open);
@@ -2797,138 +2834,92 @@ export default function Agenda() {
             </DialogContent>
           </Dialog>
         </div>
+          </div>
+        </div>
       </div>
 
-      {/* Estatísticas de Compromissos - Clicáveis para filtrar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filterStatus === 'all' ? 'ring-2 ring-primary' : ''}`}
-          onClick={() => {
-            setFilterStatus('all');
-            setActiveMainTab('lista');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-foreground">{estatisticas.total}</div>
-            <p className="text-xs text-muted-foreground">Compromissos do mês</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filterStatus === 'agendado' ? 'ring-2 ring-blue-500' : ''}`}
-          onClick={() => {
-            setFilterStatus('agendado');
-            setActiveMainTab('lista');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">{estatisticas.agendados}</div>
-            <p className="text-xs text-muted-foreground">Agendados</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filterStatus === 'concluido' ? 'ring-2 ring-green-500' : ''}`}
-          onClick={() => {
-            setFilterStatus('concluido');
-            setActiveMainTab('lista');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">{estatisticas.concluidos}</div>
-            <p className="text-xs text-muted-foreground">Concluídos</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filterStatus === 'cancelado' ? 'ring-2 ring-red-500' : ''}`}
-          onClick={() => {
-            setFilterStatus('cancelado');
-            setActiveMainTab('lista');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-red-600">{estatisticas.cancelados}</div>
-            <p className="text-xs text-muted-foreground">Cancelados</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Estatísticas de Compromissos */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <CalendarDays className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Compromissos do mês</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { key: 'all', label: 'Total', value: estatisticas.total, icon: CalendarDays, accent: 'primary', ring: 'ring-primary' },
+            { key: 'agendado', label: 'Agendados', value: estatisticas.agendados, icon: Clock, accent: 'blue', ring: 'ring-blue-500' },
+            { key: 'concluido', label: 'Concluídos', value: estatisticas.concluidos, icon: CheckCircle2, accent: 'green', ring: 'ring-green-500' },
+            { key: 'cancelado', label: 'Cancelados', value: estatisticas.cancelados, icon: XCircle, accent: 'red', ring: 'ring-red-500' },
+          ].map((s) => {
+            const Icon = s.icon;
+            const active = filterStatus === s.key;
+            const accentClass = s.accent === 'primary' ? 'text-primary bg-primary/10'
+              : s.accent === 'blue' ? 'text-blue-600 bg-blue-500/10'
+              : s.accent === 'green' ? 'text-green-600 bg-green-500/10'
+              : 'text-red-600 bg-red-500/10';
+            return (
+              <Card
+                key={s.key}
+                onClick={() => { setFilterStatus(s.key); setActiveMainTab('lista'); }}
+                className={`group relative cursor-pointer overflow-hidden border transition-all hover:shadow-md hover:-translate-y-0.5 ${active ? `ring-2 ${s.ring} shadow-md` : ''}`}
+              >
+                <div className={`absolute top-0 left-0 right-0 h-0.5 ${s.accent === 'primary' ? 'bg-primary' : s.accent === 'blue' ? 'bg-blue-500' : s.accent === 'green' ? 'bg-green-500' : 'bg-red-500'} ${active ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'} transition-opacity`} />
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${accentClass}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-2xl font-bold leading-none text-foreground">{s.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
 
-      {/* Estatísticas de Lembretes - Clicáveis para filtrar */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatusLembrete === 'all' && filtroRecorrencia === 'all' ? 'ring-2 ring-primary' : ''}`}
-          onClick={() => {
-            setFiltroStatusLembrete('all');
-            setFiltroRecorrencia('all');
-            setActiveMainTab('lembretes');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-foreground">{estatisticasLembretes.total}</div>
-            <p className="text-xs text-muted-foreground">Total de lembretes</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatusLembrete === 'enviado' ? 'ring-2 ring-green-500' : ''}`}
-          onClick={() => {
-            setFiltroStatusLembrete('enviado');
-            setFiltroRecorrencia('all');
-            setActiveMainTab('lembretes');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-green-600">{estatisticasLembretes.enviados}</div>
-            <p className="text-xs text-muted-foreground">Enviados</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filtroStatusLembrete === 'pendente' ? 'ring-2 ring-yellow-500' : ''}`}
-          onClick={() => {
-            setFiltroStatusLembrete('pendente');
-            setFiltroRecorrencia('all');
-            setActiveMainTab('lembretes');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-yellow-600">{estatisticasLembretes.pendentes}</div>
-            <p className="text-xs text-muted-foreground">Pendentes</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md ${filtroRecorrencia === 'recorrente' ? 'ring-2 ring-purple-500' : ''}`}
-          onClick={() => {
-            setFiltroStatusLembrete('all');
-            setFiltroRecorrencia('recorrente');
-            setActiveMainTab('lembretes');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-purple-600">{estatisticasLembretes.recorrentes}</div>
-            <p className="text-xs text-muted-foreground">Recorrentes</p>
-          </CardContent>
-        </Card>
-        <Card 
-          className={`cursor-pointer transition-all hover:shadow-md`}
-          onClick={() => {
-            setFiltroStatusLembrete('hoje');
-            setFiltroRecorrencia('all');
-            setActiveMainTab('lembretes');
-          }}
-        >
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-cyan-600">{estatisticasLembretes.paraHoje}</div>
-            <p className="text-xs text-muted-foreground">Para hoje</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-2xl font-bold text-blue-600">{estatisticasLembretes.taxaSucesso}%</div>
-            <p className="text-xs text-muted-foreground">Taxa de sucesso</p>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Estatísticas de Lembretes */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <Bell className="h-4 w-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Lembretes automáticos</h2>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { key: 'total', label: 'Total', value: estatisticasLembretes.total, icon: Bell, color: 'text-foreground bg-muted', bar: 'bg-foreground/40', active: filtroStatusLembrete === 'all' && filtroRecorrencia === 'all', onClick: () => { setFiltroStatusLembrete('all'); setFiltroRecorrencia('all'); setActiveMainTab('lembretes'); } },
+            { key: 'enviados', label: 'Enviados', value: estatisticasLembretes.enviados, icon: Send, color: 'text-green-600 bg-green-500/10', bar: 'bg-green-500', active: filtroStatusLembrete === 'enviado', onClick: () => { setFiltroStatusLembrete('enviado'); setFiltroRecorrencia('all'); setActiveMainTab('lembretes'); } },
+            { key: 'pendentes', label: 'Pendentes', value: estatisticasLembretes.pendentes, icon: Hourglass, color: 'text-yellow-600 bg-yellow-500/10', bar: 'bg-yellow-500', active: filtroStatusLembrete === 'pendente', onClick: () => { setFiltroStatusLembrete('pendente'); setFiltroRecorrencia('all'); setActiveMainTab('lembretes'); } },
+            { key: 'recorrentes', label: 'Recorrentes', value: estatisticasLembretes.recorrentes, icon: Repeat, color: 'text-purple-600 bg-purple-500/10', bar: 'bg-purple-500', active: filtroRecorrencia === 'recorrente', onClick: () => { setFiltroStatusLembrete('all'); setFiltroRecorrencia('recorrente'); setActiveMainTab('lembretes'); } },
+            { key: 'hoje', label: 'Para hoje', value: estatisticasLembretes.paraHoje, icon: Clock, color: 'text-cyan-600 bg-cyan-500/10', bar: 'bg-cyan-500', active: false, onClick: () => { setFiltroStatusLembrete('hoje'); setFiltroRecorrencia('all'); setActiveMainTab('lembretes'); } },
+            { key: 'taxa', label: 'Taxa de sucesso', value: `${estatisticasLembretes.taxaSucesso}%`, icon: TrendingUp, color: 'text-blue-600 bg-blue-500/10', bar: 'bg-blue-500', active: false, onClick: undefined as any },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card
+                key={s.key}
+                onClick={s.onClick}
+                className={`group relative overflow-hidden border transition-all ${s.onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''} ${s.active ? 'ring-2 ring-primary shadow-md' : ''}`}
+              >
+                <div className={`absolute top-0 left-0 right-0 h-0.5 ${s.bar} ${s.active ? 'opacity-100' : 'opacity-40 group-hover:opacity-100'} transition-opacity`} />
+                <CardContent className="p-4 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-2xl font-bold leading-none text-foreground">{s.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1 truncate">{s.label}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Tabs principais */}
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 h-11 p-1 bg-muted/60 rounded-xl">
           <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
           <TabsTrigger value="lista">Lista de Compromissos</TabsTrigger>
           <TabsTrigger value="lembretes">Lembretes</TabsTrigger>
