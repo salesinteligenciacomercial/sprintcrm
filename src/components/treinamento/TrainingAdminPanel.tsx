@@ -29,6 +29,7 @@ interface TrainingAdminPanelProps {
 
 export function TrainingAdminPanel({
   modules,
+  canCreateGlobal = false,
   onCreateModule,
   onUpdateModule,
   onDeleteModule,
