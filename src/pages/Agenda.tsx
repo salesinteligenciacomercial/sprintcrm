@@ -119,6 +119,7 @@ export default function Agenda() {
 
   // Hook de notificações para escutar lembretes enviados e enviar push notifications
   useNotifications();
+  const googleCal = useGoogleCalendar();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [compromissos, setCompromissos] = useState<Compromisso[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
