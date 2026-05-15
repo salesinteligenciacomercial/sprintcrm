@@ -2287,14 +2287,31 @@ export default function Agenda() {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground">Agenda</h1>
+                <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground">Agenda Clínica</h1>
                 <Badge variant="secondary" className="gap-1 text-[10px] uppercase tracking-wide">
-                  <Sparkles className="h-3 w-3" /> Multi-agendas
+                  <Sparkles className="h-3 w-3" /> Multi-agendas por especialidade
                 </Badge>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Gerencie compromissos, lembretes e a sincronização com o Google Calendar.
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                Gerencie agendas individuais para cada profissional e especialidade médica — consultas, retornos, procedimentos, exames e cirurgias — com lembretes automáticos e sincronização com o Google Calendar.
               </p>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {[
+                  'Consultas',
+                  'Retornos',
+                  'Procedimentos',
+                  'Exames',
+                  'Cirurgias',
+                  'Por especialidade',
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-2.5 py-0.5 text-[11px] font-medium text-primary"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
