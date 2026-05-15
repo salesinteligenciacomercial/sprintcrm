@@ -49,6 +49,7 @@ import { EstrategiaComercialPanel } from "@/components/prospeccao/comercial/Estr
 import { RotinaInteligente } from "@/components/prospeccao/RotinaInteligente";
 import { PerformanceHubPanel } from "@/components/prospeccao/PerformanceHubPanel";
 import { TopoFoco } from "@/components/prospeccao/foco/TopoFoco";
+import { HunterCockpit } from "@/components/prospeccao/HunterCockpit";
 import { usePermissions } from "@/hooks/usePermissions";
 
 
@@ -60,7 +61,7 @@ export default function Prospeccao() {
   const isMobile = useIsMobile();
   const [rpgMode, setRpgMode] = useState<boolean>(() => localStorage.getItem(RPG_KEY) !== "false");
   const [soundOn, setSoundOn] = useState<boolean>(() => localStorage.getItem(SOUND_KEY) === "true");
-  const [activeTab, setActiveTab] = useState<"organic" | "paid" | "followup" | "arena" | "performance" | "coldcall" | "instagram" | "whatsapp" | "email" | "funil" | "closer" | "comando" | "fila" | "intel" | "social" | "rotina" | "estrategia">("followup");
+  const [activeTab, setActiveTab] = useState<"cockpit" | "organic" | "paid" | "followup" | "arena" | "performance" | "coldcall" | "instagram" | "whatsapp" | "email" | "funil" | "closer" | "comando" | "fila" | "intel" | "social" | "rotina" | "estrategia">("cockpit");
   const [subTab, setSubTab] = useState<"registros" | "interacoes">("registros");
   const [channelView, setChannelView] = useState<"prospect" | "chat" | "funil">("prospect");
   const [instagramSub, setInstagramSub] = useState<"chat" | "social" | "prospect">("chat");
@@ -168,6 +169,7 @@ export default function Prospeccao() {
   };
 
   const labels: Record<string, string> = {
+    cockpit: "Cockpit",
     organic: "Visão Geral",
     paid: "Pipeline Pago",
     followup: "Follow-ups",
@@ -251,6 +253,7 @@ export default function Prospeccao() {
         <div className="flex-1 min-w-0">
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as any); setSubTab("registros"); }}>
             <TabsList className="flex flex-wrap h-auto">
+              <TabsTrigger value="cockpit">🎮 {labels.cockpit}</TabsTrigger>
               {/* Visão Geral e Pipeline Pago ocultos — métricas estão em Inteligência */}
               <TabsTrigger value="followup">{labels.followup}</TabsTrigger>
               <TabsTrigger value="fila">{labels.fila}</TabsTrigger>
@@ -269,7 +272,11 @@ export default function Prospeccao() {
 
             {/* Sub-abas Registros/Interações ocultas conforme solicitado */}
 
-            {isEstrategiaTab ? (
+            {activeTab === "cockpit" ? (
+              <div className="mt-4">
+                <HunterCockpit />
+              </div>
+            ) : isEstrategiaTab ? (
               <div className="mt-4">
                 <EstrategiaComercialPanel />
               </div>
