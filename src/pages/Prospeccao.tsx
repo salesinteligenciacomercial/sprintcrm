@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Plus, Download, FileText, UserPlus, Settings, Volume2, VolumeX, PanelRightClose, PanelRightOpen, Table as TableIcon, LayoutGrid } from "lucide-react";
 import { PipelineFunnelVisual } from "@/components/prospeccao/PipelineFunnelVisual";
-import { QuickActionCards } from "@/components/prospeccao/QuickActionCards";
+
 import { ProspeccaoKanbanView } from "@/components/prospeccao/ProspeccaoKanbanView";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -231,14 +231,6 @@ export default function Prospeccao() {
 
       {/* Topo de Foco — meta do dia, perda estimada, posição */}
       <TopoFoco onRecuperar={() => setActiveTab("followup")} />
-
-      {/* Cards de Ação Rápida */}
-      <QuickActionCards
-        onRegister={handleRegister}
-        onInteraction={() => setShowInteractionForm(true)}
-        onScripts={() => setShowScripts(true)}
-        onExport={handleExportCSV}
-      />
 
       {/* Arena ao vivo (topo) */}
       {gamificationOn && <ArenaTopBar companyId={companyId} currentUserId={userId} />}
