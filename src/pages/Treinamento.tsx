@@ -98,7 +98,7 @@ export default function Treinamento() {
           </div>
         </div>
 
-        {isSuperAdmin && !selectedModule && (
+        {canManage && !selectedModule && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="training">
@@ -154,7 +154,7 @@ export default function Treinamento() {
             </Card>
           </div>
         </div>
-      ) : isSuperAdmin && activeTab === "admin" ? (
+      ) : canManage && activeTab === "admin" ? (
         // Admin Panel
         <TrainingAdminPanel
           modules={modules}
