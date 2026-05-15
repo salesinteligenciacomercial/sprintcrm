@@ -15,6 +15,9 @@ import {
   CheckCircle2,
   ArrowRight,
   RefreshCw,
+  Gauge,
+  Sparkles,
+  Trophy,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -88,16 +91,16 @@ export default function GrowSalesBI() {
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10">
-              <Brain className="h-7 w-7 text-primary" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/40 via-primary/20 to-transparent ring-1 ring-primary/20 shadow-[0_0_30px_-5px_hsl(var(--primary)/0.5)]">
+              <Sparkles className="h-7 w-7 text-primary" />
             </div>
-            Grow Sales BI
+            Revenue Intelligence BI
             <Badge className="bg-gradient-to-r from-primary to-primary/70 text-primary-foreground border-0">
-              Revenue Intelligence
+              Grow Sales
             </Badge>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Inteligência de crescimento — receita, funil, perdas ocultas e forecast em tempo real.
+            Transforme dados comerciais em previsibilidade de crescimento.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -128,6 +131,7 @@ export default function GrowSalesBI() {
           <TabsTrigger value="performance" className="gap-2"><Users className="h-4 w-4" /> Performance</TabsTrigger>
           <TabsTrigger value="forecast" className="gap-2"><Target className="h-4 w-4" /> Forecast & Metas</TabsTrigger>
           <TabsTrigger value="campanhas" className="gap-2"><Megaphone className="h-4 w-4" /> Campanhas / ROI</TabsTrigger>
+          <TabsTrigger value="score" className="gap-2"><Trophy className="h-4 w-4" /> Growth Score</TabsTrigger>
           <TabsTrigger value="insights" className="gap-2"><Brain className="h-4 w-4" /> IA Insights</TabsTrigger>
         </TabsList>
 
@@ -256,18 +260,27 @@ export default function GrowSalesBI() {
         <TabsContent value="perdas" className="space-y-4">
           {isLoading || !data ? skeleton : (
             <>
-              <Card className="border-destructive/40 bg-destructive/5">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Você está deixando de faturar</p>
-                      <p className="text-4xl font-black text-destructive mt-1">{formatBRL(data.perdas.total)}</p>
-                      <p className="text-xs text-muted-foreground mt-1">no período selecionado</p>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <Card className="border-destructive/40 bg-gradient-to-br from-destructive/10 to-transparent lg:col-span-2">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Você está deixando de faturar</p>
+                        <p className="text-4xl font-black text-destructive mt-1">{formatBRL(data.perdas.total)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">no período selecionado</p>
+                      </div>
+                      <AlertTriangle className="h-12 w-12 text-destructive/40" />
                     </div>
-                    <AlertTriangle className="h-12 w-12 text-destructive/40" />
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+                <Card className="border-primary/40 bg-gradient-to-br from-primary/10 to-transparent">
+                  <CardContent className="p-6">
+                    <p className="text-sm text-muted-foreground">Recuperável em 30 dias</p>
+                    <p className="text-3xl font-black text-primary mt-1">{formatBRL(data.recuperavel30d)}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Estimativa com retomada de no-show, follow-up e atendimento.</p>
+                  </CardContent>
+                </Card>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <KpiCard icon={AlertTriangle} label="No-shows" value={formatBRL(data.perdas.noShow.valor)} hint={`${data.perdas.noShow.qty} compromissos`} tone="bad" />
@@ -395,6 +408,37 @@ export default function GrowSalesBI() {
                   )}
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-primary" /> Capacidade comercial utilizada
+                  </CardTitle>
+                  <CardDescription>
+                    {data.capacidade.vendedoresAtivos} vendedor(es) ativo(s) ·
+                    {" "}{data.capacidade.abertosPorVendedor.toFixed(1)} oportunidades abertas / vendedor
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        data.capacidade.utilizada >= 90 ? "bg-destructive" :
+                        data.capacidade.utilizada >= 70 ? "bg-orange-500" : "bg-primary"
+                      }`}
+                      style={{ width: `${data.capacidade.utilizada}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{data.capacidade.utilizada.toFixed(0)}% da capacidade</span>
+                    <span className="font-medium">
+                      {data.capacidade.utilizada >= 90 ? "Time saturado — contrate ou redistribua"
+                       : data.capacidade.utilizada >= 70 ? "Atenção: próximo do limite"
+                       : "Capacidade saudável para escalar"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </TabsContent>
@@ -437,6 +481,75 @@ export default function GrowSalesBI() {
                       <Bar dataKey="receita" fill="hsl(var(--primary))" name="Receita" radius={[6, 6, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ===== GROWTH SCORE ===== */}
+        <TabsContent value="score" className="space-y-4">
+          {isLoading || !data ? skeleton : (
+            <>
+              <Card className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/15 via-background to-background">
+                <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
+                  <div className="relative w-44 h-44 flex-shrink-0">
+                    <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
+                      <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="10" />
+                      <circle
+                        cx="60" cy="60" r="52" fill="none"
+                        stroke="hsl(var(--primary))" strokeWidth="10" strokeLinecap="round"
+                        strokeDasharray={`${(data.growthScore.total / 100) * 326.7} 326.7`}
+                        className="transition-all duration-1000"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-5xl font-black text-primary">{data.growthScore.total}</span>
+                      <span className="text-xs text-muted-foreground uppercase tracking-wider">Grow Score</span>
+                    </div>
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <Badge className="bg-primary text-primary-foreground mb-2 text-sm">
+                      <Trophy className="h-3 w-3 mr-1" /> {data.growthScore.classificacao}
+                    </Badge>
+                    <h3 className="text-2xl font-bold mb-2">Sua operação está {data.growthScore.classificacao.toLowerCase()}</h3>
+                    <p className="text-sm text-muted-foreground max-w-xl">
+                      O Grow Score consolida 7 dimensões da sua operação comercial. Use-o como bússola executiva para
+                      decidir onde investir energia neste mês.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {data.growthScore.breakdown.map((b) => (
+                  <Card key={b.dimensao}>
+                    <CardContent className="p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold">{b.dimensao}</span>
+                        <span className={`text-2xl font-bold ${
+                          b.nota >= 70 ? "text-primary" : b.nota >= 40 ? "text-orange-500" : "text-destructive"
+                        }`}>{b.nota}</span>
+                      </div>
+                      <div className="w-full bg-muted rounded-full h-2 overflow-hidden mb-2">
+                        <div
+                          className={`h-full ${
+                            b.nota >= 70 ? "bg-primary" : b.nota >= 40 ? "bg-orange-500" : "bg-destructive"
+                          }`}
+                          style={{ width: `${b.nota}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{b.descricao}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="bg-muted/30">
+                <CardContent className="p-5 text-sm text-muted-foreground">
+                  <strong className="text-foreground">Como evoluir:</strong> foque primeiro nas dimensões com nota
+                  abaixo de 50. Cada ponto a mais no Grow Score se traduz, na média, em mais previsibilidade de receita
+                  e menos perda oculta no funil.
                 </CardContent>
               </Card>
             </>
