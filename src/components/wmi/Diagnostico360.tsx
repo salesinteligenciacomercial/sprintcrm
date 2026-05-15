@@ -1251,21 +1251,28 @@ function RevenueLeakCard({ result }: { result: any }) {
 
         {/* ====== HEMORRAGIA EM LINHAS DE TEMPO ====== */}
         <div className="rounded-lg border-2 border-rose-500/30 overflow-hidden">
-          <div className="bg-rose-500/10 px-3 py-2 flex items-center justify-between">
-            <div className="text-sm font-bold text-rose-700 flex items-center gap-2">
-              <Flame className="h-4 w-4" /> Quanto você está perdendo
+          <div className="bg-rose-500/10 px-3 py-2 space-y-1">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="text-sm font-bold text-rose-700 flex items-center gap-2">
+                <Flame className="h-4 w-4" /> Quanto você está deixando de faturar
+              </div>
+              <span className="text-[10px] text-rose-700 font-mono bg-rose-500/10 px-2 py-0.5 rounded">
+                Meta {fmt(leak.receita_potencial)} − Atual {fmt(leak.receita_atual_estimada)} = <b>{fmt(leak.receita_potencial - leak.receita_atual_estimada)}/mês</b>
+              </span>
             </div>
-            <span className="text-[10px] text-rose-700 font-mono">
-              = (R$ Meta − R$ Atual)
-            </span>
+            <p className="text-[11px] text-rose-700/80 leading-snug">
+              Esses valores são a <b>diferença entre o cenário META</b> ({idealDia} prospecções/dia → {fmt(leak.receita_potencial)}/mês)
+              e o seu <b>cenário ATUAL</b> ({atualDia} prospecção/dia → {fmt(leak.receita_atual_estimada)}/mês).
+              Cada linha mostra essa perda projetada no tempo.
+            </p>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-px bg-rose-500/20">
             {[
-              { label: "POR DIA", v: leak.perda_diaria, sub: "dia útil" },
+              { label: "POR DIA", v: leak.perda_diaria, sub: "1 dia útil de operação" },
               { label: "POR SEMANA", v: leak.perda_diaria * 5, sub: "5 dias úteis" },
               { label: "POR MÊS", v: leak.perda_mensal, sub: `${defaults.dias} dias úteis` },
-              { label: "POR TRIMESTRE", v: leak.perda_mensal * 3, sub: "3 meses" },
-              { label: `EM ${prazo} MESES`, v: leak.perda_projetada, sub: "se nada mudar", big: true },
+              { label: "POR TRIMESTRE", v: leak.perda_mensal * 3, sub: "3 meses parado" },
+              { label: `EM ${prazo} ${prazo === 1 ? "MÊS" : "MESES"}`, v: leak.perda_projetada, sub: "se nada mudar", big: true },
             ].map((it) => (
               <div key={it.label} className={`p-3 bg-background ${it.big ? "bg-rose-500/5" : ""}`}>
                 <div className="text-[10px] uppercase font-bold text-rose-700">{it.label}</div>
@@ -1275,6 +1282,10 @@ function RevenueLeakCard({ result }: { result: any }) {
                 <div className="text-[10px] text-muted-foreground mt-0.5">{it.sub}</div>
               </div>
             ))}
+          </div>
+          <div className="bg-rose-500/5 border-t border-rose-500/20 px-3 py-2 text-[11px] text-rose-700">
+            💡 Traduzindo: a cada <b>dia útil</b> que você mantém só {atualDia} prospecção/dia em vez de {idealDia},
+            sua empresa deixa <b>{fmt(leak.perda_diaria)}</b> em cima da mesa.
           </div>
         </div>
 
