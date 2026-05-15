@@ -12,7 +12,7 @@ import { SegmentBenchmarkCard } from "@/components/wmi/SegmentBenchmarkCard";
 import { GrowSegmentBenchmarkCard } from "@/components/wmi/GrowSegmentBenchmarkCard";
 import { PillarEvolutionChart } from "@/components/wmi/PillarEvolutionChart";
 import { Diagnostico360 } from "@/components/wmi/Diagnostico360";
-
+import { GuidedDiagnosisWizard } from "@/components/wmi/GuidedDiagnosisWizard";
 import { CRMMaturityCheck } from "@/components/wmi/CRMMaturityCheck";
 import { CommercialHRPanel } from "@/components/wmi/CommercialHRPanel";
 import { BusinessPhaseCard } from "@/components/wmi/BusinessPhaseCard";
@@ -24,6 +24,7 @@ import {
   Activity, Trophy, Sparkles, ArrowRight, GraduationCap, AlertTriangle,
   TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck,
   Database, Heart, Rocket, Compass, Calendar as CalendarIcon, Zap,
+  Megaphone, Instagram, ShieldAlert, TrendingDown, ListChecks,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { format } from "date-fns";
@@ -39,8 +40,12 @@ const PILLAR_META: Record<string, { label: string; icon: any; color: string; rou
   processos: { label: "Processos Comerciais", icon: FileText, color: "from-purple-500 to-fuchsia-400", route: "/processos" },
   prospeccao: { label: "Prospecção", icon: Target, color: "from-blue-500 to-cyan-400", route: "/prospeccao" },
   gestao: { label: "Gestão Comercial", icon: BarChart3, color: "from-emerald-500 to-green-400", route: "/analytics" },
-  automacao: { label: "Automação & IA", icon: Bot, color: "from-amber-500 to-orange-400", route: "/ia" },
+  automacao: { label: "Automação & Resposta", icon: Bot, color: "from-amber-500 to-orange-400", route: "/ia" },
   pessoas: { label: "Pessoas & Performance", icon: Users, color: "from-pink-500 to-rose-400", route: "/configuracoes/gamificacao" },
+  aquisicao: { label: "Aquisição & Marketing", icon: Megaphone, color: "from-blue-500 to-cyan-400", route: "/maturidade" },
+  social: { label: "Social Selling", icon: Instagram, color: "from-pink-500 to-fuchsia-400", route: "/maturidade" },
+  dependencia: { label: "Dependência Operacional", icon: ShieldAlert, color: "from-amber-500 to-orange-400", route: "/maturidade" },
+  crescimento: { label: "Crescimento Travado", icon: TrendingDown, color: "from-rose-500 to-red-400", route: "/maturidade" },
 };
 
 export default function Maturidade() {
