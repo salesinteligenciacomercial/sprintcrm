@@ -162,9 +162,9 @@ export function PlanoIARenderer({ markdown }: { markdown: string }) {
   // Se não detectou seções (markdown sem ##), renderiza inteiro
   if (!sections.length) {
     return (
-      <Card>
-        <CardContent className="p-6 prose prose-sm dark:prose-invert max-w-none">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdown}</ReactMarkdown>
+      <Card className="border-border shadow-sm">
+        <CardContent className="p-6">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{prepareMarkdown(markdown)}</ReactMarkdown>
         </CardContent>
       </Card>
     );
@@ -176,33 +176,26 @@ export function PlanoIARenderer({ markdown }: { markdown: string }) {
         const cfg = ICONS[s.emoji] || { icon: FileText, gradient: "from-muted to-muted/50", tone: "text-muted-foreground border-border" };
         const Icon = cfg.icon;
         return (
-          <Card key={i} className={cn("border-l-4 overflow-hidden", cfg.tone)}>
-            <CardHeader className={cn("bg-gradient-to-r pb-3", cfg.gradient)}>
-              <CardTitle className="text-base flex items-center gap-3">
-                <div className={cn("p-2 rounded-lg bg-background/60 backdrop-blur", cfg.tone)}>
+          <Card key={i} className={cn("overflow-hidden border-border shadow-sm", s.kind === "topic" && "border-l-4", cfg.tone)}>
+            <CardHeader className={cn("bg-gradient-to-r pb-4", cfg.gradient)}>
+              <CardTitle className="flex items-start gap-3 text-base leading-tight">
+                <div className={cn("shrink-0 rounded-lg border bg-background/80 p-2", cfg.tone)}>
                   <Icon className="h-4 w-4" />
                 </div>
-                <span className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] font-mono">
-                    {String(i + 1).padStart(2, "0")}
-                  </Badge>
-                  {s.title}
+                <span className="flex min-w-0 flex-col gap-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <Badge variant={s.kind === "intro" ? "secondary" : "outline"} className="h-5 text-[10px] font-mono">
+                      {s.kind === "intro" ? "BASE" : `PASSO ${String(i).padStart(2, "0")}`}
+                    </Badge>
+                    <span>{s.title}</span>
+                  </span>
+                  {s.kind === "topic" && <span className="text-xs font-normal text-muted-foreground">Objetivo, correção, KPI e módulo GROW organizados para execução.</span>}
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-5">
-              <article className="prose prose-sm dark:prose-invert max-w-none
-                prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-2
-                prose-h3:text-sm prose-h3:uppercase prose-h3:tracking-wider prose-h3:text-muted-foreground
-                prose-p:my-2 prose-p:leading-relaxed
-                prose-strong:text-foreground prose-strong:font-semibold
-                prose-ul:my-2 prose-li:my-1
-                prose-table:my-3 prose-table:text-xs prose-table:border prose-table:rounded-lg prose-table:overflow-hidden
-                prose-th:bg-muted/60 prose-th:p-2 prose-th:text-left prose-th:font-semibold prose-th:border-b
-                prose-td:p-2 prose-td:border-b prose-td:border-border/40
-                prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:content-none prose-code:after:content-none
-                prose-blockquote:border-l-4 prose-blockquote:border-primary/50 prose-blockquote:bg-muted/30 prose-blockquote:py-1 prose-blockquote:not-italic">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{s.body}</ReactMarkdown>
+            <CardContent className="p-5 md:p-6">
+              <article className="max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{s.body}</ReactMarkdown>
               </article>
             </CardContent>
           </Card>
