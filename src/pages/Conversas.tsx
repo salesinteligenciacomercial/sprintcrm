@@ -593,6 +593,7 @@ function Conversas() {
   const [isCorrectingText, setIsCorrectingText] = useState(false); // Estado de loading durante correção
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const sendingMessageRef = useRef(false);
+  const [showMobileExtras, setShowMobileExtras] = useState(false);
 
   // ✍️ Estado para assinatura na mensagem
   const [includeSignature, setIncludeSignature] = useState<boolean>(() => {
