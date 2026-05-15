@@ -38,11 +38,19 @@ const ICONS: Record<string, { icon: any; gradient: string; tone: string }> = {
 // 1) "## Título"
 // 2) "💸 1. Título"  (emoji + número + ponto)
 // 3) "1. Título"     (apenas número + ponto, em linha curta)
-const HEAD_RE = /^(?:##\s+.+|(?:\p{Extended_Pictographic}|\p{Emoji_Presentation})\s*\d+\.\s+.+|\d+\.\s+[A-ZÁÉÍÓÚÂÊÔÃÕÇ][^\n]{3,80})$/u;
+const SECTION_START_RE = /(?:^|\n)\s*(?:#{1,3}\s*)?(?=(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b)/gu;
+const HEAD_RE = /^(?:#{1,3}\s*)?(?:(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*)?\d+\.\s+.+$/u;
+
+function prepareMarkdown(md: string): string {
+  return md
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(SECTION_START_RE, (match) => `${match.startsWith("\n") ? "\n\n" : ""}${match.trimStart()}`);
+}
 
 function parseSections(md: string): Section[] {
   if (!md) return [];
-  const lines = md.split("\n");
+  const lines = prepareMarkdown(md).split("\n");
   const sections: Section[] = [];
   let current: { head: string; body: string[] } | null = null;
   let preamble: string[] = [];
@@ -63,7 +71,7 @@ function parseSections(md: string): Section[] {
   // Se temos preâmbulo relevante, vira a primeira seção "Resumo"
   const preambleText = preamble.join("\n").trim();
   if (preambleText && sections.length) {
-    sections.unshift({ title: "Resumo", emoji: "📌", body: preambleText });
+    sections.unshift({ title: "Resumo executivo", emoji: "📌", body: normalizeIntro(preambleText), kind: "intro" });
   }
 
   return sections;
@@ -73,8 +81,17 @@ function toSection(c: { head: string; body: string[] }): Section {
   const head = c.head.replace(/^#+\s*/, "").trim();
   const emojiMatch = head.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation})/u);
   const emoji = emojiMatch ? emojiMatch[0] : "📌";
-  const title = head.replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
-  return { title, emoji, body: normalizeBody(c.body.join("\n")) };
+  const title = head.replace(/^#{1,3}\s*/, "").replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
+  return { title, emoji, body: normalizeBody(c.body.join("\n")), kind: "topic" };
+}
+
+function normalizeIntro(body: string): string {
+  return body
+    .replace(/^PLANO COMERCIAL EXECUTIVO\s*$/gim, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 // Garante que cada linha "Label: valor" vire um bullet/parágrafo próprio (legibilidade).
