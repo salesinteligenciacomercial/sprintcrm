@@ -47,38 +47,42 @@ const moduleAccessOptions = [
 interface CreateModuleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { title: string; description?: string; icon?: string; related_modules?: string[] }) => Promise<void>;
-  editingModule?: { id: string; title: string; description: string | null; icon: string; related_modules?: string[] } | null;
+  canCreateGlobal?: boolean;
+  onSubmit: (data: { title: string; description?: string; icon?: string; related_modules?: string[]; scope?: 'global' | 'company' }) => Promise<void>;
+  editingModule?: { id: string; title: string; description: string | null; icon: string; related_modules?: string[]; scope?: 'global' | 'company' } | null;
 }
 
 export function CreateModuleDialog({ 
   open, 
   onOpenChange, 
   onSubmit,
-  editingModule 
+  editingModule,
+  canCreateGlobal = false,
 }: CreateModuleDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("book");
+  const [scope, setScope] = useState<'global' | 'company'>('company');
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Reset form when dialog opens/closes or editingModule changes
   useEffect(() => {
     if (open) {
       if (editingModule) {
         setTitle(editingModule.title);
         setDescription(editingModule.description || "");
         setIcon(editingModule.icon);
+        setScope(editingModule.scope || 'company');
         setSelectedModules(editingModule.related_modules || []);
       } else {
         setTitle("");
         setDescription("");
         setIcon("book");
+        setScope(canCreateGlobal ? 'global' : 'company');
         setSelectedModules([]);
       }
     }
-  }, [open, editingModule]);
+  }, [open, editingModule, canCreateGlobal]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,11 +90,7 @@ export function CreateModuleDialog({
     
     setLoading(true);
     try {
-      await onSubmit({ title, description, icon, related_modules: selectedModules });
-      setTitle("");
-      setDescription("");
-      setIcon("book");
-      setSelectedModules([]);
+      await onSubmit({ title, description, icon, related_modules: selectedModules, scope });
       onOpenChange(false);
     } finally {
       setLoading(false);
@@ -125,6 +125,26 @@ export function CreateModuleDialog({
               required
             />
           </div>
+
+          {canCreateGlobal && (
+            <div className="space-y-2">
+              <Label>Visibilidade do treinamento</Label>
+              <Select value={scope} onValueChange={(v) => setScope(v as 'global' | 'company')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">🌐 Global — todas as empresas (Grow Sales Inteligência)</SelectItem>
+                  <SelectItem value="company">🏢 Apenas esta empresa (treinamento do time)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {scope === 'global'
+                  ? 'Visível para todas as subcontas. Use para conteúdo institucional GROW OS.'
+                  : 'Visível apenas para o time desta empresa. Use para gravações personalizadas da estruturação comercial.'}
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>

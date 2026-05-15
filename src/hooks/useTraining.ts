@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+export type TrainingScope = 'global' | 'company';
+export type VideoType = 'youtube' | 'upload';
+
 export interface TrainingModule {
   id: string;
   company_id: string;
@@ -10,6 +13,7 @@ export interface TrainingModule {
   icon: string;
   order_index: number;
   is_active: boolean;
+  scope: TrainingScope;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -23,8 +27,10 @@ export interface TrainingLesson {
   module_id: string;
   title: string;
   description: string | null;
-  youtube_url: string;
+  youtube_url: string | null;
   youtube_video_id: string | null;
+  video_url: string | null;
+  video_type: VideoType;
   duration_minutes: number | null;
   order_index: number;
   is_active: boolean;
@@ -75,25 +81,26 @@ export function useTraining() {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Verificar se é subconta e obter company_id da conta mestre
+      // Detect master account context
       const { data: companyData } = await supabase
         .from('companies')
         .select('id, is_master_account, parent_company_id')
         .eq('id', cid)
         .single();
       
-      // Se for subconta, buscar treinamentos da conta mestre
-      // Se for conta mestre, buscar da própria conta
-      const trainingCompanyId = companyData?.is_master_account 
-        ? cid 
+      // Master company id (used to fetch GLOBAL trainings produced by Grow Sales Inteligência)
+      const masterCompanyId = companyData?.is_master_account
+        ? cid
         : (companyData?.parent_company_id || cid);
       
-      // Fetch modules da conta mestre (treinamentos são globais)
+      // Fetch modules:
+      //  - GLOBAL modules from the master account (visible to all subaccounts)
+      //  - COMPANY modules owned by the user's own company (custom recordings for this team)
       const { data: modulesData, error: modulesError } = await supabase
         .from('training_modules')
         .select('*')
-        .eq('company_id', trainingCompanyId)
         .eq('is_active', true)
+        .or(`and(company_id.eq.${masterCompanyId},scope.eq.global),and(company_id.eq.${cid},scope.eq.company)`)
         .order('order_index', { ascending: true });
       
       if (modulesError) throw modulesError;
@@ -150,13 +157,12 @@ export function useTraining() {
     }
   };
 
-  const createModule = async (data: { title: string; description?: string; icon?: string }) => {
+  const createModule = async (data: { title: string; description?: string; icon?: string; scope?: TrainingScope }) => {
     try {
       if (!companyId) throw new Error('Company ID not found');
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get max order_index
       const maxOrder = modules.length > 0 
         ? Math.max(...modules.map(m => m.order_index)) + 1 
         : 0;
@@ -169,24 +175,17 @@ export function useTraining() {
           description: data.description || null,
           icon: data.icon || 'book',
           order_index: maxOrder,
+          scope: data.scope || 'company',
           created_by: user?.id
-        });
+        } as any);
       
       if (error) throw error;
       
-      toast({
-        title: 'Sucesso',
-        description: 'Módulo criado com sucesso'
-      });
-      
+      toast({ title: 'Sucesso', description: 'Módulo criado com sucesso' });
       await fetchModules();
     } catch (error) {
       console.error('Error creating module:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Não foi possível criar o módulo'
-      });
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível criar o módulo' });
     }
   };
 
@@ -243,19 +242,22 @@ export function useTraining() {
   const createLesson = async (moduleId: string, data: { 
     title: string; 
     description?: string; 
-    youtube_url: string;
+    youtube_url?: string;
+    video_url?: string;
+    video_type?: VideoType;
     duration_minutes?: number;
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get module lessons to determine order
       const moduleData = modules.find(m => m.id === moduleId);
       const maxOrder = moduleData?.lessons?.length 
         ? Math.max(...moduleData.lessons.map(l => l.order_index)) + 1 
         : 0;
       
-      const videoId = extractYouTubeId(data.youtube_url);
+      const videoType: VideoType = data.video_type || 'youtube';
+      const youtubeUrl = videoType === 'youtube' ? (data.youtube_url || '') : null;
+      const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
       
       const { error } = await supabase
         .from('training_lessons')
@@ -263,28 +265,22 @@ export function useTraining() {
           module_id: moduleId,
           title: data.title,
           description: data.description || null,
-          youtube_url: data.youtube_url,
+          youtube_url: youtubeUrl,
           youtube_video_id: videoId,
+          video_url: videoType === 'upload' ? (data.video_url || null) : null,
+          video_type: videoType,
           duration_minutes: data.duration_minutes || null,
           order_index: maxOrder,
           created_by: user?.id
-        });
+        } as any);
       
       if (error) throw error;
       
-      toast({
-        title: 'Sucesso',
-        description: 'Aula adicionada com sucesso'
-      });
-      
+      toast({ title: 'Sucesso', description: 'Aula adicionada com sucesso' });
       await fetchModules();
     } catch (error) {
       console.error('Error creating lesson:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Não foi possível adicionar a aula'
-      });
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a aula' });
     }
   };
 

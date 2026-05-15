@@ -26,14 +26,16 @@ export default function Treinamento() {
 
   const [selectedModule, setSelectedModule] = useState<TrainingModule | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<TrainingLesson | null>(null);
+  const [canManage, setCanManage] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("training");
 
   useEffect(() => {
     const checkAdminStatus = async () => {
       const { data } = await supabase.rpc('get_my_role');
-      // Apenas super_admin pode gerenciar treinamentos (são globais para todas as subcontas)
-      setIsSuperAdmin(data === 'super_admin');
+      const role = data as string;
+      setCanManage(['super_admin', 'company_admin', 'gestor'].includes(role));
+      setIsSuperAdmin(role === 'super_admin');
     };
     checkAdminStatus();
   }, []);
@@ -98,7 +100,7 @@ export default function Treinamento() {
           </div>
         </div>
 
-        {isSuperAdmin && !selectedModule && (
+        {canManage && !selectedModule && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="training">
@@ -121,6 +123,8 @@ export default function Treinamento() {
           <div className="lg:col-span-2">
             <TrainingVideoPlayer 
               videoId={selectedLesson?.youtube_video_id || null}
+              videoUrl={selectedLesson?.video_url || null}
+              videoType={selectedLesson?.video_type || 'youtube'}
               title={selectedLesson?.title}
             />
             
@@ -154,10 +158,11 @@ export default function Treinamento() {
             </Card>
           </div>
         </div>
-      ) : isSuperAdmin && activeTab === "admin" ? (
+      ) : canManage && activeTab === "admin" ? (
         // Admin Panel
         <TrainingAdminPanel
           modules={modules}
+          canCreateGlobal={isSuperAdmin}
           onCreateModule={createModule}
           onUpdateModule={updateModule}
           onDeleteModule={deleteModule}

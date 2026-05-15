@@ -8,25 +8,28 @@ import {
 } from "@/components/ui/collapsible";
 import { 
   Plus, Pencil, Trash2, ChevronDown, ChevronRight, 
-  Book, GripVertical, Youtube
+  Book, GripVertical, Youtube, Globe, Building2
 } from "lucide-react";
-import { TrainingModule, TrainingLesson } from "@/hooks/useTraining";
+import { Badge } from "@/components/ui/badge";
+import { TrainingModule, TrainingLesson, TrainingScope, VideoType } from "@/hooks/useTraining";
 import { CreateModuleDialog } from "./CreateModuleDialog";
 import { CreateLessonDialog } from "./CreateLessonDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface TrainingAdminPanelProps {
   modules: TrainingModule[];
-  onCreateModule: (data: { title: string; description?: string; icon?: string }) => Promise<void>;
+  canCreateGlobal?: boolean;
+  onCreateModule: (data: { title: string; description?: string; icon?: string; scope?: TrainingScope }) => Promise<void>;
   onUpdateModule: (id: string, data: { title?: string; description?: string; icon?: string }) => Promise<void>;
   onDeleteModule: (id: string) => Promise<void>;
-  onCreateLesson: (moduleId: string, data: { title: string; description?: string; youtube_url: string; duration_minutes?: number }) => Promise<void>;
+  onCreateLesson: (moduleId: string, data: { title: string; description?: string; youtube_url?: string; video_url?: string; video_type?: VideoType; duration_minutes?: number }) => Promise<void>;
   onUpdateLesson: (id: string, data: { title?: string; description?: string; youtube_url?: string; duration_minutes?: number }) => Promise<void>;
   onDeleteLesson: (id: string) => Promise<void>;
 }
 
 export function TrainingAdminPanel({
   modules,
+  canCreateGlobal = false,
   onCreateModule,
   onUpdateModule,
   onDeleteModule,
@@ -66,7 +69,7 @@ export function TrainingAdminPanel({
     }
   };
 
-  const handleLessonSubmit = async (data: { title: string; description?: string; youtube_url: string; duration_minutes?: number }) => {
+  const handleLessonSubmit = async (data: { title: string; description?: string; youtube_url?: string; video_url?: string; video_type?: VideoType; duration_minutes?: number }) => {
     if (editingLesson) {
       await onUpdateLesson(editingLesson.lesson.id, data);
       setEditingLesson(null);
@@ -119,9 +122,14 @@ export function TrainingAdminPanel({
                       ) : (
                         <ChevronRight className="h-4 w-4" />
                       )}
-                      <CardTitle className="text-base flex-1">
-                        {module.title}
-                        <span className="text-sm font-normal text-muted-foreground ml-2">
+                      <CardTitle className="text-base flex-1 flex items-center gap-2 flex-wrap">
+                        <span>{module.title}</span>
+                        {module.scope === 'global' ? (
+                          <Badge variant="secondary" className="gap-1"><Globe className="h-3 w-3" />Global</Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1"><Building2 className="h-3 w-3" />Empresa</Badge>
+                        )}
+                        <span className="text-sm font-normal text-muted-foreground">
                           ({module.lessons?.length || 0} aulas)
                         </span>
                       </CardTitle>
@@ -207,6 +215,7 @@ export function TrainingAdminPanel({
         }}
         onSubmit={handleModuleSubmit}
         editingModule={editingModule}
+        canCreateGlobal={canCreateGlobal}
       />
 
       {/* Create Lesson Dialog */}
