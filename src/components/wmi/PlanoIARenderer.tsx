@@ -38,8 +38,12 @@ const ICONS: Record<string, { icon: any; gradient: string; tone: string }> = {
 // 1) "## Título"
 // 2) "💸 1. Título"  (emoji + número + ponto)
 // 3) "1. Título"     (apenas número + ponto, em linha curta)
-const SECTION_START_RE = /(?:^|\n)\s*(?:#{1,3}\s*)?(?=(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b)/gu;
-const HEAD_RE = /^(?:#{1,3}\s*)?(?:(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+.+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b.+)$/u;
+const SECTION_START_RE = /(?:^|\n)\s*(?:\*{0,2}\s*)?(?:#{1,3}\s*)?(?=(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b)/gu;
+const HEAD_RE = /^(?:\*{0,2}\s*)?(?:#{1,3}\s*)?(?:(?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?\s*\d+\.\s+.+|\d+\.\s+(?:Custo|Diagnóstico|Top|Plano|Metas|Roadmap|Conexão|Análise|Frases)\b.+?)(?:\s*\*{0,2})$/u;
+
+function cleanHeadLine(line: string): string {
+  return line.replace(/^\*{1,2}\s*/, "").replace(/\s*\*{1,2}$/, "").trim();
+}
 
 function prepareMarkdown(md: string): string {
   return md
@@ -56,10 +60,10 @@ function parseSections(md: string): Section[] {
   let preamble: string[] = [];
 
   for (const line of lines) {
-    const trimmed = line.trim();
+    const trimmed = cleanHeadLine(line.trim());
     if (HEAD_RE.test(trimmed)) {
       if (current) sections.push(toSection(current));
-      current = { head: trimmed.replace(/^##\s+/, ""), body: [] };
+      current = { head: trimmed.replace(/^#{1,3}\s+/, ""), body: [] };
     } else if (current) {
       current.body.push(line);
     } else {
@@ -78,7 +82,7 @@ function parseSections(md: string): Section[] {
 }
 
 function toSection(c: { head: string; body: string[] }): Section {
-  const head = c.head.replace(/^#+\s*/, "").trim();
+  const head = cleanHeadLine(c.head.replace(/^#+\s*/, "").trim());
   const emojiMatch = head.match(/^((?:[\p{Extended_Pictographic}\p{Emoji_Presentation}]|[\u2600-\u27BF])\ufe0f?)/u);
   const emoji = emojiMatch ? emojiMatch[0] : "📌";
   const title = head.replace(/^#{1,3}\s*/, "").replace(emoji, "").replace(/^[\s\.\-:]*/, "").trim();
