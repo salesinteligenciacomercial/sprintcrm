@@ -125,6 +125,26 @@ export function CreateModuleDialog({
               required
             />
           </div>
+
+          {canCreateGlobal && (
+            <div className="space-y-2">
+              <Label>Visibilidade do treinamento</Label>
+              <Select value={scope} onValueChange={(v) => setScope(v as 'global' | 'company')}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="global">🌐 Global — todas as empresas (Grow Sales Inteligência)</SelectItem>
+                  <SelectItem value="company">🏢 Apenas esta empresa (treinamento do time)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {scope === 'global'
+                  ? 'Visível para todas as subcontas. Use para conteúdo institucional GROW OS.'
+                  : 'Visível apenas para o time desta empresa. Use para gravações personalizadas da estruturação comercial.'}
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label htmlFor="description">Descrição</Label>
