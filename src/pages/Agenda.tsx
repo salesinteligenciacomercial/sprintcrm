@@ -2919,7 +2919,7 @@ export default function Agenda() {
 
       {/* Tabs principais */}
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 h-11 p-1 bg-muted/60 rounded-xl">
           <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
           <TabsTrigger value="lista">Lista de Compromissos</TabsTrigger>
           <TabsTrigger value="lembretes">Lembretes</TabsTrigger>
