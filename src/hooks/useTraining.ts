@@ -242,19 +242,22 @@ export function useTraining() {
   const createLesson = async (moduleId: string, data: { 
     title: string; 
     description?: string; 
-    youtube_url: string;
+    youtube_url?: string;
+    video_url?: string;
+    video_type?: VideoType;
     duration_minutes?: number;
   }) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get module lessons to determine order
       const moduleData = modules.find(m => m.id === moduleId);
       const maxOrder = moduleData?.lessons?.length 
         ? Math.max(...moduleData.lessons.map(l => l.order_index)) + 1 
         : 0;
       
-      const videoId = extractYouTubeId(data.youtube_url);
+      const videoType: VideoType = data.video_type || 'youtube';
+      const youtubeUrl = videoType === 'youtube' ? (data.youtube_url || '') : null;
+      const videoId = youtubeUrl ? extractYouTubeId(youtubeUrl) : null;
       
       const { error } = await supabase
         .from('training_lessons')
@@ -262,28 +265,22 @@ export function useTraining() {
           module_id: moduleId,
           title: data.title,
           description: data.description || null,
-          youtube_url: data.youtube_url,
+          youtube_url: youtubeUrl,
           youtube_video_id: videoId,
+          video_url: videoType === 'upload' ? (data.video_url || null) : null,
+          video_type: videoType,
           duration_minutes: data.duration_minutes || null,
           order_index: maxOrder,
           created_by: user?.id
-        });
+        } as any);
       
       if (error) throw error;
       
-      toast({
-        title: 'Sucesso',
-        description: 'Aula adicionada com sucesso'
-      });
-      
+      toast({ title: 'Sucesso', description: 'Aula adicionada com sucesso' });
       await fetchModules();
     } catch (error) {
       console.error('Error creating lesson:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Não foi possível adicionar a aula'
-      });
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível adicionar a aula' });
     }
   };
 
