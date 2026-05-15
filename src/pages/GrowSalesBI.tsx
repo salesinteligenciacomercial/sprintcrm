@@ -408,6 +408,37 @@ export default function GrowSalesBI() {
                   )}
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-primary" /> Capacidade comercial utilizada
+                  </CardTitle>
+                  <CardDescription>
+                    {data.capacidade.vendedoresAtivos} vendedor(es) ativo(s) ·
+                    {" "}{data.capacidade.abertosPorVendedor.toFixed(1)} oportunidades abertas / vendedor
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="w-full bg-muted rounded-full h-4 overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        data.capacidade.utilizada >= 90 ? "bg-destructive" :
+                        data.capacidade.utilizada >= 70 ? "bg-orange-500" : "bg-primary"
+                      }`}
+                      style={{ width: `${data.capacidade.utilizada}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{data.capacidade.utilizada.toFixed(0)}% da capacidade</span>
+                    <span className="font-medium">
+                      {data.capacidade.utilizada >= 90 ? "Time saturado — contrate ou redistribua"
+                       : data.capacidade.utilizada >= 70 ? "Atenção: próximo do limite"
+                       : "Capacidade saudável para escalar"}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </>
           )}
         </TabsContent>
