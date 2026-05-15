@@ -9490,11 +9490,10 @@ function Conversas() {
                         </Button>
                       </div>
                     </div>}
-                  <div className="flex items-end gap-2">
+                  <div className="flex items-end gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                     <MediaUpload onFileSelected={handleSendMedia} />
                     <Textarea ref={messageTextareaRef} placeholder="Escreva sua mensagem..." value={messageInput} onChange={e => {
                   setMessageInput(e.target.value);
-                  // Auto-resize
                   e.target.style.height = 'auto';
                   e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
                 }} onKeyPress={e => {
@@ -9515,160 +9514,163 @@ function Conversas() {
                       break;
                     }
                   }
-                }} className="flex-1 min-h-[40px] max-h-[200px] resize-none overflow-y-auto" rows={1} />
+                }} className="flex-1 min-w-[120px] min-h-[40px] max-h-[200px] resize-none overflow-y-auto" rows={1} />
                     <AudioRecorder onSendAudio={handleSendAudio} onTranscribed={(text) => setMessageInput(prev => prev ? `${prev} ${text}` : text)} />
-                    
-                    {/* Botão de Correção Automática */}
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className={`${autoCorrectEnabled ? 'text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 bg-green-50/50' : 'text-muted-foreground hover:text-foreground border-border'}`}
-                      title={autoCorrectEnabled ? "Correção automática ativada (clique para desativar)" : "Correção automática desativada (clique para ativar)"}
-                      onClick={() => {
-                        const newValue = !autoCorrectEnabled;
-                        setAutoCorrectEnabled(newValue);
-                        localStorage.setItem(AUTO_CORRECT_KEY, JSON.stringify(newValue));
-                        toast.success(newValue ? "Correção automática ativada" : "Correção automática desativada");
-                      }}
-                    >
-                      {isCorrectingText ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <SpellCheck className="h-5 w-5" />
-                      )}
-                    </Button>
-                    
-                    {/* Botão de Assinatura na Mensagem */}
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className={`${includeSignature 
-                        ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 bg-blue-50/50' 
-                        : 'text-muted-foreground hover:text-foreground border-border'}`}
-                      title={includeSignature 
-                        ? `Assinatura ativada: "Atendente - ${userName}"` 
-                        : "Incluir assinatura na mensagem"}
-                      onClick={() => {
-                        const newValue = !includeSignature;
-                        setIncludeSignature(newValue);
-                        localStorage.setItem(INCLUDE_SIGNATURE_KEY, JSON.stringify(newValue));
-                        toast.success(newValue 
-                          ? `Assinatura ativada: "Atendente - ${userName}"` 
-                          : "Assinatura desativada");
-                      }}
-                    >
-                      <PenLine className="h-5 w-5" />
-                    </Button>
-                    
-                    {/* Botão Enviar Template (ao lado do raio) */}
+
                     <Button
                       variant="outline"
                       size="icon"
-                      className="text-primary hover:bg-primary/10 border-primary/40"
-                      title="Enviar Template"
-                      onClick={() => setTemplateDialogOpen(true)}
+                      className="sm:hidden text-muted-foreground border-border flex-shrink-0"
+                      title={showMobileExtras ? "Minimizar opções" : "Mais opções"}
+                      onClick={() => setShowMobileExtras(v => !v)}
                     >
-                      <FileText className="h-5 w-5" />
+                      {showMobileExtras ? <ChevronDown className="h-5 w-5" /> : <MoreHorizontal className="h-5 w-5" />}
                     </Button>
-                    {userCompanyId && selectedConv && (
-                      <ConversaTemplateSender
-                        open={templateDialogOpen}
-                        onOpenChange={setTemplateDialogOpen}
-                        companyId={userCompanyId}
-                        contactName={selectedConv.contactName || ""}
-                        contactPhone={selectedConv.phoneNumber || selectedConv.id}
-                        origemApi={selectedConv.origemApi}
-                      />
-                    )}
 
-                    {/* Botão de Respostas Rápidas */}
-                    <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300" title="Respostas Rápidas">
-                          <Zap className="h-5 w-5" />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                        <DialogHeader>
-                          <DialogTitle className="flex items-center gap-2">
-                            <Zap className="h-5 w-5 text-amber-500" />
-                            Respostas Rápidas
-                          </DialogTitle>
-                        </DialogHeader>
-                        
-                        {/* Mensagens por Categoria */}
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-medium">Mensagens por Categoria:</h4>
-                          {quickCategories.length === 0 ? <div className="text-center py-8 text-muted-foreground border rounded-lg">
-                              <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                              <p>Nenhuma categoria criada</p>
-                              <p className="text-sm">Use o botão "Mensagens Rápidas" no painel lateral para criar</p>
-                            </div> : <Accordion type="single" collapsible className="w-full">
-                              {quickCategories.map(category => {
-                          const categoryMessages = quickMessages.filter(msg => msg.category === category.id).sort((a, b) => {
-                            const indexA = quickMessages.findIndex(m => m.id === a.id);
-                            const indexB = quickMessages.findIndex(m => m.id === b.id);
-                            return indexA - indexB;
-                          });
-                          return <AccordionItem key={category.id} value={category.id}>
-                                    <AccordionTrigger className="hover:no-underline">
-                                      <div className="flex items-center justify-between w-full pr-4">
-                                        <span className="font-medium">{category.name}</span>
-                                        <Badge variant="secondary">{categoryMessages.length}</Badge>
-                                      </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                      {categoryMessages.length === 0 ? <p className="text-sm text-muted-foreground py-2 px-4">
-                                          Nenhuma mensagem nesta categoria
-                                        </p> : <div className="space-y-2">
-                                          {categoryMessages.map(qm => <div key={qm.id} className="flex items-start justify-between p-3 bg-background rounded border">
-                                              <div className="flex-1 min-w-0 mr-3">
-                                                <p className="font-medium text-sm mb-1">{qm.title}</p>
-                                                {qm.type === "text" ? <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
-                                                    {qm.content}
-                                                  </p> : <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                    {qm.type === "image" ? <>
-                                                        <ImageIcon className="h-4 w-4" />
-                                                        <span>[Imagem]</span>
-                                                        {qm.mediaUrl && <img src={qm.mediaUrl} alt="Preview" className="h-12 w-12 object-cover rounded border" />}
-                                                      </> : qm.type === "audio" ? <>
-                                                        <Music className="h-4 w-4" />
-                                                        <span>[Áudio]</span>
-                                                        {qm.mediaUrl && <audio src={qm.mediaUrl} controls className="h-8 max-w-[200px]" />}
-                                                      </> : qm.type === "document" ? <>
-                                                        <FileText className="h-4 w-4 text-red-500" />
-                                                        <span>[Documento PDF]</span>
-                                                      </> : <>
-                                                        <Video className="h-4 w-4" />
-                                                        <span>[Vídeo]</span>
-                                                      </>}
-                                                    {qm.content && qm.content !== "[Imagem]" && qm.content !== "[Vídeo]" && qm.content !== "[Áudio]" && qm.content !== "[Documento]" && (
-                                                      <span className="text-xs italic">"{qm.content}"</span>
-                                                    )}
-                                                  </div>}
-                                              </div>
-                                              <div className="flex items-center gap-1 flex-shrink-0">
-                                                <Button size="sm" onClick={() => {
-                                      sendQuickMessage(qm);
-                                      setShowQuickRepliesPopup(false);
-                                    }} className="bg-primary hover:bg-primary/90">
-                                                  Enviar
-                                                </Button>
-                                              </div>
-                                            </div>)}
-                                        </div>}
-                                    </AccordionContent>
-                                  </AccordionItem>;
-                        })}
-                            </Accordion>}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                    
+                    <div className={`${showMobileExtras ? 'flex' : 'hidden'} sm:flex items-end gap-1.5 sm:gap-2 w-full sm:w-auto order-last sm:order-none`}>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className={`${autoCorrectEnabled ? 'text-green-600 hover:text-green-700 hover:bg-green-50 border-green-300 bg-green-50/50' : 'text-muted-foreground hover:text-foreground border-border'}`}
+                        title={autoCorrectEnabled ? "Correção automática ativada (clique para desativar)" : "Correção automática desativada (clique para ativar)"}
+                        onClick={() => {
+                          const newValue = !autoCorrectEnabled;
+                          setAutoCorrectEnabled(newValue);
+                          localStorage.setItem(AUTO_CORRECT_KEY, JSON.stringify(newValue));
+                          toast.success(newValue ? "Correção automática ativada" : "Correção automática desativada");
+                        }}
+                      >
+                        {isCorrectingText ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <SpellCheck className="h-5 w-5" />
+                        )}
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className={`${includeSignature 
+                          ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-300 bg-blue-50/50' 
+                          : 'text-muted-foreground hover:text-foreground border-border'}`}
+                        title={includeSignature 
+                          ? `Assinatura ativada: "Atendente - ${userName}"` 
+                          : "Incluir assinatura na mensagem"}
+                        onClick={() => {
+                          const newValue = !includeSignature;
+                          setIncludeSignature(newValue);
+                          localStorage.setItem(INCLUDE_SIGNATURE_KEY, JSON.stringify(newValue));
+                          toast.success(newValue 
+                            ? `Assinatura ativada: "Atendente - ${userName}"` 
+                            : "Assinatura desativada");
+                        }}
+                      >
+                        <PenLine className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-primary hover:bg-primary/10 border-primary/40"
+                        title="Enviar Template"
+                        onClick={() => setTemplateDialogOpen(true)}
+                      >
+                        <FileText className="h-5 w-5" />
+                      </Button>
+                      {userCompanyId && selectedConv && (
+                        <ConversaTemplateSender
+                          open={templateDialogOpen}
+                          onOpenChange={setTemplateDialogOpen}
+                          companyId={userCompanyId}
+                          contactName={selectedConv.contactName || ""}
+                          contactPhone={selectedConv.phoneNumber || selectedConv.id}
+                          origemApi={selectedConv.origemApi}
+                        />
+                      )}
+                      <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300" title="Respostas Rápidas">
+                            <Zap className="h-5 w-5" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2">
+                              <Zap className="h-5 w-5 text-amber-500" />
+                              Respostas Rápidas
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <h4 className="text-sm font-medium">Mensagens por Categoria:</h4>
+                            {quickCategories.length === 0 ? <div className="text-center py-8 text-muted-foreground border rounded-lg">
+                                <Zap className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                                <p>Nenhuma categoria criada</p>
+                                <p className="text-sm">Use o botão "Mensagens Rápidas" no painel lateral para criar</p>
+                              </div> : <Accordion type="single" collapsible className="w-full">
+                                {quickCategories.map(category => {
+                            const categoryMessages = quickMessages.filter(msg => msg.category === category.id).sort((a, b) => {
+                              const indexA = quickMessages.findIndex(m => m.id === a.id);
+                              const indexB = quickMessages.findIndex(m => m.id === b.id);
+                              return indexA - indexB;
+                            });
+                            return <AccordionItem key={category.id} value={category.id}>
+                                      <AccordionTrigger className="hover:no-underline">
+                                        <div className="flex items-center justify-between w-full pr-4">
+                                          <span className="font-medium">{category.name}</span>
+                                          <Badge variant="secondary">{categoryMessages.length}</Badge>
+                                        </div>
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        {categoryMessages.length === 0 ? <p className="text-sm text-muted-foreground py-2 px-4">
+                                            Nenhuma mensagem nesta categoria
+                                          </p> : <div className="space-y-2">
+                                            {categoryMessages.map(qm => <div key={qm.id} className="flex items-start justify-between p-3 bg-background rounded border">
+                                                <div className="flex-1 min-w-0 mr-3">
+                                                  <p className="font-medium text-sm mb-1">{qm.title}</p>
+                                                  {qm.type === "text" ? <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words">
+                                                      {qm.content}
+                                                    </p> : <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                      {qm.type === "image" ? <>
+                                                          <ImageIcon className="h-4 w-4" />
+                                                          <span>[Imagem]</span>
+                                                          {qm.mediaUrl && <img src={qm.mediaUrl} alt="Preview" className="h-12 w-12 object-cover rounded border" />}
+                                                        </> : qm.type === "audio" ? <>
+                                                          <Music className="h-4 w-4" />
+                                                          <span>[Áudio]</span>
+                                                          {qm.mediaUrl && <audio src={qm.mediaUrl} controls className="h-8 max-w-[200px]" />}
+                                                        </> : qm.type === "document" ? <>
+                                                          <FileText className="h-4 w-4 text-red-500" />
+                                                          <span>[Documento PDF]</span>
+                                                        </> : <>
+                                                          <Video className="h-4 w-4" />
+                                                          <span>[Vídeo]</span>
+                                                        </>}
+                                                      {qm.content && qm.content !== "[Imagem]" && qm.content !== "[Vídeo]" && qm.content !== "[Áudio]" && qm.content !== "[Documento]" && (
+                                                        <span className="text-xs italic">"{qm.content}"</span>
+                                                      )}
+                                                    </div>}
+                                                </div>
+                                                <div className="flex items-center gap-1 flex-shrink-0">
+                                                  <Button size="sm" onClick={() => {
+                                        sendQuickMessage(qm);
+                                        setShowQuickRepliesPopup(false);
+                                      }} className="bg-primary hover:bg-primary/90">
+                                                    Enviar
+                                                  </Button>
+                                                </div>
+                                              </div>)}
+                                          </div>}
+                                      </AccordionContent>
+                                    </AccordionItem>;
+                          })}
+                              </Accordion>}
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+
                     <Button onClick={() => {
                   handleSendMessage();
                   setReplyingTo(null);
-                }} size="icon" className="bg-[#25D366] hover:bg-[#128C7E] text-white" disabled={!messageInput.trim() || isCorrectingText || isSendingMessage}>
+                }} size="icon" className="bg-[#25D366] hover:bg-[#128C7E] text-white flex-shrink-0" disabled={!messageInput.trim() || isCorrectingText || isSendingMessage}>
                       {isCorrectingText || isSendingMessage ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                     </Button>
                   </div>
