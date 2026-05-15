@@ -157,13 +157,12 @@ export function useTraining() {
     }
   };
 
-  const createModule = async (data: { title: string; description?: string; icon?: string }) => {
+  const createModule = async (data: { title: string; description?: string; icon?: string; scope?: TrainingScope }) => {
     try {
       if (!companyId) throw new Error('Company ID not found');
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Get max order_index
       const maxOrder = modules.length > 0 
         ? Math.max(...modules.map(m => m.order_index)) + 1 
         : 0;
@@ -176,28 +175,19 @@ export function useTraining() {
           description: data.description || null,
           icon: data.icon || 'book',
           order_index: maxOrder,
+          scope: data.scope || 'company',
           created_by: user?.id
-        });
+        } as any);
       
       if (error) throw error;
       
-      toast({
-        title: 'Sucesso',
-        description: 'Módulo criado com sucesso'
-      });
-      
+      toast({ title: 'Sucesso', description: 'Módulo criado com sucesso' });
       await fetchModules();
     } catch (error) {
       console.error('Error creating module:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Não foi possível criar o módulo'
-      });
+      toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível criar o módulo' });
     }
   };
-
-  const updateModule = async (id: string, data: { title?: string; description?: string; icon?: string }) => {
     try {
       const { error } = await supabase
         .from('training_modules')
