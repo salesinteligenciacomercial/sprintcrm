@@ -680,7 +680,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
         <Tooltip>
           <TooltipTrigger asChild>
             <div 
-              className="absolute top-2 right-2 w-4 h-4 rounded-full cursor-default shadow-sm border border-white/50"
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full cursor-default shadow-sm border-2 border-background z-10"
               style={{ backgroundColor: creatorColor }}
             />
           </TooltipTrigger>
@@ -707,8 +707,8 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold text-sm text-foreground">{lead.nome}</h4>
+              <div className="flex items-center gap-2 mb-1 min-w-0">
+                <h4 className="font-semibold text-sm text-foreground truncate min-w-0 flex-shrink">{lead.nome}</h4>
                 {/* Badge de Status Ganho/Perdido */}
                 {leadStatus === 'ganho' && (
                   <Badge className="bg-success hover:bg-success text-success-foreground text-[10px] px-1.5 py-0">
@@ -724,9 +724,9 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                 )}
                 {/* ✅ Origem (source) sempre visível ao lado do nome */}
                 {lead.source && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium border-primary/30 text-primary bg-primary/5">
-                    <Tag className="h-2.5 w-2.5 mr-0.5" />
-                    {lead.source}
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium border-primary/30 text-primary bg-primary/5 max-w-[90px] flex-shrink-0">
+                    <Tag className="h-2.5 w-2.5 mr-0.5 flex-shrink-0" />
+                    <span className="truncate">{lead.source}</span>
                   </Badge>
                 )}
               </div>
@@ -876,7 +876,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
           </div>
 
           {/* Ações (menu) + agenda + expandir */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0 flex-nowrap">
             {/* Dias no funil */}
             {diasNoFunil !== null && (
               <TooltipProvider>
