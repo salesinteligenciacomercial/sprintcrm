@@ -910,7 +910,7 @@ export default function KanbanPage() {
     }> = {};
     
     etapasFiltradas.forEach((etapa, index) => {
-      const leadsNaEtapa = leads.filter(l => l.etapa_id === etapa.id);
+      const leadsNaEtapa = leadsFiltrados.filter(l => l.etapa_id === etapa.id);
       const total = leadsNaEtapa.reduce((sum, lead) => sum + (lead.value || 0), 0);
       const count = leadsNaEtapa.length;
       
@@ -921,7 +921,7 @@ export default function KanbanPage() {
       let taxaConversao = 0;
       if (index < etapasFiltradas.length - 1) {
         const proximaEtapa = etapasFiltradas[index + 1];
-        const leadsProximaEtapa = leads.filter(l => l.etapa_id === proximaEtapa.id).length;
+        const leadsProximaEtapa = leadsFiltrados.filter(l => l.etapa_id === proximaEtapa.id).length;
         taxaConversao = count > 0 ? (leadsProximaEtapa / count) * 100 : 0;
       }
       
