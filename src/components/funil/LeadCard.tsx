@@ -724,9 +724,9 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                 )}
                 {/* ✅ Origem (source) sempre visível ao lado do nome */}
                 {lead.source && (
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium border-primary/30 text-primary bg-primary/5">
-                    <Tag className="h-2.5 w-2.5 mr-0.5" />
-                    {lead.source}
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium border-primary/30 text-primary bg-primary/5 max-w-[90px] flex-shrink-0">
+                    <Tag className="h-2.5 w-2.5 mr-0.5 flex-shrink-0" />
+                    <span className="truncate">{lead.source}</span>
                   </Badge>
                 )}
               </div>
