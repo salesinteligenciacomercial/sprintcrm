@@ -690,7 +690,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
         </Tooltip>
       </TooltipProvider>
 
-      <div className="relative space-y-2">
+      <div className="relative space-y-1">
         {/* Header sempre visível */}
         <div className="flex justify-between items-start gap-2 min-w-0">
           <div className="flex items-start gap-2 flex-1 min-w-0 pr-1">
