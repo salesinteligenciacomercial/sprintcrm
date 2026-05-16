@@ -876,7 +876,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
           </div>
 
           {/* Ações (menu) + agenda + expandir */}
-          <div className="flex items-center gap-1 flex-shrink-0 flex-nowrap">
+          <div className="flex w-[76px] flex-shrink-0 items-start justify-end gap-1 flex-nowrap">
             {/* Dias no funil */}
             {diasNoFunil !== null && (
               <TooltipProvider>
@@ -952,9 +952,10 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
+                  className="h-8 w-8 shrink-0 p-0"
                   onClick={(e) => { e.stopPropagation(); }}
                   onMouseDown={(e) => { e.stopPropagation(); }}
+                  aria-label="Abrir ações do lead"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -1004,7 +1005,8 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                 e.stopPropagation();
                 setIsExpanded(!isExpanded);
               }}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 shrink-0 p-0"
+              aria-label={isExpanded ? "Recolher lead" : "Expandir lead"}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
