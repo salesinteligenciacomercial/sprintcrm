@@ -694,7 +694,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
         {/* Header sempre visível */}
         <div className="flex justify-between items-start gap-2 min-w-0">
           <div className="flex items-start gap-2 flex-1 min-w-0 pr-1">
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-7 w-7 flex-shrink-0">
               <AvatarImage 
                 src={avatarUrl || lead.avatar_url || undefined} 
                 alt={lead.nome}
@@ -702,7 +702,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                   setAvatarUrl(`https://ui-avatars.com/api/?name=${encodeURIComponent(lead.nome)}&background=10b981&color=fff&bold=true&size=128`);
                 }}
               />
-              <AvatarFallback className="bg-primary/10 text-primary">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs">
                 {lead.nome && lead.nome.length > 0 ? lead.nome.charAt(0).toUpperCase() : "?"}
               </AvatarFallback>
             </Avatar>
