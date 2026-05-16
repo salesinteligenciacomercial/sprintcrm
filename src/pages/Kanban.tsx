@@ -210,6 +210,8 @@ export default function KanbanPage() {
   useEffect(() => {
     if (!isGestor && viewMode !== "meus") setViewMode("meus");
   }, [isGestor, viewMode]);
+
+  useEffect(() => {
     let mounted = true;
 
     const loadData = async () => {
