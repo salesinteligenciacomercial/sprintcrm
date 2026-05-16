@@ -1180,6 +1180,18 @@ export default function KanbanPage() {
         </div>
       </div>
 
+      {/* Barra de filtros por responsável - controle de pipeline */}
+      <FunilFiltrosResponsaveis
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        responsavelFiltro={responsavelFiltro}
+        onResponsavelChange={setResponsavelFiltro}
+        isGestor={isGestor || isAdmin}
+        companyId={currentCompanyId}
+        counts={viewCounts}
+        responsavelCounts={responsavelCounts}
+      />
+
       <div className="mb-6 flex items-center gap-3">
         <div className="flex-1 max-w-xs">
           <Label>Funil</Label>
