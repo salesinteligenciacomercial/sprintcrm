@@ -808,12 +808,12 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                   </button>
                 )}
               </div>
-              {(diasNoFunil !== null || attachmentsCount > 0 || proximoCompromissoData) && (
-                <div className="mb-1 flex min-w-0 flex-wrap items-center gap-1">
+              {(diasNoFunil !== null || attachmentsCount > 0 || proximoCompromissoData || responsaveisData.length > 0 || (lead.tags && lead.tags.length > 0)) && (
+                <div className="flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto scrollbar-none">
                   {diasNoFunil !== null && (
                     <Badge 
                       variant="outline" 
-                      className={`text-xs cursor-default ${
+                      className={`text-[10px] px-1 py-0 h-4 cursor-default flex-shrink-0 ${
                         diasNoFunil <= 7 
                           ? 'bg-success/10 border-success/20 text-success' 
                           : diasNoFunil <= 30 
@@ -821,44 +821,38 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                             : 'bg-destructive/10 border-destructive/20 text-destructive'
                       }`}
                     >
-                      <Clock className="h-2.5 w-2.5 mr-1" />
+                      <Clock className="h-2.5 w-2.5 mr-0.5" />
                       {diasNoFunil}d
                     </Badge>
                   )}
                   {attachmentsCount > 0 && (
                     <Badge 
                       variant="outline" 
-                      className="text-xs bg-primary/10 border-primary/20 text-primary cursor-pointer hover:bg-primary/20"
+                      className="text-[10px] px-1 py-0 h-4 bg-primary/10 border-primary/20 text-primary cursor-pointer hover:bg-primary/20 flex-shrink-0"
                       onClick={(e) => { e.stopPropagation(); setAttachmentsOpen(true); }}
                     >
-                      <Paperclip className="h-2.5 w-2.5 mr-1" />
+                      <Paperclip className="h-2.5 w-2.5 mr-0.5" />
                       {attachmentsCount}
                     </Badge>
                   )}
                   {proximoCompromissoData && (
-                    <Badge variant="outline" className="text-xs bg-success/10 border-success/20 text-success cursor-pointer">
-                      <Calendar className="h-2.5 w-2.5 mr-1" />
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-success/10 border-success/20 text-success cursor-pointer flex-shrink-0">
+                      <Calendar className="h-2.5 w-2.5 mr-0.5" />
                       {proximoCompromissoData}
                     </Badge>
                   )}
-                </div>
-              )}
-              
-              {/* Responsáveis (múltiplos) com foto */}
-              {responsaveisData.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1 mb-1">
                   {responsaveisData.map((resp) => (
                     <TooltipProvider key={resp.id} delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center gap-1 bg-primary/5 border border-primary/20 rounded-full pr-2 pl-0.5 py-0.5">
-                            <Avatar className="h-5 w-5">
+                          <div className="flex items-center gap-1 bg-primary/5 border border-primary/20 rounded-full pr-1.5 pl-0.5 py-0 h-4 flex-shrink-0">
+                            <Avatar className="h-3.5 w-3.5">
                               <AvatarImage src={resp.avatar_url || undefined} alt={resp.nome} />
-                              <AvatarFallback className="text-[8px] bg-primary/20 text-primary">
+                              <AvatarFallback className="text-[7px] bg-primary/20 text-primary">
                                 {resp.nome.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-xs text-foreground truncate max-w-[60px]">{resp.nome.split(' ')[0]}</span>
+                            <span className="text-[10px] text-foreground truncate max-w-[50px]">{resp.nome.split(' ')[0]}</span>
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="top">
@@ -867,18 +861,13 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                       </Tooltip>
                     </TooltipProvider>
                   ))}
-                </div>
-              )}
-              
-              {lead.tags && lead.tags.length > 0 && (
-                <div className="flex flex-nowrap gap-1 overflow-hidden">
-                  {lead.tags.slice(0, 2).map((tag) => (
+                  {lead.tags && lead.tags.slice(0, 2).map((tag) => (
                     <TooltipProvider key={tag} delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="inline-flex flex-shrink-0 cursor-default">
-                            <Badge variant="secondary" className="text-xs max-w-[60px]">
-                              <Tag className="h-2.5 w-2.5 mr-1 flex-shrink-0" />
+                            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4 max-w-[60px]">
+                              <Tag className="h-2.5 w-2.5 mr-0.5 flex-shrink-0" />
                               <span className="truncate">{tag}</span>
                             </Badge>
                           </span>
@@ -889,12 +878,12 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                       </Tooltip>
                     </TooltipProvider>
                   ))}
-                  {lead.tags.length > 2 && (
+                  {lead.tags && lead.tags.length > 2 && (
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="inline-flex flex-shrink-0 cursor-default">
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">
                               +{lead.tags.length - 2}
                             </Badge>
                           </span>
