@@ -947,7 +947,7 @@ export default function KanbanPage() {
     });
     
     return stats;
-  }, [etapasFiltradas, leads]);
+  }, [etapasFiltradas, leadsFiltrados]);
 
   // 🎯 Função otimizada para obter total de uma etapa
   const calcularTotalEtapa = useCallback((etapaId: string) => {
