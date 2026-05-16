@@ -692,8 +692,8 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
 
       <div className="relative space-y-2">
         {/* Header sempre visível */}
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex items-start gap-2 flex-1">
+        <div className="flex justify-between items-start gap-2 min-w-0">
+          <div className="flex items-start gap-2 flex-1 min-w-0 pr-1">
             <Avatar className="h-8 w-8">
               <AvatarImage 
                 src={avatarUrl || lead.avatar_url || undefined} 
@@ -780,7 +780,7 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                 ) : (
                   <button
                     type="button"
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded px-1 py-0.5 -ml-1 transition-colors group/title cursor-pointer"
+                    className="flex max-w-full min-w-0 items-center gap-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded px-1 py-0.5 -ml-1 transition-colors group/title cursor-pointer"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -796,8 +796,8 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
                   >
                     {leadTitle ? (
                       <>
-                        <span className="font-medium text-foreground">{leadTitle}</span>
-                        <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                        <span className="font-medium text-foreground truncate min-w-0">{leadTitle}</span>
+                        <Pencil className="h-2.5 w-2.5 flex-shrink-0 opacity-0 group-hover/title:opacity-100 transition-opacity" />
                       </>
                     ) : (
                       <>
