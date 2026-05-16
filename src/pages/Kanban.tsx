@@ -181,7 +181,35 @@ export default function KanbanPage() {
   const isMovingRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // 🎯 Filtros de visibilidade por responsável (controle de pipeline por usuário)
+  const VIEW_MODE_KEY = "kanban:viewMode";
+  const RESP_FILTER_KEY = "kanban:responsavelFiltro";
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = (typeof window !== "undefined" && localStorage.getItem(VIEW_MODE_KEY)) as ViewMode | null;
+    return saved || "meus";
+  });
+  const [responsavelFiltro, setResponsavelFiltro] = useState<string>(() => {
+    return (typeof window !== "undefined" && localStorage.getItem(RESP_FILTER_KEY)) || "all";
+  });
+
+  // Quando carrega papel, ajusta default apenas se o usuário não tinha preferência salva
   useEffect(() => {
+    if (!currentUserId) return;
+    const saved = localStorage.getItem(VIEW_MODE_KEY);
+    if (!saved && isGestor) setViewMode("todos");
+  }, [currentUserId, isGestor]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
+  useEffect(() => {
+    if (typeof window !== "undefined") localStorage.setItem(RESP_FILTER_KEY, responsavelFiltro);
+  }, [responsavelFiltro]);
+
+  // Se vendedor (não gestor) acessar um modo restrito, força "meus"
+  useEffect(() => {
+    if (!isGestor && viewMode !== "meus") setViewMode("meus");
+  }, [isGestor, viewMode]);
     let mounted = true;
 
     const loadData = async () => {
