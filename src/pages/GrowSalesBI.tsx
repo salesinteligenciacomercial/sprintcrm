@@ -43,18 +43,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const COLORS = ["hsl(var(--primary))", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#84cc16"];
 
+function deltaPct(curr: number, prev: number): number | null {
+  if (!Number.isFinite(curr) || !Number.isFinite(prev)) return null;
+  if (prev === 0) return curr > 0 ? 100 : null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
+}
+
+function DeltaBadge({ delta, inverse }: { delta: number | null; inverse?: boolean }) {
+  if (delta == null) return null;
+  const good = inverse ? delta < 0 : delta > 0;
+  const Icon = delta >= 0 ? TrendingUp : TrendingDown;
+  const cls = good ? "text-emerald-500" : delta === 0 ? "text-muted-foreground" : "text-destructive";
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${cls}`}>
+      <Icon className="h-3 w-3" /> {Math.abs(delta).toFixed(1)}%
+    </span>
+  );
+}
+
 function KpiCard({
   icon: Icon,
   label,
   value,
   hint,
   tone = "default",
+  delta,
+  deltaInverse,
 }: {
   icon: any;
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "good" | "warn" | "bad";
+  delta?: number | null;
+  deltaInverse?: boolean;
 }) {
   const toneClass =
     tone === "good"
@@ -72,7 +94,10 @@ function KpiCard({
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="text-2xl font-bold">{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+        <div className="flex items-center justify-between mt-1">
+          {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
+          {delta != null && <DeltaBadge delta={delta} inverse={deltaInverse} />}
+        </div>
       </CardContent>
     </Card>
   );
