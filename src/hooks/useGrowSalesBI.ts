@@ -138,7 +138,7 @@ export function useGrowSalesBI(range: BIRange = "30d") {
       const prevEnd = since;
 
       // Parallel fetch
-      const [companyRes, leadsRaw, compromissosRaw, goalsRaw, profilesRaw] = await Promise.all([
+      const [companyRes, leadsRaw, compromissosRaw, goalsRaw, profilesRaw, prevLeadsRaw] = await Promise.all([
         supabase.rpc("get_my_company_id"),
         fetchAllPaginated<any>(() =>
           supabase
@@ -165,6 +165,15 @@ export function useGrowSalesBI(range: BIRange = "30d") {
           .gte("end_date", new Date().toISOString().slice(0, 10))
           .then((r: any) => r.data || []),
         supabase.from("profiles").select("id,full_name,email").then((r: any) => r.data || []),
+        // Previous period (apenas ganhos/perdidos para comparativo)
+        fetchAllPaginated<any>(() =>
+          supabase
+            .from("leads")
+            .select("id,value,status,won_at,lost_at,created_at")
+            .or(`won_at.gte.${prevStart},lost_at.gte.${prevStart},created_at.gte.${prevStart}`)
+            .lt("created_at", prevEnd)
+            .order("created_at", { ascending: false })
+        ).catch(() => []),
       ]);
 
       const companyId = (companyRes as any)?.data;
