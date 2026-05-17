@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
+  TrendingDown,
   AlertTriangle,
   Users,
   Target,
@@ -18,6 +19,9 @@ import {
   Gauge,
   Sparkles,
   Trophy,
+  Zap,
+  Clock,
+  Compass,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -39,18 +43,40 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const COLORS = ["hsl(var(--primary))", "#3b82f6", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#84cc16"];
 
+function deltaPct(curr: number, prev: number): number | null {
+  if (!Number.isFinite(curr) || !Number.isFinite(prev)) return null;
+  if (prev === 0) return curr > 0 ? 100 : null;
+  return ((curr - prev) / Math.abs(prev)) * 100;
+}
+
+function DeltaBadge({ delta, inverse }: { delta: number | null; inverse?: boolean }) {
+  if (delta == null) return null;
+  const good = inverse ? delta < 0 : delta > 0;
+  const Icon = delta >= 0 ? TrendingUp : TrendingDown;
+  const cls = good ? "text-emerald-500" : delta === 0 ? "text-muted-foreground" : "text-destructive";
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-[11px] font-medium ${cls}`}>
+      <Icon className="h-3 w-3" /> {Math.abs(delta).toFixed(1)}%
+    </span>
+  );
+}
+
 function KpiCard({
   icon: Icon,
   label,
   value,
   hint,
   tone = "default",
+  delta,
+  deltaInverse,
 }: {
   icon: any;
   label: string;
   value: string;
   hint?: string;
   tone?: "default" | "good" | "warn" | "bad";
+  delta?: number | null;
+  deltaInverse?: boolean;
 }) {
   const toneClass =
     tone === "good"
@@ -68,7 +94,10 @@ function KpiCard({
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
         <div className="text-2xl font-bold">{value}</div>
-        {hint && <div className="text-xs text-muted-foreground mt-1">{hint}</div>}
+        <div className="flex items-center justify-between mt-1">
+          {hint && <div className="text-xs text-muted-foreground">{hint}</div>}
+          {delta != null && <DeltaBadge delta={delta} inverse={deltaInverse} />}
+        </div>
       </CardContent>
     </Card>
   );
@@ -131,6 +160,7 @@ export default function GrowSalesBI() {
           <TabsTrigger value="performance" className="gap-2"><Users className="h-4 w-4" /> Performance</TabsTrigger>
           <TabsTrigger value="forecast" className="gap-2"><Target className="h-4 w-4" /> Forecast & Metas</TabsTrigger>
           <TabsTrigger value="campanhas" className="gap-2"><Megaphone className="h-4 w-4" /> Campanhas / ROI</TabsTrigger>
+          <TabsTrigger value="grow-financeiro" className="gap-2"><Compass className="h-4 w-4" /> GROW Financeiro</TabsTrigger>
           <TabsTrigger value="score" className="gap-2"><Trophy className="h-4 w-4" /> Growth Score</TabsTrigger>
           <TabsTrigger value="insights" className="gap-2"><Brain className="h-4 w-4" /> IA Insights</TabsTrigger>
         </TabsList>
@@ -139,11 +169,85 @@ export default function GrowSalesBI() {
         <TabsContent value="overview" className="space-y-4">
           {isLoading || !data ? skeleton : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <KpiCard icon={DollarSign} label="Receita" value={formatBRL(data.receita.bruto)} hint={`${data.receita.deals} deals fechados`} tone="good" />
-                <KpiCard icon={TrendingUp} label="Ticket Médio" value={formatBRL(data.receita.ticketMedio)} />
-                <KpiCard icon={AlertTriangle} label="Perda Estimada" value={formatBRL(data.perdas.total)} hint={`${data.perdas.noShow.qty} no-shows`} tone="bad" />
-                <KpiCard icon={Target} label="Pipeline Aberto" value={formatBRL(data.forecast.pipelineAberto)} hint={`Forecast 30d: ${formatBRL(data.forecast.forecast30d)}`} />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <KpiCard
+                  icon={DollarSign}
+                  label="Receita"
+                  value={formatBRL(data.receita.bruto)}
+                  hint={`${data.receita.deals} deals · vs ${formatBRL(data.previous.receita)}`}
+                  tone="good"
+                  delta={deltaPct(data.receita.bruto, data.previous.receita)}
+                />
+                <KpiCard
+                  icon={TrendingUp}
+                  label="Ticket Médio"
+                  value={formatBRL(data.receita.ticketMedio)}
+                  hint={`vs ${formatBRL(data.previous.ticketMedio)} anterior`}
+                  delta={deltaPct(data.receita.ticketMedio, data.previous.ticketMedio)}
+                />
+                <KpiCard
+                  icon={Users}
+                  label="LTV"
+                  value={formatBRL(data.receita.ltv)}
+                  hint="Receita por cliente"
+                />
+                <KpiCard
+                  icon={Trophy}
+                  label="LTV / CAC"
+                  value={data.ltvCac != null ? `${data.ltvCac.toFixed(1)}x` : "—"}
+                  hint={data.ltvCac != null ? (data.ltvCac >= 3 ? "Saudável (≥3x)" : "Abaixo do ideal") : "Sem dados de CAC"}
+                  tone={data.ltvCac != null ? (data.ltvCac >= 3 ? "good" : "warn") : "default"}
+                />
+                <KpiCard
+                  icon={Megaphone}
+                  label="CAC"
+                  value={data.cac != null ? formatBRL(data.cac) : "—"}
+                  hint={data.investimentoMidia > 0 ? `Mídia: ${formatBRL(data.investimentoMidia)}` : "Conecte Meta Ads"}
+                />
+                <KpiCard
+                  icon={Zap}
+                  label="ROAS"
+                  value={data.roas != null ? `${data.roas.toFixed(1)}x` : "—"}
+                  hint={data.cpl != null ? `CPL ${formatBRL(data.cpl)}` : "Sem investimento"}
+                  tone={data.roas != null ? (data.roas >= 3 ? "good" : data.roas < 1 ? "bad" : "warn") : "default"}
+                />
+                <KpiCard
+                  icon={CheckCircle2}
+                  label="Win Rate"
+                  value={formatPct(data.winRate)}
+                  hint={`vs ${formatPct(data.previous.winRate)} anterior`}
+                  delta={deltaPct(data.winRate, data.previous.winRate)}
+                />
+                <KpiCard
+                  icon={Activity}
+                  label="Sales Velocity / dia"
+                  value={formatBRL(data.salesVelocity)}
+                  hint={data.cicloMedioDias > 0 ? `Ciclo ${data.cicloMedioDias.toFixed(0)}d` : "Sem ciclo"}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <KpiCard
+                  icon={AlertTriangle}
+                  label="Perda Estimada"
+                  value={formatBRL(data.perdas.total)}
+                  hint={`Recuperável 30d: ${formatBRL(data.recuperavel30d)}`}
+                  tone="bad"
+                />
+                <KpiCard
+                  icon={Target}
+                  label="Pipeline Aberto"
+                  value={formatBRL(data.forecast.pipelineAberto)}
+                  hint={`Forecast 30d: ${formatBRL(data.forecast.forecast30d)}`}
+                />
+                <KpiCard
+                  icon={Gauge}
+                  label="Concentração Top 3 canais"
+                  value={formatPct(data.concentracaoTop3)}
+                  hint={data.concentracaoTop3 > 70 ? "Alta dependência" : "Mix saudável"}
+                  tone={data.concentracaoTop3 > 70 ? "warn" : "default"}
+                  deltaInverse
+                />
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -487,6 +591,176 @@ export default function GrowSalesBI() {
           )}
         </TabsContent>
 
+        {/* ===== GROW FINANCEIRO (5 pilares × R$) ===== */}
+        <TabsContent value="grow-financeiro" className="space-y-4">
+          {isLoading || !data ? skeleton : (
+            <>
+              <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-3">
+                    <Compass className="h-6 w-6 text-primary mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold">GROW Financeiro — Os 5 pilares traduzidos em dinheiro</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Cada pilar da metodologia GROW com seus indicadores monetários, score 0–100 e diagnóstico de saúde.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <PillarCard
+                  icon={Megaphone}
+                  title="Aquisição & Marketing"
+                  score={data.cac != null && data.roas != null
+                    ? Math.min(100, Math.round((data.roas / 4) * 100))
+                    : Math.round(100 - data.concentracaoTop3 * 0.5)}
+                  rows={[
+                    ["Investimento em mídia", formatBRL(data.investimentoMidia)],
+                    ["CPL", data.cpl != null ? formatBRL(data.cpl) : "—"],
+                    ["CAC", data.cac != null ? formatBRL(data.cac) : "—"],
+                    ["ROAS", data.roas != null ? `${data.roas.toFixed(2)}x` : "—"],
+                    ["Concentração top 3 canais", formatPct(data.concentracaoTop3)],
+                  ]}
+                  alert={data.concentracaoTop3 > 70
+                    ? `Alta dependência: ${formatPct(data.concentracaoTop3)} da receita vem só dos top 3 canais.`
+                    : data.roas != null && data.roas < 1
+                    ? `ROAS abaixo de 1x: você está perdendo dinheiro em ads.`
+                    : null}
+                />
+
+                <PillarCard
+                  icon={Activity}
+                  title="Processos Comerciais"
+                  score={Math.min(100, Math.round(data.winRate * 2 + (data.cicloMedioDias > 0 ? Math.max(0, 100 - data.cicloMedioDias) : 0)) / 2)}
+                  rows={[
+                    ["Win Rate global", formatPct(data.winRate)],
+                    ["Ciclo médio de vendas", data.cicloMedioDias > 0 ? `${data.cicloMedioDias.toFixed(0)} dias` : "—"],
+                    ["Sales Velocity / dia", formatBRL(data.salesVelocity)],
+                    ["Gargalo do funil", data.funil.gargalo],
+                    ["Comparecimento", formatPct(data.funil.convCompareceu)],
+                  ]}
+                  alert={data.winRate < 20
+                    ? `Win Rate de ${formatPct(data.winRate)} — reveja qualificação e script.`
+                    : null}
+                />
+
+                <PillarCard
+                  icon={Target}
+                  title="Gestão Comercial"
+                  score={data.forecast.metaAtual > 0
+                    ? Math.min(100, Math.round(data.forecast.pctMeta))
+                    : 50}
+                  rows={[
+                    ["Realizado", formatBRL(data.forecast.realizadoAtual)],
+                    ["Meta do período", data.forecast.metaAtual > 0 ? formatBRL(data.forecast.metaAtual) : "Sem meta"],
+                    ["% da meta", data.forecast.metaAtual > 0 ? formatPct(data.forecast.pctMeta) : "—"],
+                    ["Forecast 30d (ponderado)", formatBRL(data.forecast.forecast30d)],
+                    ["Pipeline aberto", formatBRL(data.forecast.pipelineAberto)],
+                  ]}
+                  alert={data.forecast.metaAtual > 0 && data.forecast.pctMeta < 60
+                    ? `Faltam ${formatBRL(Math.max(data.forecast.metaAtual - data.forecast.realizadoAtual, 0))} para bater a meta.`
+                    : data.forecast.metaAtual === 0
+                    ? "Configure uma meta de receita em Configurações → Comercial."
+                    : null}
+                />
+
+                <PillarCard
+                  icon={Zap}
+                  title="Automação & Resposta"
+                  score={Math.max(0, 100 - Math.round((data.perdas.leadSemResposta.qty + data.perdas.semFollowUp.qty) / Math.max(data.funil.leadsNovos, 1) * 100))}
+                  rows={[
+                    ["Leads sem 1ª resposta", `${data.perdas.leadSemResposta.qty} (${formatBRL(data.perdas.leadSemResposta.valor)})`],
+                    ["Leads sem follow-up 7d+", `${data.perdas.semFollowUp.qty} (${formatBRL(data.perdas.semFollowUp.valor)})`],
+                    ["No-shows", `${data.perdas.noShow.qty} (${formatBRL(data.perdas.noShow.valor)})`],
+                    ["Recuperável em 30 dias", formatBRL(data.recuperavel30d)],
+                    ["Perda total estimada", formatBRL(data.perdas.total)],
+                  ]}
+                  alert={data.perdas.total > 0
+                    ? `Recuperando 30% das perdas você fatura mais ${formatBRL(data.recuperavel30d)} sem investir 1 real em ads.`
+                    : null}
+                />
+
+                <PillarCard
+                  icon={Users}
+                  title="Pessoas & Performance"
+                  score={Math.min(100, Math.round(data.capacidade.utilizada * 0.5 + (data.performance.closers[0]?.conv || 0)))}
+                  rows={[
+                    ["Vendedores ativos", String(data.capacidade.vendedoresAtivos)],
+                    ["Oportunidades / vendedor", data.capacidade.abertosPorVendedor.toFixed(1)],
+                    ["Capacidade utilizada", formatPct(data.capacidade.utilizada)],
+                    ["Top closer", data.performance.closers[0]?.user || "—"],
+                    ["Receita top closer", data.performance.closers[0] ? formatBRL(data.performance.closers[0].receita) : "—"],
+                  ]}
+                  alert={data.capacidade.utilizada >= 90
+                    ? "Time saturado — contrate ou redistribua a base."
+                    : data.capacidade.vendedoresAtivos <= 1
+                    ? "Operação dependente de 1 pessoa. Risco alto."
+                    : null}
+                />
+
+                <PillarCard
+                  icon={Trophy}
+                  title="Crescimento & LTV"
+                  score={data.ltvCac != null
+                    ? Math.min(100, Math.round(data.ltvCac * 25))
+                    : 50}
+                  rows={[
+                    ["LTV (proxy)", formatBRL(data.receita.ltv)],
+                    ["LTV / CAC", data.ltvCac != null ? `${data.ltvCac.toFixed(2)}x` : "—"],
+                    ["Payback do CAC", data.paybackMeses != null ? `${data.paybackMeses.toFixed(1)} meses` : "—"],
+                    ["Δ Receita vs período anterior", `${deltaPct(data.receita.bruto, data.previous.receita)?.toFixed(1) ?? "—"}%`],
+                    ["Δ Win Rate vs anterior", `${deltaPct(data.winRate, data.previous.winRate)?.toFixed(1) ?? "—"}%`],
+                  ]}
+                  alert={data.ltvCac != null && data.ltvCac < 3
+                    ? `LTV/CAC de ${data.ltvCac.toFixed(1)}x está abaixo de 3x. Otimize retenção ou reduza CAC.`
+                    : null}
+                />
+              </div>
+
+              {/* Cohort */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-primary" /> Cohort por mês de entrada
+                  </CardTitle>
+                  <CardDescription>Quantos leads entraram em cada mês e quantos fecharam.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground border-b">
+                        <th className="text-left py-2">Mês</th>
+                        <th className="text-right">Entrados</th>
+                        <th className="text-right">Fechados</th>
+                        <th className="text-right">Conversão</th>
+                        <th className="text-right">Receita</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.cohorts.map((c) => (
+                        <tr key={c.mes} className="border-b last:border-0">
+                          <td className="py-2 font-medium">{c.mes}</td>
+                          <td className="text-right">{c.entrados}</td>
+                          <td className="text-right">{c.fechados}</td>
+                          <td className="text-right">
+                            <Badge variant={c.conv >= 20 ? "default" : "secondary"}>{formatPct(c.conv)}</Badge>
+                          </td>
+                          <td className="text-right font-semibold text-primary">{formatBRL(c.receita)}</td>
+                        </tr>
+                      ))}
+                      {data.cohorts.length === 0 && (
+                        <tr><td colSpan={5} className="text-center py-6 text-muted-foreground">Sem dados de cohort no período.</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
         {/* ===== GROWTH SCORE ===== */}
         <TabsContent value="score" className="space-y-4">
           {isLoading || !data ? skeleton : (
@@ -592,6 +866,52 @@ function InsightRow({ insight, large }: { insight: { tipo: "alerta" | "oportunid
           </div>
           <ArrowRight className="h-4 w-4 text-muted-foreground/50" />
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PillarCard({
+  icon: Icon,
+  title,
+  score,
+  rows,
+  alert,
+}: {
+  icon: any;
+  title: string;
+  score: number;
+  rows: [string, string][];
+  alert?: string | null;
+}) {
+  const s = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const tone = s >= 70 ? "text-primary" : s >= 40 ? "text-orange-500" : "text-destructive";
+  const bar = s >= 70 ? "bg-primary" : s >= 40 ? "bg-orange-500" : "bg-destructive";
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Icon className="h-4 w-4 text-primary" /> {title}
+          </CardTitle>
+          <span className={`text-2xl font-bold ${tone}`}>{s}</span>
+        </div>
+        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
+          <div className={`h-full ${bar}`} style={{ width: `${s}%` }} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-1.5">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between text-sm border-b last:border-0 py-1">
+            <span className="text-muted-foreground">{k}</span>
+            <span className="font-medium">{v}</span>
+          </div>
+        ))}
+        {alert && (
+          <div className="mt-3 text-xs p-2 rounded border-l-2 border-orange-500 bg-orange-500/5 text-orange-700 dark:text-orange-400">
+            {alert}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
