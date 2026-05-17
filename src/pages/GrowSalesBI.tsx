@@ -870,3 +870,49 @@ function InsightRow({ insight, large }: { insight: { tipo: "alerta" | "oportunid
     </Card>
   );
 }
+
+function PillarCard({
+  icon: Icon,
+  title,
+  score,
+  rows,
+  alert,
+}: {
+  icon: any;
+  title: string;
+  score: number;
+  rows: [string, string][];
+  alert?: string | null;
+}) {
+  const s = Math.max(0, Math.min(100, Math.round(score || 0)));
+  const tone = s >= 70 ? "text-primary" : s >= 40 ? "text-orange-500" : "text-destructive";
+  const bar = s >= 70 ? "bg-primary" : s >= 40 ? "bg-orange-500" : "bg-destructive";
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Icon className="h-4 w-4 text-primary" /> {title}
+          </CardTitle>
+          <span className={`text-2xl font-bold ${tone}`}>{s}</span>
+        </div>
+        <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden mt-2">
+          <div className={`h-full ${bar}`} style={{ width: `${s}%` }} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-1.5">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex justify-between text-sm border-b last:border-0 py-1">
+            <span className="text-muted-foreground">{k}</span>
+            <span className="font-medium">{v}</span>
+          </div>
+        ))}
+        {alert && (
+          <div className="mt-3 text-xs p-2 rounded border-l-2 border-orange-500 bg-orange-500/5 text-orange-700 dark:text-orange-400">
+            {alert}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
