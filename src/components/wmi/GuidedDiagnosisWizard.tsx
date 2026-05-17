@@ -331,7 +331,11 @@ const FLAT: FlatItem[] = PILARES.flatMap((p, pilarIdx) =>
   p.questions.map((q, qIdx) => ({ pilarIdx, qIdx, pilar: p, q }))
 );
 
-export function GuidedDiagnosisWizard() {
+export interface GuidedDiagnosisWizardProps {
+  onComplete?: () => void;
+  completeLabel?: string;
+}
+export function GuidedDiagnosisWizard({ onComplete, completeLabel }: GuidedDiagnosisWizardProps = {}) {
   const { data: existing, isLoading } = useGuidedDiagnosis();
   const save = useSaveGuidedPilar();
   const [answersByPilar, setAnswersByPilar] = useState<Record<string, Record<string, any>>>({});
