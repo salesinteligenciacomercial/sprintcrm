@@ -125,49 +125,77 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action } = body;
 
+    // Resolve company_id once
+    const { data: userRole } = await supabase
+      .from("user_roles")
+      .select("company_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const companyId = userRole?.company_id;
+    if (!companyId) throw new Error("Company not found");
+
+    // Admin client for writes (bypass RLS recursion edge cases)
+    const adminKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const admin = createClient(supabaseUrl, adminKey);
+
     let result: any;
 
     switch (action) {
       case "make-call": {
         const { caller, called } = body;
-        if (!caller || !called) {
-          throw new Error("caller and called are required");
-        }
-        result = await makeCall(caller, called);
+        if (!caller || !called) throw new Error("caller and called are required");
+        result = await makeCall(caller, called, supabase, companyId);
         break;
       }
       case "check-call": {
         const { callId } = body;
         if (!callId) throw new Error("callId is required");
-        result = await checkCall(callId);
+        result = await checkCall(callId, supabase, companyId);
         break;
       }
       case "end-call": {
         const { callId } = body;
         if (!callId) throw new Error("callId is required");
-        result = await endCall(callId);
+        result = await endCallApi(callId, supabase, companyId);
         break;
       }
       case "get-config": {
-        // Get nvoip_config for user's company
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("company_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!userRole?.company_id) {
-          throw new Error("Company not found");
-        }
-
         const { data: config } = await supabase
           .from("nvoip_config")
-          .select("*")
-          .eq("company_id", userRole.company_id)
-          .eq("is_active", true)
+          .select("id, number_sip, napikey, login_email, is_active, user_token")
+          .eq("company_id", companyId)
           .maybeSingle();
+        // Mask token in response
+        const safe = config ? { ...config, user_token: config.user_token ? "••••••••" : null, has_token: !!config.user_token } : null;
+        result = { config: safe, company_id: companyId };
+        break;
+      }
+      case "save-config": {
+        const { number_sip, user_token, napikey, login_email } = body;
+        if (!number_sip) throw new Error("number_sip é obrigatório");
 
-        result = { config, company_id: userRole.company_id };
+        const payload: any = {
+          company_id: companyId,
+          number_sip,
+          napikey: napikey ?? null,
+          login_email: login_email ?? null,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        };
+        // Only overwrite token if a new one was provided
+        if (user_token && user_token !== "••••••••") payload.user_token = user_token;
+
+        const { error: upErr } = await admin
+          .from("nvoip_config")
+          .upsert(payload, { onConflict: "company_id" });
+        if (upErr) throw upErr;
+        result = { success: true };
+        break;
+      }
+      case "test-connection": {
+        const { numberSip, userToken } = await resolveCreds(supabase, companyId);
+        await getAccessTokenFor(numberSip, userToken);
+        result = { success: true, numberSip };
         break;
       }
       default:
