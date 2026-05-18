@@ -64,57 +64,32 @@ async function getAccessToken(supabase?: any, companyId?: string): Promise<{ tok
   return { token: await getAccessTokenFor(numberSip, userToken), napikey: Deno.env.get("NVOIP_NAPIKEY") };
 }
 
-async function makeCall(caller: string, called: string): Promise<any> {
-  const token = await getAccessToken();
-
+async function makeCall(caller: string, called: string, supabase: any, companyId: string): Promise<any> {
+  const { token, napikey } = await getAccessToken(supabase, companyId);
   const res = await fetch(`${NVOIP_BASE}/calls/`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      caller,
-      called,
-      napikey: Deno.env.get("NVOIP_NAPIKEY"),
-    }),
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ caller, called, napikey }),
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`make-call failed (${res.status}): ${text}`);
-  }
-
+  if (!res.ok) throw new Error(`make-call failed (${res.status}): ${await res.text()}`);
   return await res.json();
 }
 
-async function checkCall(callId: string): Promise<any> {
-  const token = await getAccessToken();
-
+async function checkCall(callId: string, supabase: any, companyId: string): Promise<any> {
+  const { token } = await getAccessToken(supabase, companyId);
   const res = await fetch(`${NVOIP_BASE}/calls?callId=${callId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`check-call failed (${res.status}): ${text}`);
-  }
-
+  if (!res.ok) throw new Error(`check-call failed (${res.status}): ${await res.text()}`);
   return await res.json();
 }
 
-async function endCall(callId: string): Promise<any> {
-  const token = await getAccessToken();
-
+async function endCallApi(callId: string, supabase: any, companyId: string): Promise<any> {
+  const { token } = await getAccessToken(supabase, companyId);
   const res = await fetch(`${NVOIP_BASE}/endcall?callId=${callId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`end-call failed (${res.status}): ${text}`);
-  }
-
+  if (!res.ok) throw new Error(`end-call failed (${res.status}): ${await res.text()}`);
   return await res.json();
 }
 
