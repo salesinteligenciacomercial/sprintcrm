@@ -17,7 +17,7 @@ async function getAccessTokenFor(numberSip: string, userToken: string): Promise<
   const cached = tokenCache.get(key);
   if (cached && Date.now() < cached.expiresAt) return cached.token;
 
-  const body = `username=${numberSip}&password=${encodeURIComponent(userToken)}&grant_type=password`;
+  const body = `username=${encodeURIComponent(numberSip)}&password=${encodeURIComponent(userToken)}&grant_type=password`;
   const res = await fetch(`${NVOIP_BASE}/oauth/token`, {
     method: "POST",
     headers: {
@@ -31,9 +31,13 @@ async function getAccessTokenFor(numberSip: string, userToken: string): Promise<
     throw new Error(`OAuth failed (${res.status}): ${text}`);
   }
   const data = await res.json();
+  if (!data.access_token) {
+    throw new Error(`OAuth: resposta sem access_token: ${JSON.stringify(data)}`);
+  }
+  const ttl = Math.max(60, (Number(data.expires_in) || 3600) - 60);
   tokenCache.set(key, {
     token: data.access_token,
-    expiresAt: Date.now() + (data.expires_in - 3600) * 1000,
+    expiresAt: Date.now() + ttl * 1000,
   });
   return data.access_token;
 }
