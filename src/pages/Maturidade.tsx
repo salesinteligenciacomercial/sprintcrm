@@ -91,6 +91,9 @@ export default function Maturidade() {
         </p>
       </div>
 
+      {/* 4 FASES G.R.O.W. — jornada da metodologia */}
+      <GrowPhasesPanel />
+
       {/* GROW SCORE CONSOLIDADO (selo da metodologia) */}
       <GrowScoreHero />
 
