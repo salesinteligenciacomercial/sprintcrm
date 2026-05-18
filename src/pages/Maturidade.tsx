@@ -20,6 +20,7 @@ import { GrowScoreHero } from "@/components/wmi/GrowScoreHero";
 import { NorthMetricsPanel } from "@/components/wmi/NorthMetricsPanel";
 import { RhythmTemplatesPanel } from "@/components/wmi/RhythmTemplatesPanel";
 import { Onboarding7Days } from "@/components/wmi/Onboarding7Days";
+import { GrowPhasesPanel } from "@/components/wmi/GrowPhasesPanel";
 import {
   Activity, Trophy, Sparkles, ArrowRight, GraduationCap, AlertTriangle,
   TrendingUp, Target, FileText, BarChart3, Bot, Users, ClipboardCheck,
