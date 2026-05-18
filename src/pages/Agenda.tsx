@@ -2511,13 +2511,40 @@ export default function Agenda() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={novoCompromissoOpen} onOpenChange={setNovoCompromissoOpen}>
-            <DialogTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
-                Novo Agendamento
+                Criar
+                <ChevronDown className="h-4 w-4 opacity-70" />
               </Button>
-            </DialogTrigger>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setNovoCompromissoOpen(true)} className="gap-2 cursor-pointer">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Compromisso</span>
+                  <span className="text-xs text-muted-foreground">Reunião, consulta, call</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setQuickTaskOpen(true)} className="gap-2 cursor-pointer">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Tarefa</span>
+                  <span className="text-xs text-muted-foreground">To-do com data de entrega</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <QuickTaskDialog
+            open={quickTaskOpen}
+            onOpenChange={setQuickTaskOpen}
+            defaultDueDate={dataSelecionada}
+            onCreated={() => { carregarCompromissos?.(); }}
+          />
+
+          <Dialog open={novoCompromissoOpen} onOpenChange={setNovoCompromissoOpen}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Novo Agendamento</DialogTitle>
