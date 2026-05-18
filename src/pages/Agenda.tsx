@@ -129,6 +129,7 @@ export default function Agenda() {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [novoCompromissoOpen, setNovoCompromissoOpen] = useState(false);
+  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
   const [configuracoesOpen, setConfiguracoesOpen] = useState(false);
   const [horarioComercial, setHorarioComercial] = useState<HorarioComercial>(criarHorarioPadrao());
   const [tempoMedioPadrao, setTempoMedioPadrao] = useState<number>(30);
