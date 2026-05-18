@@ -10,6 +10,8 @@ import { CallHistory } from '@/components/discador/CallHistory';
 import { SDRDashboard } from '@/components/discador/SDRDashboard';
 import { SDRSpecializationPanel } from '@/components/discador/SDRSpecializationPanel';
 import { StartCallFromLeadDialog } from '@/components/discador/StartCallFromLeadDialog';
+import { NvoipAccountPanel } from '@/components/discador/NvoipAccountPanel';
+import { KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibility';
 import { Switch } from '@/components/ui/switch';
@@ -98,6 +100,10 @@ const Discador = () => {
             <TabsTrigger value="especializacao" className="flex items-center gap-2">
               ✨ Especialização SDR
             </TabsTrigger>
+            <TabsTrigger value="conta-nvoip" className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4" />
+              Conta Nvoip
+            </TabsTrigger>
           </TabsList>
 
           {/* Tab: Fazer Ligação */}
@@ -184,6 +190,10 @@ const Discador = () => {
 
           <TabsContent value="especializacao">
             <SDRSpecializationPanel />
+          </TabsContent>
+
+          <TabsContent value="conta-nvoip">
+            <NvoipAccountPanel />
           </TabsContent>
         </Tabs>
       </div>

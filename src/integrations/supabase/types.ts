@@ -6317,24 +6317,33 @@ export type Database = {
           created_at: string | null
           id: string
           is_active: boolean | null
+          login_email: string | null
+          napikey: string | null
           number_sip: string
           updated_at: string | null
+          user_token: string | null
         }
         Insert: {
           company_id: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          login_email?: string | null
+          napikey?: string | null
           number_sip: string
           updated_at?: string | null
+          user_token?: string | null
         }
         Update: {
           company_id?: string
           created_at?: string | null
           id?: string
           is_active?: boolean | null
+          login_email?: string | null
+          napikey?: string | null
           number_sip?: string
           updated_at?: string | null
+          user_token?: string | null
         }
         Relationships: [
           {
