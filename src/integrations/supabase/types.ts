@@ -9188,6 +9188,9 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          external_source: string
+          google_synced_at: string | null
+          google_task_id: string | null
           id: string
           lead_id: string | null
           legal_process_id: string | null
@@ -9217,6 +9220,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          external_source?: string
+          google_synced_at?: string | null
+          google_task_id?: string | null
           id?: string
           lead_id?: string | null
           legal_process_id?: string | null
@@ -9246,6 +9252,9 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          external_source?: string
+          google_synced_at?: string | null
+          google_task_id?: string | null
           id?: string
           lead_id?: string | null
           legal_process_id?: string | null

@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
-import { Calendar as CalendarIcon, Plus, Clock, User, Filter, Settings, Bell, CheckCircle2, XCircle, AlertCircle, Trash2, Search, CalendarDays, Copy, Download, RefreshCw, Link2, Sparkles, TrendingUp, Send, Repeat, Hourglass } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Clock, User, Filter, Settings, Bell, CheckCircle2, XCircle, AlertCircle, Trash2, Search, CalendarDays, Copy, Download, RefreshCw, Link2, Sparkles, TrendingUp, Send, Repeat, Hourglass, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { QuickTaskDialog } from "@/components/agenda/QuickTaskDialog";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -127,6 +129,7 @@ export default function Agenda() {
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [novoCompromissoOpen, setNovoCompromissoOpen] = useState(false);
+  const [quickTaskOpen, setQuickTaskOpen] = useState(false);
   const [configuracoesOpen, setConfiguracoesOpen] = useState(false);
   const [horarioComercial, setHorarioComercial] = useState<HorarioComercial>(criarHorarioPadrao());
   const [tempoMedioPadrao, setTempoMedioPadrao] = useState<number>(30);
@@ -2508,13 +2511,40 @@ export default function Agenda() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={novoCompromissoOpen} onOpenChange={setNovoCompromissoOpen}>
-            <DialogTrigger asChild>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
-                Novo Agendamento
+                Criar
+                <ChevronDown className="h-4 w-4 opacity-70" />
               </Button>
-            </DialogTrigger>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => setNovoCompromissoOpen(true)} className="gap-2 cursor-pointer">
+                <CalendarIcon className="h-4 w-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Compromisso</span>
+                  <span className="text-xs text-muted-foreground">Reunião, consulta, call</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setQuickTaskOpen(true)} className="gap-2 cursor-pointer">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-medium">Tarefa</span>
+                  <span className="text-xs text-muted-foreground">To-do com data de entrega</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <QuickTaskDialog
+            open={quickTaskOpen}
+            onOpenChange={setQuickTaskOpen}
+            defaultDueDate={selectedDate}
+            onCreated={() => { carregarCompromissos?.(); }}
+          />
+
+          <Dialog open={novoCompromissoOpen} onOpenChange={setNovoCompromissoOpen}>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Novo Agendamento</DialogTitle>
