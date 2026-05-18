@@ -10,6 +10,8 @@ import { CallHistory } from '@/components/discador/CallHistory';
 import { SDRDashboard } from '@/components/discador/SDRDashboard';
 import { SDRSpecializationPanel } from '@/components/discador/SDRSpecializationPanel';
 import { StartCallFromLeadDialog } from '@/components/discador/StartCallFromLeadDialog';
+import { NvoipAccountPanel } from '@/components/discador/NvoipAccountPanel';
+import { KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibility';
 import { Switch } from '@/components/ui/switch';
