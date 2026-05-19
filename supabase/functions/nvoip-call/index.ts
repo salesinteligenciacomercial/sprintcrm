@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
         if (!number_sip) throw new Error("number_sip é obrigatório");
         if (!user_token || user_token === "••••••••") {
           const { userToken } = await resolveCreds(supabase, companyId);
-          if (!userToken) throw new Error("Senha da conta Nvoip é obrigatória");
+          if (!userToken) throw new Error("User Token da conta Nvoip é obrigatório");
         } else {
           await getAccessTokenFor(number_sip, user_token);
         }
