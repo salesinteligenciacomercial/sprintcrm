@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { LeadAttachments } from "@/components/leads/LeadAttachments";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
+import { safeFormatPhoneNumber } from "@/utils/phoneFormatter";
 
 /**
  * ✅ BACKUP ATUALIZADO - 2024-11-01
@@ -528,8 +529,12 @@ export const LeadCard = memo(function LeadCard({ lead, onDelete, onLeadMoved, is
     e.preventDefault();
     e.stopPropagation();
     if (lead.telefone) {
-      const numero = lead.telefone.replace(/\D/g, "");
-      window.open(`https://wa.me/55${numero}`, "_blank");
+      const numero = safeFormatPhoneNumber(lead.telefone);
+      if (!numero) {
+        toast.error("Telefone inválido");
+        return;
+      }
+      window.open(`https://wa.me/${numero}`, "_blank");
     } else {
       toast.error("Lead não possui telefone cadastrado");
     }
