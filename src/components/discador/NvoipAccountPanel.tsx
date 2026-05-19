@@ -37,9 +37,7 @@ export const NvoipAccountPanel: React.FC = () => {
         body: { action: 'account-info' },
       });
       if (error) throw error;
-      if (data?.success === false) {
-        throw new Error('Não foi possível autenticar na Nvoip. Verifique se o e-mail e a senha da conta Nvoip estão corretos.');
-      }
+      if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       setAccount(data);
       return true;
     } catch (e: any) {
@@ -93,8 +91,8 @@ export const NvoipAccountPanel: React.FC = () => {
     const passwordToSave = form.user_token.trim();
     const shouldPreservePassword = hasToken && passwordToSave === '••••••••';
 
-    if (!form.login_email.trim() || !form.number_sip.trim() || (!shouldPreservePassword && !passwordToSave)) {
-      toast.error('Preencha o email, a senha Nvoip e o ID da central');
+    if (!form.number_sip.trim() || (!shouldPreservePassword && !passwordToSave)) {
+      toast.error('Preencha o NumberSIP e o User Token');
       return;
     }
     setSaving(true);
@@ -109,9 +107,7 @@ export const NvoipAccountPanel: React.FC = () => {
         },
       });
       if (error) throw error;
-      if (data?.success === false) {
-        throw new Error('Não foi possível autenticar na Nvoip. Verifique se o e-mail e a senha da conta Nvoip estão corretos.');
-      }
+      if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       toast.success('Central conectada com sucesso');
       setShowForm(false);
       await load();
