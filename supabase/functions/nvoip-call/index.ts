@@ -9,7 +9,7 @@ const corsHeaders = {
 const NVOIP_BASE = "https://api.nvoip.com.br/v2";
 const NVOIP_BASIC_AUTH = "Basic TnZvaXBBcGlWMjpUblp2YVhCQmNHbFdNakl3TWpFPQ==";
 
-// Cache token per (numberSip+userToken) combo
+// Cache token per (NumberSIP + User Token) combo
 const tokenCache = new Map<string, { token: string; expiresAt: number }>();
 
 async function getAccessTokenFor(username: string, password: string): Promise<string> {
@@ -28,7 +28,7 @@ async function getAccessTokenFor(username: string, password: string): Promise<st
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`OAuth Nvoip falhou (${res.status}): verifique e-mail e senha da sua conta Nvoip. Detalhe: ${text}`);
+    throw new Error(`OAuth Nvoip falhou (${res.status}): verifique o NumberSIP e o User Token da sua conta Nvoip. Detalhe: ${text}`);
   }
   const data = await res.json();
   if (!data.access_token) {
@@ -54,21 +54,21 @@ async function resolveCreds(supabase: any, companyId: string) {
   const userToken = cfg?.user_token || Deno.env.get("NVOIP_USER_TOKEN");
   const napikey = cfg?.napikey || Deno.env.get("NVOIP_NAPIKEY");
   const loginEmail = cfg?.login_email || Deno.env.get("NVOIP_LOGIN_EMAIL");
-  if (!loginEmail || !userToken) {
-    throw new Error("Conta Nvoip não conectada. Configure e-mail e senha em Call Center → Conta Nvoip.");
+  if (!numberSip || !userToken) {
+    throw new Error("Conta Nvoip não conectada. Configure NumberSIP e User Token em Call Center → Conta Telefônica.");
   }
   return { numberSip, userToken, napikey, loginEmail };
 }
 
 async function getAccessToken(supabase?: any, companyId?: string): Promise<{ token: string; napikey?: string }> {
   if (supabase && companyId) {
-    const { loginEmail, userToken, napikey } = await resolveCreds(supabase, companyId);
-    return { token: await getAccessTokenFor(loginEmail, userToken), napikey };
+    const { numberSip, userToken, napikey } = await resolveCreds(supabase, companyId);
+    return { token: await getAccessTokenFor(numberSip, userToken), napikey };
   }
   const userToken = Deno.env.get("NVOIP_USER_TOKEN");
-  const loginEmail = Deno.env.get("NVOIP_LOGIN_EMAIL");
-  if (!userToken || !loginEmail) throw new Error("NVOIP_LOGIN_EMAIL/NVOIP_USER_TOKEN not configured");
-  return { token: await getAccessTokenFor(loginEmail, userToken), napikey: Deno.env.get("NVOIP_NAPIKEY") };
+  const numberSip = Deno.env.get("NVOIP_NUMBER_SIP");
+  if (!userToken || !numberSip) throw new Error("NVOIP_NUMBER_SIP/NVOIP_USER_TOKEN not configured");
+  return { token: await getAccessTokenFor(numberSip, userToken), napikey: Deno.env.get("NVOIP_NAPIKEY") };
 }
 
 async function makeCall(caller: string, called: string, supabase: any, companyId: string): Promise<any> {
@@ -180,12 +180,11 @@ Deno.serve(async (req) => {
       case "save-config": {
         const { number_sip, user_token, napikey, login_email } = body;
         if (!number_sip) throw new Error("number_sip é obrigatório");
-        if (!login_email) throw new Error("E-mail da conta Nvoip é obrigatório");
         if (!user_token || user_token === "••••••••") {
           const { userToken } = await resolveCreds(supabase, companyId);
-          if (!userToken) throw new Error("Senha da conta Nvoip é obrigatória");
+          if (!userToken) throw new Error("User Token da conta Nvoip é obrigatório");
         } else {
-          await getAccessTokenFor(login_email, user_token);
+          await getAccessTokenFor(number_sip, user_token);
         }
 
         const payload: any = {
@@ -207,8 +206,8 @@ Deno.serve(async (req) => {
         break;
       }
       case "test-connection": {
-        const { numberSip, userToken, loginEmail } = await resolveCreds(supabase, companyId);
-        await getAccessTokenFor(loginEmail, userToken);
+        const { numberSip, userToken } = await resolveCreds(supabase, companyId);
+        await getAccessTokenFor(numberSip, userToken);
         result = { success: true, numberSip };
         break;
       }
@@ -253,6 +252,7 @@ Deno.serve(async (req) => {
     const isExpectedNvoipError =
       message.includes("OAuth Nvoip falhou") ||
       message.includes("Conta Nvoip") ||
+      message.includes("NumberSIP") ||
       message.includes("obrigatór");
 
     return new Response(
