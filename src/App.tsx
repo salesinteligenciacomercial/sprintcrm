@@ -41,6 +41,7 @@ import InstallApp from "./pages/InstallApp";
 import { MainLayout } from "./components/layout/MainLayout";
 import NotFound from "./pages/NotFound";
 import AutomacaoDiagnostico from "./pages/AutomacaoDiagnostico";
+import ConfirmarCompromisso from "./pages/ConfirmarCompromisso";
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from "./components/ui/button";
 
