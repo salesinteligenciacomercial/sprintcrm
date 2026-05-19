@@ -1,18 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle2, AlertCircle, Loader2, KeyRound, ShieldCheck } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Loader2, KeyRound, ShieldCheck, Wallet, Radio, RefreshCw, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+interface AccountInfo {
+  numberSip: string;
+  balance: any;
+  balanceError: string | null;
+  tokenIssuedAt: string;
+}
 
 export const NvoipAccountPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [account, setAccount] = useState<AccountInfo | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     number_sip: '',
     user_token: '',
@@ -21,7 +31,23 @@ export const NvoipAccountPanel: React.FC = () => {
     login_password: '',
   });
 
-  const load = async () => {
+  const loadAccount = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('nvoip-call', {
+        body: { action: 'account-info' },
+      });
+      if (error) throw error;
+      setAccount(data);
+    } catch (e: any) {
+      console.error('Erro ao buscar dados da central:', e);
+      toast.error('Não foi possível buscar dados da central');
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('nvoip-call', {
@@ -38,15 +64,23 @@ export const NvoipAccountPanel: React.FC = () => {
           login_email: cfg.login_email || '',
         }));
         setHasToken(!!cfg.has_token);
+        if (cfg.has_token) {
+          await loadAccount();
+        } else {
+          setShowForm(true);
+        }
+      } else {
+        setShowForm(true);
       }
     } catch (e) {
       console.error(e);
+      setShowForm(true);
     } finally {
       setLoading(false);
     }
-  };
+  }, [loadAccount]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   const handleSave = async () => {
     if (!form.number_sip.trim() || (!hasToken && !form.user_token.trim())) {
@@ -66,6 +100,7 @@ export const NvoipAccountPanel: React.FC = () => {
       });
       if (error) throw error;
       toast.success('Central conectada com sucesso');
+      setShowForm(false);
       await load();
     } catch (e: any) {
       toast.error(e.message || 'Erro ao salvar');
@@ -74,123 +109,183 @@ export const NvoipAccountPanel: React.FC = () => {
     }
   };
 
-  const handleTest = async () => {
-    setTesting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('nvoip-call', {
-        body: { action: 'test-connection' },
-      });
-      if (error) throw error;
-      toast.success(`Central conectada (ID ${data?.numberSip})`);
-    } catch (e: any) {
-      toast.error(e.message || 'Falha na conexão');
-    } finally {
-      setTesting(false);
+  // Extrai saldo de forma resiliente (a API pode retornar formatos variados)
+  const renderBalance = () => {
+    if (!account?.balance) return account?.balanceError ? 'Indisponível' : '—';
+    const b = account.balance;
+    const value = b.balance ?? b.saldo ?? b.value ?? b.amount;
+    if (typeof value === 'number') {
+      return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
+    if (typeof value === 'string') return value;
+    return JSON.stringify(b);
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {hasToken ? (
-              <CheckCircle2 className="w-5 h-5 text-green-500" />
-            ) : (
-              <KeyRound className="w-5 h-5 text-primary" />
-            )}
-            Acesso à Central Telefônica
-          </CardTitle>
-          <CardDescription>
-            {hasToken
-              ? 'Sua central está conectada. Você pode atualizar as credenciais quando quiser.'
-              : 'Informe as credenciais da sua central telefônica para habilitar ligações dentro do CRM.'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="login_email">Email de acesso</Label>
-                  <Input
-                    id="login_email"
-                    type="email"
-                    placeholder="seuemail@empresa.com"
-                    value={form.login_email}
-                    onChange={(e) => setForm({ ...form, login_email: e.target.value })}
-                  />
+    <div className="max-w-3xl mx-auto space-y-4">
+      {loading ? (
+        <Card>
+          <CardContent className="flex justify-center py-16">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Painel pós-login (sessão ativa) */}
+          {hasToken && account && (
+            <Card className="border-green-500/40 bg-green-500/5">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      Sessão ativa na Central Telefônica
+                      <Badge variant="outline" className="border-green-500/50 text-green-600 dark:text-green-400">
+                        <Radio className="w-3 h-3 mr-1 animate-pulse" />
+                        Online
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Login autenticado com sucesso. Você já pode iniciar chamadas pelo CRM.
+                    </CardDescription>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={loadAccount} disabled={refreshing}>
+                    <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login_password">Senha (opcional)</Label>
-                  <Input
-                    id="login_password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={form.login_password}
-                    onChange={(e) => setForm({ ...form, login_password: e.target.value })}
-                  />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-lg border bg-background p-3">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <Wallet className="w-3.5 h-3.5" /> Saldo da conta
+                    </div>
+                    <div className="text-xl font-bold mt-1">{renderBalance()}</div>
+                  </div>
+                  <div className="rounded-lg border bg-background p-3">
+                    <div className="text-xs text-muted-foreground">ID da Central</div>
+                    <div className="text-xl font-bold font-mono mt-1">{account.numberSip}</div>
+                  </div>
+                  <div className="rounded-lg border bg-background p-3">
+                    <div className="text-xs text-muted-foreground">Última autenticação</div>
+                    <div className="text-sm font-medium mt-1">
+                      {new Date(account.tokenIssuedAt).toLocaleTimeString('pt-BR')}
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="number_sip">ID da Central *</Label>
-                  <Input
-                    id="number_sip"
-                    placeholder="Ex: 137715001"
-                    value={form.number_sip}
-                    onChange={(e) => setForm({ ...form, number_sip: e.target.value })}
-                  />
+                {account.balanceError && (
+                  <Alert variant="destructive" className="py-2">
+                    <AlertDescription className="text-xs">
+                      Saldo indisponível: {account.balanceError}. O login está ativo, mas a operadora não respondeu ao endpoint de saldo.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" size="sm" onClick={() => setShowForm((s) => !s)}>
+                    <KeyRound className="w-4 h-4 mr-2" />
+                    {showForm ? 'Ocultar credenciais' : 'Editar credenciais'}
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="user_token">Chave de Acesso *</Label>
-                  <Input
-                    id="user_token"
-                    type="password"
-                    placeholder={hasToken ? 'Mantenha em branco para preservar' : 'Cole sua chave'}
-                    value={form.user_token}
-                    onChange={(e) => setForm({ ...form, user_token: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="napikey">Chave de API (opcional)</Label>
-                <Input
-                  id="napikey"
-                  placeholder="Usada para iniciar chamadas"
-                  value={form.napikey}
-                  onChange={(e) => setForm({ ...form, napikey: e.target.value })}
-                />
-              </div>
-
-              <Alert>
-                <ShieldCheck className="h-4 w-4" />
-                <AlertDescription className="text-xs">
-                  Suas credenciais são armazenadas de forma segura na nossa nuvem e usadas apenas para autenticar
-                  ligações em nome da sua empresa. Nenhum dado é compartilhado com terceiros.
-                </AlertDescription>
-              </Alert>
-
-              <div className="flex gap-2 pt-2">
-                <Button onClick={handleSave} disabled={saving} className="flex-1">
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {hasToken ? 'Atualizar conexão' : 'Conectar central'}
-                </Button>
-                <Button variant="outline" onClick={handleTest} disabled={testing || !hasToken}>
-                  {testing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Testar conexão
-                </Button>
-              </div>
-            </>
+              </CardContent>
+            </Card>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Formulário de credenciais */}
+          {(!hasToken || showForm) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-primary" />
+                  {hasToken ? 'Atualizar credenciais' : 'Acesso à Central Telefônica'}
+                </CardTitle>
+                <CardDescription>
+                  {hasToken
+                    ? 'Atualize os dados de acesso da sua central quando precisar.'
+                    : 'Informe as credenciais da sua central telefônica para habilitar ligações dentro do CRM.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="login_email">Email de acesso</Label>
+                    <Input
+                      id="login_email"
+                      type="email"
+                      placeholder="seuemail@empresa.com"
+                      value={form.login_email}
+                      onChange={(e) => setForm({ ...form, login_email: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login_password">Senha (opcional)</Label>
+                    <Input
+                      id="login_password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={form.login_password}
+                      onChange={(e) => setForm({ ...form, login_password: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="number_sip">ID da Central *</Label>
+                    <Input
+                      id="number_sip"
+                      placeholder="Ex: 137715001"
+                      value={form.number_sip}
+                      onChange={(e) => setForm({ ...form, number_sip: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user_token">Chave de Acesso *</Label>
+                    <Input
+                      id="user_token"
+                      type="password"
+                      placeholder={hasToken ? 'Mantenha em branco para preservar' : 'Cole sua chave'}
+                      value={form.user_token}
+                      onChange={(e) => setForm({ ...form, user_token: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="napikey">Chave de API (opcional)</Label>
+                  <Input
+                    id="napikey"
+                    placeholder="Usada para iniciar chamadas"
+                    value={form.napikey}
+                    onChange={(e) => setForm({ ...form, napikey: e.target.value })}
+                  />
+                </div>
+
+                <Alert>
+                  <ShieldCheck className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Suas credenciais são armazenadas de forma segura na nossa nuvem e usadas apenas para autenticar
+                    ligações em nome da sua empresa. Nenhum dado é compartilhado com terceiros.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={handleSave} disabled={saving} className="flex-1">
+                    {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    {hasToken ? 'Atualizar conexão' : 'Conectar central'}
+                  </Button>
+                  {hasToken && (
+                    <Button variant="outline" onClick={() => setShowForm(false)}>
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 };

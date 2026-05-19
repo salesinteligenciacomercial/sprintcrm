@@ -202,6 +202,34 @@ Deno.serve(async (req) => {
         result = { success: true, numberSip };
         break;
       }
+      case "account-info": {
+        const { numberSip } = await resolveCreds(supabase, companyId);
+        const { token } = await getAccessToken(supabase, companyId);
+        // Buscar saldo da conta (endpoint público da API v2)
+        let balance: any = null;
+        let balanceError: string | null = null;
+        try {
+          const balRes = await fetch(`${NVOIP_BASE}/balance`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (balRes.ok) {
+            balance = await balRes.json();
+          } else {
+            balanceError = `HTTP ${balRes.status}`;
+          }
+        } catch (e: any) {
+          balanceError = e.message;
+        }
+        result = {
+          success: true,
+          connected: true,
+          numberSip,
+          balance,
+          balanceError,
+          tokenIssuedAt: new Date().toISOString(),
+        };
+        break;
+      }
       default:
         throw new Error(`Unknown action: ${action}`);
     }
