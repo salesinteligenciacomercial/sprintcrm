@@ -23,6 +23,7 @@ export const NvoipAccountPanel: React.FC = () => {
   const [hasToken, setHasToken] = useState(false);
   const [account, setAccount] = useState<AccountInfo | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [form, setForm] = useState({
     number_sip: '',
     user_token: '',
@@ -39,12 +40,16 @@ export const NvoipAccountPanel: React.FC = () => {
       if (error) throw error;
       if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       setAccount(data);
+      setConnectionError(null);
       return true;
     } catch (e: any) {
       console.error('Erro ao buscar dados da central:', e);
+      const message = e.message || 'Não foi possível buscar dados da central';
       setAccount(null);
       setShowForm(true);
-      toast.error(e.message || 'Não foi possível buscar dados da central');
+      setHasToken(false);
+      setForm((f) => ({ ...f, user_token: '' }));
+      setConnectionError(message);
       return false;
     } finally {
       setRefreshing(false);
@@ -95,6 +100,12 @@ export const NvoipAccountPanel: React.FC = () => {
       toast.error('Preencha o NumberSIP e o User Token');
       return;
     }
+    if (!shouldPreservePassword && passwordToSave.length <= 8) {
+      const message = 'Esse valor parece ser um código temporário. Cole o User Token completo da Nvoip em Configurações → API.';
+      setConnectionError(message);
+      toast.error(message);
+      return;
+    }
     setSaving(true);
     try {
       const { data, error } = await supabase.functions.invoke('nvoip-call', {
@@ -109,10 +120,13 @@ export const NvoipAccountPanel: React.FC = () => {
       if (error) throw error;
       if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       toast.success('Central conectada com sucesso');
+      setConnectionError(null);
       setShowForm(false);
       await load();
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao salvar');
+      const message = e.message || 'Erro ao salvar';
+      setConnectionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -216,17 +230,15 @@ export const NvoipAccountPanel: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {connectionError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      {connectionError} O User Token fica no painel Nvoip em Configurações → API; não use senha, código SMS ou token de 6 dígitos.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="login_email">Email de acesso</Label>
-                    <Input
-                      id="login_email"
-                      type="email"
-                      placeholder="seuemail@empresa.com"
-                      value={form.login_email}
-                      onChange={(e) => setForm({ ...form, login_email: e.target.value })}
-                    />
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="number_sip">NumberSIP *</Label>
                     <Input
@@ -245,6 +257,9 @@ export const NvoipAccountPanel: React.FC = () => {
                       value={form.user_token}
                       onChange={(e) => setForm({ ...form, user_token: e.target.value })}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Cole o User Token completo gerado em Configurações → API da Nvoip.
+                    </p>
                   </div>
                 </div>
 
