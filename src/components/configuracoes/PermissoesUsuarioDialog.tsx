@@ -51,7 +51,7 @@ const moduleLabels: Record<string, string> = {
   usuarios: "Usuários",
   chat_equipe: "Chat da Equipe",
   reunioes: "Reuniões",
-  discador: "Discador",
+  discador: "Call Center",
   processos: "Processos Comerciais",
 };
 
