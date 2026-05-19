@@ -15,7 +15,7 @@ export function GrowScoreHero() {
   const pillars: { key: keyof typeof data.pillars; label: string }[] = [
     { key: "prospeccao", label: "Prospecção" },
     { key: "processos",  label: "Processos" },
-    { key: "discador",   label: "Discador" },
+    { key: "discador",   label: "Call Center" },
     { key: "automacao",  label: "Automação" },
     { key: "crm",        label: "CRM" },
     { key: "ia",         label: "IA" },
