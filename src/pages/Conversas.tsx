@@ -2953,8 +2953,12 @@ function Conversas() {
     const phoneParam = urlParams.get('phone');
     const nameParam = urlParams.get('name');
     if (phoneParam) {
-      // Formatar número com +55
-      const formattedPhone = phoneParam.startsWith('55') ? phoneParam : '55' + phoneParam;
+      const { formatted: formattedPhone, isValid } = robustFormatPhoneNumber(phoneParam);
+
+      if (!isValid || !formattedPhone) {
+        toast.error('Número de telefone inválido. Informe o DDI para contatos internacionais.');
+        return;
+      }
 
       // Buscar ou criar conversa com este número
       setTimeout(() => {
