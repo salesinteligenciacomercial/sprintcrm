@@ -381,7 +381,7 @@ export function EditarSubcontaDialog({ company, open, onOpenChange, onSuccess }:
                 />
                 <label htmlFor="edit_allow_discador" className="text-sm flex items-center gap-1.5 cursor-pointer">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  Discador
+                  Call Center
                 </label>
               </div>
               <div className="flex items-center space-x-2">
