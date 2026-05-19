@@ -23,6 +23,7 @@ export const NvoipAccountPanel: React.FC = () => {
   const [hasToken, setHasToken] = useState(false);
   const [account, setAccount] = useState<AccountInfo | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [form, setForm] = useState({
     number_sip: '',
     user_token: '',
@@ -39,12 +40,16 @@ export const NvoipAccountPanel: React.FC = () => {
       if (error) throw error;
       if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       setAccount(data);
+      setConnectionError(null);
       return true;
     } catch (e: any) {
       console.error('Erro ao buscar dados da central:', e);
+      const message = e.message || 'Não foi possível buscar dados da central';
       setAccount(null);
       setShowForm(true);
-      toast.error(e.message || 'Não foi possível buscar dados da central');
+      setHasToken(false);
+      setForm((f) => ({ ...f, user_token: '' }));
+      setConnectionError(message);
       return false;
     } finally {
       setRefreshing(false);
@@ -109,10 +114,13 @@ export const NvoipAccountPanel: React.FC = () => {
       if (error) throw error;
       if (data?.success === false) throw new Error('Não foi possível autenticar na Nvoip. Verifique o NumberSIP e o User Token.');
       toast.success('Central conectada com sucesso');
+      setConnectionError(null);
       setShowForm(false);
       await load();
     } catch (e: any) {
-      toast.error(e.message || 'Erro ao salvar');
+      const message = e.message || 'Erro ao salvar';
+      setConnectionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
