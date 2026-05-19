@@ -180,12 +180,11 @@ Deno.serve(async (req) => {
       case "save-config": {
         const { number_sip, user_token, napikey, login_email } = body;
         if (!number_sip) throw new Error("number_sip é obrigatório");
-        if (!login_email) throw new Error("E-mail da conta Nvoip é obrigatório");
         if (!user_token || user_token === "••••••••") {
           const { userToken } = await resolveCreds(supabase, companyId);
           if (!userToken) throw new Error("Senha da conta Nvoip é obrigatória");
         } else {
-          await getAccessTokenFor(login_email, user_token);
+          await getAccessTokenFor(number_sip, user_token);
         }
 
         const payload: any = {
@@ -207,8 +206,8 @@ Deno.serve(async (req) => {
         break;
       }
       case "test-connection": {
-        const { numberSip, userToken, loginEmail } = await resolveCreds(supabase, companyId);
-        await getAccessTokenFor(loginEmail, userToken);
+        const { numberSip, userToken } = await resolveCreds(supabase, companyId);
+        await getAccessTokenFor(numberSip, userToken);
         result = { success: true, numberSip };
         break;
       }
