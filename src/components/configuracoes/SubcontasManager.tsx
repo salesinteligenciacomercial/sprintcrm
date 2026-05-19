@@ -549,14 +549,14 @@ export function SubcontasManager() {
                         />
                       </div>
                       
-                      {/* Discador */}
+                      {/* Call Center */}
                       <div className="flex items-center gap-1.5 bg-secondary/50 rounded px-2 py-1">
                         <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Discador</span>
+                        <span className="text-xs text-muted-foreground">Call Center</span>
                         <Switch
                           className="scale-75"
                           checked={subconta.allow_discador || false}
-                          onCheckedChange={() => toggleModuloPremium(subconta.id, 'allow_discador', subconta.allow_discador || false, 'Discador')}
+                          onCheckedChange={() => toggleModuloPremium(subconta.id, 'allow_discador', subconta.allow_discador || false, 'Call Center')}
                         />
                       </div>
                       
