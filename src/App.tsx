@@ -41,6 +41,7 @@ import InstallApp from "./pages/InstallApp";
 import { MainLayout } from "./components/layout/MainLayout";
 import NotFound from "./pages/NotFound";
 import AutomacaoDiagnostico from "./pages/AutomacaoDiagnostico";
+import ConfirmarCompromisso from "./pages/ConfirmarCompromisso";
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from "./components/ui/button";
 
@@ -95,6 +96,8 @@ const App = () => (
             <Route path="/site/:slug" element={<SitePublico />} />
             <Route path="/site/:slug/agenda" element={<SitePublicoAgenda />} />
             <Route path="/processos/page/:id" element={<ProcessPagePublic />} />
+            <Route path="/c/:token" element={<ConfirmarCompromisso />} />
+            <Route path="/confirmar/:token" element={<ConfirmarCompromisso />} />
             <Route path="/" element={<MainLayout />}>
               <Route index element={<Navigate to="/analytics" replace />} />
               <Route path="dashboard" element={<Navigate to="/analytics" replace />} />
