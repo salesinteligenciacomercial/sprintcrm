@@ -1041,7 +1041,7 @@ async function sendEvolutionMessage(
   try {
     let evolutionUrl: string;
     let bodyPayload: any;
-    const targetNumber = isGroup ? target : target.replace(/[^0-9]/g, '');
+    const targetNumber = isGroup ? target : normalizeRecipientNumber(target);
     const globalEvolutionKey = Deno.env.get("EVOLUTION_API_KEY") || "";
     const canRetryWithGlobalKey = _retryAttempt === 0 && !!globalEvolutionKey && globalEvolutionKey !== apiKey;
 
@@ -1316,13 +1316,8 @@ serve(async (req) => {
       final_provider: apiProvider 
     });
     
-    // Formatar número para Meta API (adicionar código do país se necessário)
-    let formattedNumber = validatedData.numero.replace(/[^0-9]/g, '');
-    
-    // Se o número não começa com 55 e tem 10 ou 11 dígitos, adicionar código do país
-    if (!formattedNumber.startsWith('55') && (formattedNumber.length === 10 || formattedNumber.length === 11)) {
-      formattedNumber = '55' + formattedNumber;
-    }
+    // Formatar número para APIs: preserva DDI estrangeiro e aplica 55 apenas para BR local.
+    const formattedNumber = normalizeRecipientNumber(validatedData.numero);
     
     // Se já tem 55 no início, garantir que o formato está correto
     // Números brasileiros: 55 + DDD (2 dígitos) + número (8 ou 9 dígitos) = 12 ou 13 dígitos total
