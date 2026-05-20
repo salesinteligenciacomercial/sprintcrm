@@ -3218,6 +3218,7 @@ export default function Agenda() {
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-medium text-base">{compromisso.titulo || compromisso.tipo_servico}</span>
                                 {getStatusBadge(compromisso.status)}
+                                {compromisso.status === 'agendado' && getConfirmacaoBadge(compromisso.status_confirmacao)}
                               </div>
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <CalendarDays className="h-4 w-4" />
