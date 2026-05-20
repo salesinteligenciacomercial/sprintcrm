@@ -3293,6 +3293,9 @@ export default function Agenda() {
                                 </p>}
                             </div>
                             <div className="flex gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => copiarLinkConfirmacao(compromisso.confirmation_token)} title="Copiar link de confirmação">
+                                <LinkIcon className="h-4 w-4" />
+                              </Button>
                               <Button size="sm" variant="ghost" onClick={() => duplicarCompromisso(compromisso)} title="Duplicar compromisso">
                                 <Copy className="h-4 w-4" />
                               </Button>
