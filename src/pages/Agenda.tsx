@@ -2221,6 +2221,29 @@ export default function Agenda() {
     };
     return badges[status] || badges.agendado;
   };
+  const getConfirmacaoBadge = (statusConfirmacao?: string | null) => {
+    const sc = statusConfirmacao || 'pendente';
+    if (sc === 'confirmado') {
+      return <Badge className="bg-emerald-600 hover:bg-emerald-600"><CheckCircle2 className="h-3 w-3 mr-1" /> Confirmado</Badge>;
+    }
+    if (sc === 'recusado') {
+      return <Badge className="bg-rose-600 hover:bg-rose-600"><XCircle className="h-3 w-3 mr-1" /> Recusado</Badge>;
+    }
+    return <Badge variant="outline" className="border-amber-500 text-amber-600"><Clock className="h-3 w-3 mr-1" /> Aguardando confirmação</Badge>;
+  };
+  const copiarLinkConfirmacao = async (token?: string | null) => {
+    if (!token) {
+      toast.error("Este compromisso ainda não possui link de confirmação");
+      return;
+    }
+    const url = `${window.location.origin}/c/${token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link de confirmação copiado!");
+    } catch {
+      toast.error("Não foi possível copiar o link");
+    }
+  };
   const reenviarLembrete = async (lembreteId: string) => {
     try {
       const {
