@@ -7114,31 +7114,42 @@ function Conversas() {
           // Calcular data de envio do lembrete
           const dataEnvio = new Date(dataHoraInicio);
           dataEnvio.setHours(dataEnvio.getHours() - horasAntecedencia);
-          const lembreteData = {
-            compromisso_id: compromisso.id,
-            canal: 'whatsapp',
-            horas_antecedencia: horasAntecedencia,
-            mensagem: `Olá ${leadVinculado.name}! Lembramos do seu compromisso agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", {
-              locale: ptBR
-            })}.`,
-            status_envio: 'pendente',
-            data_envio: dataEnvio.toISOString(),
-            destinatario: 'lead',
-            telefone_responsavel: leadVinculado?.phone || leadVinculado?.telefone || null,
-            company_id: companyId
-          };
-          console.log('📝 [LEMBRETE] Dados do lembrete:', {
-            ...lembreteData,
-            mensagem: '[oculta]'
-          });
-          const {
-            error: lembreteError
-          } = await supabase.from('lembretes').insert(lembreteData);
-          if (lembreteError) {
-            console.error('❌ [LEMBRETE] Erro ao criar lembrete:', lembreteError);
-            toast.warning("Compromisso criado, mas houve erro ao criar o lembrete.");
+
+          // 🛡️ Guard: se o horário do lembrete já passou (ou está em até 2 min),
+          // não cria — a mensagem de confirmação acabou de ser enviada e o
+          // lembrete viraria mensagem duplicada imediata para o cliente.
+          if (dataEnvio.getTime() <= Date.now() + 2 * 60 * 1000) {
+            console.log('⏭️ [LEMBRETE] Pulado: data_envio já passou ou está muito próxima', {
+              dataEnvio: dataEnvio.toISOString(),
+              agora: new Date().toISOString()
+            });
           } else {
-            console.log('✅ [LEMBRETE] Lembrete criado com sucesso!');
+            const lembreteData = {
+              compromisso_id: compromisso.id,
+              canal: 'whatsapp',
+              horas_antecedencia: horasAntecedencia,
+              mensagem: `Olá ${leadVinculado.name}! Lembramos do seu compromisso agendado para ${format(dataHoraInicio, "dd/MM/yyyy 'às' HH:mm", {
+                locale: ptBR
+              })}.`,
+              status_envio: 'pendente',
+              data_envio: dataEnvio.toISOString(),
+              destinatario: 'lead',
+              telefone_responsavel: leadVinculado?.phone || leadVinculado?.telefone || null,
+              company_id: companyId
+            };
+            console.log('📝 [LEMBRETE] Dados do lembrete:', {
+              ...lembreteData,
+              mensagem: '[oculta]'
+            });
+            const {
+              error: lembreteError
+            } = await supabase.from('lembretes').insert(lembreteData);
+            if (lembreteError) {
+              console.error('❌ [LEMBRETE] Erro ao criar lembrete:', lembreteError);
+              toast.warning("Compromisso criado, mas houve erro ao criar o lembrete.");
+            } else {
+              console.log('✅ [LEMBRETE] Lembrete criado com sucesso!');
+            }
           }
 
           // Criar lembretes antecipados configurados
