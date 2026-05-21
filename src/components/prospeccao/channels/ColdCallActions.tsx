@@ -423,6 +423,14 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
         onOpenChange={setScriptOpen}
         contactName={lead.name || undefined}
       />
+      <ScheduleCallbackDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        initial={scheduleInfo}
+        defaultContactName={lead.name}
+        defaultPhone={phone}
+        onSave={saveSchedule}
+      />
     </>
   );
 }
