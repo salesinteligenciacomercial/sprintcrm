@@ -87,6 +87,7 @@ export function ChannelProspectPanel({ channel }: Props) {
     if (channel !== "coldcall") return;
     let cancelled = false;
     let companyIdLocal: string | null = null;
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: cid } = await supabase.rpc("get_my_company_id");
       if (!cid || cancelled) return;
@@ -100,7 +101,6 @@ export function ChannelProspectPanel({ channel }: Props) {
           .from("pre_sdr_analyses" as any)
           .select("row_key,outcome,lead_id,attempts,attempts_count,last_attempt_at")
           .eq("company_id", companyIdLocal)
-          .not("lead_id", "is", null)
           .range(from, from + PAGE - 1);
         if (error) {
           console.error("[ChannelProspectPanel] erro carregando estados:", error);
@@ -123,37 +123,55 @@ export function ChannelProspectPanel({ channel }: Props) {
         from += PAGE;
       }
       if (!cancelled) setLeadStates(map);
+      if (cancelled) return;
+      realtimeChannel = supabase
+        .channel(`coldcall_states_${channel}_${companyIdLocal}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses", filter: `company_id=eq.${companyIdLocal}` }, (payload) => {
+          const n: any = payload.new || payload.old;
+          if (!n) return;
+          const id = n.lead_id || (typeof n.row_key === "string" && n.row_key.startsWith("lead:") ? n.row_key.slice(5) : null);
+          if (!id) return;
+          if (payload.eventType === "DELETE") {
+            setLeadStates((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            });
+            return;
+          }
+          const nn: any = payload.new || {};
+          setLeadStates((prev) => {
+            const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null, attemptsList: [] };
+            const attemptsList = Array.isArray(nn.attempts) ? nn.attempts : old.attemptsList;
+            const attemptsCount = Math.max(Number(nn.attempts_count ?? old.attempts ?? 0), attemptsList.length);
+            return {
+              ...prev,
+              [id]: {
+                outcome: nn.outcome ?? old.outcome,
+                attempts: attemptsCount,
+                last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
+                attemptsList,
+              },
+            };
+          });
+        })
+        .subscribe();
     })();
-    const ch = supabase
-      .channel(`coldcall_states_${channel}_${Date.now()}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses" }, (payload) => {
-        const n: any = payload.new || payload.old;
-        if (!n) return;
-        const id = n.lead_id || (typeof n.row_key === "string" && n.row_key.startsWith("lead:") ? n.row_key.slice(5) : null);
-        if (!id) return;
-        const nn: any = payload.new || {};
-        setLeadStates((prev) => {
-          const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null, attemptsList: [] };
-          const attemptsList = Array.isArray(nn.attempts) ? nn.attempts : old.attemptsList;
-          const attemptsCount = Math.max(Number(nn.attempts_count ?? old.attempts ?? 0), attemptsList.length);
-          return {
-            ...prev,
-            [id]: {
-              outcome: nn.outcome ?? old.outcome,
-              attempts: attemptsCount,
-              last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
-              attemptsList,
-            },
-          };
-        });
-      })
-      .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => { cancelled = true; if (realtimeChannel) supabase.removeChannel(realtimeChannel); };
   }, [channel]);
 
 
   const isToday = (iso: string | null) =>
     !!iso && new Date(iso).toDateString() === new Date().toDateString();
+
+  const getColdCallMetrics = (lead: any) => {
+    const s = leadStates[lead.id];
+    const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
+    const outcome = s?.outcome || "pendente";
+    const lastActivityAt = s?.last_attempt_at || lead.last_prospected_at || null;
+    const wasAddressed = attemptsCount > 0 || outcome !== "pendente" || !!lead.last_prospected_at;
+    return { s, attemptsCount, outcome, lastActivityAt, wasAddressed };
+  };
 
   // Aplicar filtros de tag + (cold call) outcome
   const tagFiltered = useMemo(() => {
@@ -165,31 +183,26 @@ export function ChannelProspectPanel({ channel }: Props) {
     let list = tagFiltered;
     if (channel === "coldcall" && outcomeFilter !== "all") {
       list = tagFiltered.filter((l: any) => {
-        const s = leadStates[l.id];
-        if (outcomeFilter === "contactados_hoje") return !!s && isToday(s.last_attempt_at);
-        const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
-        if (outcomeFilter === "abordados") return attemptsCount > 0;
-        if (outcomeFilter === "pendente") return (!s || (attemptsCount === 0 && (s.outcome || "pendente") === "pendente"));
-        const o = s?.outcome || "pendente";
-        return o === outcomeFilter;
+        const metrics = getColdCallMetrics(l);
+        if (outcomeFilter === "contactados_hoje") return isToday(metrics.lastActivityAt);
+        if (outcomeFilter === "abordados") return metrics.wasAddressed;
+        if (outcomeFilter === "pendente") return !metrics.wasAddressed;
+        return metrics.outcome === outcomeFilter;
       });
     }
 
     // 🔽 Ordenação por fila: quem ainda NÃO foi prospectado fica no topo;
     // quem já foi registrado/contactado vai descendo automaticamente.
     const sorted = [...list].sort((a: any, b: any) => {
-      const sa = channel === "coldcall" ? leadStates[a.id] : null;
-      const sb = channel === "coldcall" ? leadStates[b.id] : null;
-
       // "Prospectado" = teve alguma tentativa registrada OU outcome diferente de pendente
       // OU (para outros canais) já tem last_prospected_at preenchido.
-      const aAttempts = Math.max(sa?.attempts || 0, Array.isArray(sa?.attemptsList) ? sa.attemptsList.length : 0);
-      const bAttempts = Math.max(sb?.attempts || 0, Array.isArray(sb?.attemptsList) ? sb.attemptsList.length : 0);
+      const aMetrics = channel === "coldcall" ? getColdCallMetrics(a) : null;
+      const bMetrics = channel === "coldcall" ? getColdCallMetrics(b) : null;
       const aDone = channel === "coldcall"
-        ? !!(aAttempts > 0 || (sa?.outcome && sa.outcome !== "pendente") || a.last_prospected_at)
+        ? !!aMetrics?.wasAddressed
         : !!a.last_prospected_at;
       const bDone = channel === "coldcall"
-        ? !!(bAttempts > 0 || (sb?.outcome && sb.outcome !== "pendente") || b.last_prospected_at)
+        ? !!bMetrics?.wasAddressed
         : !!b.last_prospected_at;
 
       if (aDone !== bDone) return aDone ? 1 : -1; // pendentes primeiro
@@ -204,10 +217,10 @@ export function ChannelProspectPanel({ channel }: Props) {
 
       // Entre os já prospectados: mais recentes mais embaixo (último prospectado fica no fim)
       const ta = channel === "coldcall"
-        ? (sa?.last_attempt_at ? new Date(sa.last_attempt_at).getTime() : 0)
+        ? (aMetrics?.lastActivityAt ? new Date(aMetrics.lastActivityAt).getTime() : 0)
         : (a.last_prospected_at ? new Date(a.last_prospected_at).getTime() : 0);
       const tb = channel === "coldcall"
-        ? (sb?.last_attempt_at ? new Date(sb.last_attempt_at).getTime() : 0)
+        ? (bMetrics?.lastActivityAt ? new Date(bMetrics.lastActivityAt).getTime() : 0)
         : (b.last_prospected_at ? new Date(b.last_prospected_at).getTime() : 0);
       return ta - tb;
     });
@@ -228,12 +241,13 @@ export function ChannelProspectPanel({ channel }: Props) {
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
     tagFiltered.forEach((l: any) => {
-      const s = leadStates[l.id];
-      const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
-      const o = s?.outcome || "pendente";
-      if (c[o] !== undefined) c[o] = (c[o] || 0) + 1;
-      if (attemptsCount > 0) c.abordados++;
-      if (s && isToday(s.last_attempt_at)) c.contactados_hoje++;
+      const metrics = getColdCallMetrics(l);
+      if (metrics.wasAddressed) c.abordados++;
+      else c.pendente++;
+      if (isToday(metrics.lastActivityAt)) c.contactados_hoje++;
+      if (metrics.outcome !== "pendente" && c[metrics.outcome] !== undefined) {
+        c[metrics.outcome] = (c[metrics.outcome] || 0) + 1;
+      }
     });
     return c;
   }, [tagFiltered, leadStates]);
