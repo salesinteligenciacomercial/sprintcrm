@@ -206,23 +206,29 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
       created_at: new Date().toISOString(),
       created_by: { id: currentUser?.id || null, name: currentUser?.name || null },
     };
-    setOutcomeState("agendamento");
+    // Se tem data marcada -> agendamento. Se só tem contato do responsável -> follow_up.
+    const nextOutcome: Outcome = payload.callback_at ? "agendamento" : "follow_up";
+    setOutcomeState(nextOutcome);
     setScheduleInfo(payload);
     const { error } = await supabase
       .from("pre_sdr_analyses" as any)
       .update({
-        outcome: "agendamento",
+        outcome: nextOutcome,
         outcome_at: new Date().toISOString(),
         schedule_info: payload,
       } as any)
       .eq("company_id", companyId)
       .eq("row_key", rowKey);
     if (error) {
-      toast.error("Erro ao salvar agendamento", { description: error.message });
-    } else {
-      const when = payload.callback_at ? new Date(payload.callback_at).toLocaleString("pt-BR") : "";
+      toast.error("Erro ao salvar", { description: error.message });
+    } else if (payload.callback_at) {
       toast.success("Agendamento de retorno salvo", {
-        description: when ? `Retornar em ${when}` : undefined,
+        description: `Retornar em ${new Date(payload.callback_at).toLocaleString("pt-BR")}`,
+      });
+    } else {
+      const who = payload.alt_contact?.name || payload.alt_contact?.phone || "responsável";
+      toast.success("Contato do responsável salvo", {
+        description: `Contato registrado: ${who}`,
       });
     }
   }
