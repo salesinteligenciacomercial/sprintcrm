@@ -120,6 +120,7 @@ export function useTagsManager(): TagsManagerHook {
 
       if (error) throw error;
 
+      lastRefreshAt = 0;
       await refreshTags();
     } catch (error) {
       console.error("Erro ao criar tag independente:", error);
@@ -152,6 +153,7 @@ export function useTagsManager(): TagsManagerHook {
 
       if (error) throw error;
 
+      lastRefreshAt = 0;
       await refreshTags();
     } catch (error) {
       console.error("Erro ao remover tag independente:", error);
@@ -204,6 +206,7 @@ export function useTagsManager(): TagsManagerHook {
           });
       }
 
+      lastRefreshAt = 0;
       await refreshTags();
     } catch (error) {
       console.error("Erro ao adicionar tag:", error);
@@ -246,6 +249,7 @@ export function useTagsManager(): TagsManagerHook {
           });
       }
 
+      lastRefreshAt = 0;
       await refreshTags();
     } catch (error) {
       console.error("Erro ao remover tag:", error);
