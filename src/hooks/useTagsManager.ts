@@ -14,6 +14,9 @@ interface TagsManagerHook {
 
 let globalTags: string[] = [];
 let listeners: Set<() => void> = new Set();
+let refreshPromise: Promise<string[]> | null = null;
+let lastRefreshAt = 0;
+const TAG_REFRESH_TTL_MS = 30_000;
 
 export function useTagsManager(): TagsManagerHook {
   const [allTags, setAllTags] = useState<string[]>(globalTags);
@@ -26,8 +29,21 @@ export function useTagsManager(): TagsManagerHook {
   const refreshTags = useCallback(async () => {
     setLoading(true);
     try {
+      const now = Date.now();
+      if (globalTags.length > 0 && now - lastRefreshAt < TAG_REFRESH_TTL_MS) {
+        setAllTags([...globalTags]);
+        return;
+      }
+
+      if (refreshPromise) {
+        const cached = await refreshPromise;
+        setAllTags([...cached]);
+        return;
+      }
+
+      refreshPromise = (async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) return globalTags;
 
       const { data: userRole } = await supabase
         .from("user_roles")
@@ -35,7 +51,7 @@ export function useTagsManager(): TagsManagerHook {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (!userRole?.company_id) return;
+      if (!userRole?.company_id) return globalTags;
 
       // Load tags from leads
       const { data: leadsData } = await supabase
@@ -59,6 +75,11 @@ export function useTagsManager(): TagsManagerHook {
 
       const sortedTags = Array.from(tagsSet).sort();
       globalTags = sortedTags;
+      lastRefreshAt = Date.now();
+      return sortedTags;
+      })();
+
+      const sortedTags = await refreshPromise;
       setAllTags(sortedTags);
       notifyListeners();
     } catch (error: any) {
@@ -68,6 +89,7 @@ export function useTagsManager(): TagsManagerHook {
       }
       console.error("Erro ao carregar tags:", error);
     } finally {
+      refreshPromise = null;
       setLoading(false);
     }
   }, [notifyListeners]);
@@ -255,35 +277,8 @@ export function useTagsManager(): TagsManagerHook {
 
     listeners.add(updateLocalTags);
 
-    const channel = supabase
-      .channel('tags-sync')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads'
-        },
-        () => {
-          refreshTags();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'company_tags'
-        },
-        () => {
-          refreshTags();
-        }
-      )
-      .subscribe();
-
     return () => {
       listeners.delete(updateLocalTags);
-      supabase.removeChannel(channel);
     };
   }, [refreshTags]);
 
