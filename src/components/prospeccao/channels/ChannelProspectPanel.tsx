@@ -165,6 +165,15 @@ export function ChannelProspectPanel({ channel }: Props) {
   const isToday = (iso: string | null) =>
     !!iso && new Date(iso).toDateString() === new Date().toDateString();
 
+  const getColdCallMetrics = (lead: any) => {
+    const s = leadStates[lead.id];
+    const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
+    const outcome = s?.outcome || "pendente";
+    const lastActivityAt = s?.last_attempt_at || lead.last_prospected_at || null;
+    const wasAddressed = attemptsCount > 0 || outcome !== "pendente" || !!lead.last_prospected_at;
+    return { s, attemptsCount, outcome, lastActivityAt, wasAddressed };
+  };
+
   // Aplicar filtros de tag + (cold call) outcome
   const tagFiltered = useMemo(() => {
     if (!data) return [];
@@ -175,13 +184,11 @@ export function ChannelProspectPanel({ channel }: Props) {
     let list = tagFiltered;
     if (channel === "coldcall" && outcomeFilter !== "all") {
       list = tagFiltered.filter((l: any) => {
-        const s = leadStates[l.id];
-        if (outcomeFilter === "contactados_hoje") return !!s && isToday(s.last_attempt_at);
-        const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
-        if (outcomeFilter === "abordados") return attemptsCount > 0;
-        if (outcomeFilter === "pendente") return (!s || (attemptsCount === 0 && (s.outcome || "pendente") === "pendente"));
-        const o = s?.outcome || "pendente";
-        return o === outcomeFilter;
+        const metrics = getColdCallMetrics(l);
+        if (outcomeFilter === "contactados_hoje") return isToday(metrics.lastActivityAt);
+        if (outcomeFilter === "abordados") return metrics.wasAddressed;
+        if (outcomeFilter === "pendente") return !metrics.wasAddressed;
+        return metrics.outcome === outcomeFilter;
       });
     }
 
@@ -193,13 +200,13 @@ export function ChannelProspectPanel({ channel }: Props) {
 
       // "Prospectado" = teve alguma tentativa registrada OU outcome diferente de pendente
       // OU (para outros canais) já tem last_prospected_at preenchido.
-      const aAttempts = Math.max(sa?.attempts || 0, Array.isArray(sa?.attemptsList) ? sa.attemptsList.length : 0);
-      const bAttempts = Math.max(sb?.attempts || 0, Array.isArray(sb?.attemptsList) ? sb.attemptsList.length : 0);
+      const aMetrics = channel === "coldcall" ? getColdCallMetrics(a) : null;
+      const bMetrics = channel === "coldcall" ? getColdCallMetrics(b) : null;
       const aDone = channel === "coldcall"
-        ? !!(aAttempts > 0 || (sa?.outcome && sa.outcome !== "pendente") || a.last_prospected_at)
+        ? !!aMetrics?.wasAddressed
         : !!a.last_prospected_at;
       const bDone = channel === "coldcall"
-        ? !!(bAttempts > 0 || (sb?.outcome && sb.outcome !== "pendente") || b.last_prospected_at)
+        ? !!bMetrics?.wasAddressed
         : !!b.last_prospected_at;
 
       if (aDone !== bDone) return aDone ? 1 : -1; // pendentes primeiro
@@ -214,10 +221,10 @@ export function ChannelProspectPanel({ channel }: Props) {
 
       // Entre os já prospectados: mais recentes mais embaixo (último prospectado fica no fim)
       const ta = channel === "coldcall"
-        ? (sa?.last_attempt_at ? new Date(sa.last_attempt_at).getTime() : 0)
+        ? (aMetrics?.lastActivityAt ? new Date(aMetrics.lastActivityAt).getTime() : 0)
         : (a.last_prospected_at ? new Date(a.last_prospected_at).getTime() : 0);
       const tb = channel === "coldcall"
-        ? (sb?.last_attempt_at ? new Date(sb.last_attempt_at).getTime() : 0)
+        ? (bMetrics?.lastActivityAt ? new Date(bMetrics.lastActivityAt).getTime() : 0)
         : (b.last_prospected_at ? new Date(b.last_prospected_at).getTime() : 0);
       return ta - tb;
     });
