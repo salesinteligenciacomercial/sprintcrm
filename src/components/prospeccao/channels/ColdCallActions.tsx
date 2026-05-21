@@ -66,6 +66,8 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(externalUser || null);
   const [attempts, setAttempts] = useState<Attempt[]>(Array.isArray(externalState?.attempts) ? externalState!.attempts! : []);
   const [outcome, setOutcomeState] = useState<Outcome>(((externalState?.outcome as Outcome) || "pendente"));
+  const [scheduleInfo, setScheduleInfo] = useState<ScheduleInfo | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [loaded, setLoaded] = useState(!!externalState);
 
   const [conversaOpen, setConversaOpen] = useState(false);
