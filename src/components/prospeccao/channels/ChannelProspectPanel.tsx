@@ -167,7 +167,9 @@ export function ChannelProspectPanel({ channel }: Props) {
       list = tagFiltered.filter((l: any) => {
         const s = leadStates[l.id];
         if (outcomeFilter === "contactados_hoje") return !!s && isToday(s.last_attempt_at);
-        if (outcomeFilter === "abordados") return !!s && s.attempts > 0;
+        const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
+        if (outcomeFilter === "abordados") return attemptsCount > 0;
+        if (outcomeFilter === "pendente") return (!s || (attemptsCount === 0 && (s.outcome || "pendente") === "pendente"));
         const o = s?.outcome || "pendente";
         return o === outcomeFilter;
       });
@@ -225,9 +227,10 @@ export function ChannelProspectPanel({ channel }: Props) {
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
     Object.values(leadStates).forEach((s) => {
+      const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
       const o = s?.outcome || "pendente";
       if (c[o] !== undefined) c[o] = (c[o] || 0) + 1;
-      if (s && s.attempts > 0) c.abordados++;
+      if (attemptsCount > 0) c.abordados++;
       if (s && isToday(s.last_attempt_at)) c.contactados_hoje++;
     });
     return c;
