@@ -6612,6 +6612,7 @@ export type Database = {
           outcome_notes: string | null
           raw_row: Json
           row_key: string
+          schedule_info: Json | null
           site: string | null
           status: string
           telefone: string | null
@@ -6637,6 +6638,7 @@ export type Database = {
           outcome_notes?: string | null
           raw_row?: Json
           row_key: string
+          schedule_info?: Json | null
           site?: string | null
           status?: string
           telefone?: string | null
@@ -6662,6 +6664,7 @@ export type Database = {
           outcome_notes?: string | null
           raw_row?: Json
           row_key?: string
+          schedule_info?: Json | null
           site?: string | null
           status?: string
           telefone?: string | null

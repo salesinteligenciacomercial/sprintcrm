@@ -1,0 +1,1 @@
+ALTER TABLE public.pre_sdr_analyses ADD COLUMN IF NOT EXISTS schedule_info jsonb;

@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ConversaPopup } from "@/components/leads/ConversaPopup";
 import { ScriptViewerDialog } from "@/components/prospeccao/ScriptViewerDialog";
+import { ScheduleCallbackDialog, type ScheduleInfo } from "@/components/prospeccao/channels/ScheduleCallbackDialog";
 
 type Outcome = "pendente" | "prospectado" | "sem_resposta" | "oportunidade" | "agendamento" | "follow_up" | "ganho" | "descartado";
 type AttemptType =
@@ -65,6 +66,8 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(externalUser || null);
   const [attempts, setAttempts] = useState<Attempt[]>(Array.isArray(externalState?.attempts) ? externalState!.attempts! : []);
   const [outcome, setOutcomeState] = useState<Outcome>(((externalState?.outcome as Outcome) || "pendente"));
+  const [scheduleInfo, setScheduleInfo] = useState<ScheduleInfo | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [loaded, setLoaded] = useState(!!externalState);
 
   const [conversaOpen, setConversaOpen] = useState(false);
@@ -112,13 +115,14 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
     (async () => {
       const { data } = await supabase
         .from("pre_sdr_analyses" as any)
-        .select("attempts, attempts_count, outcome")
+        .select("attempts, attempts_count, outcome, schedule_info")
         .eq("company_id", companyId)
         .eq("row_key", rowKey)
         .maybeSingle();
       if (data) {
         setAttempts(Array.isArray((data as any).attempts) ? (data as any).attempts : []);
         setOutcomeState(((data as any).outcome as Outcome) || "pendente");
+        setScheduleInfo(((data as any).schedule_info as ScheduleInfo) || null);
       }
       setLoaded(true);
     })();
@@ -138,6 +142,7 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
           if (!n || n.row_key !== rowKey) return;
           setAttempts(Array.isArray(n.attempts) ? n.attempts : []);
           setOutcomeState((n.outcome as Outcome) || "pendente");
+          setScheduleInfo((n.schedule_info as ScheduleInfo) || null);
         }
       )
       .subscribe();
@@ -178,6 +183,11 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
 
   async function changeOutcome(o: Outcome) {
     if (!companyId) return;
+    // Para agendamento, abrir dialog para capturar dia/horário e contato alternativo
+    if (o === "agendamento") {
+      setScheduleOpen(true);
+      return;
+    }
     await ensureRow();
     setOutcomeState(o);
     const { error } = await supabase
@@ -186,6 +196,35 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
       .eq("company_id", companyId)
       .eq("row_key", rowKey);
     if (error) toast.error("Erro ao salvar status", { description: error.message });
+  }
+
+  async function saveSchedule(info: ScheduleInfo) {
+    if (!companyId) return;
+    await ensureRow();
+    const payload: ScheduleInfo = {
+      ...info,
+      created_at: new Date().toISOString(),
+      created_by: { id: currentUser?.id || null, name: currentUser?.name || null },
+    };
+    setOutcomeState("agendamento");
+    setScheduleInfo(payload);
+    const { error } = await supabase
+      .from("pre_sdr_analyses" as any)
+      .update({
+        outcome: "agendamento",
+        outcome_at: new Date().toISOString(),
+        schedule_info: payload,
+      } as any)
+      .eq("company_id", companyId)
+      .eq("row_key", rowKey);
+    if (error) {
+      toast.error("Erro ao salvar agendamento", { description: error.message });
+    } else {
+      const when = payload.callback_at ? new Date(payload.callback_at).toLocaleString("pt-BR") : "";
+      toast.success("Agendamento de retorno salvo", {
+        description: when ? `Retornar em ${when}` : undefined,
+      });
+    }
   }
 
   async function removeLast() {
@@ -258,6 +297,56 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
           <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full border text-[10px] ${oMeta.className}`} title="Resultado">
             {oMeta.label}
           </span>
+        )}
+
+        {outcome === "agendamento" && scheduleInfo?.callback_at && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-purple-300 text-[10px] text-purple-700 bg-purple-50 hover:bg-purple-100"
+                title="Detalhes do agendamento"
+              >
+                <CalendarClock className="h-3 w-3" />
+                <span>
+                  {new Date(scheduleInfo.callback_at).toLocaleString("pt-BR", {
+                    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
+                  })}
+                </span>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-3 text-xs space-y-2">
+              <div>
+                <p className="text-[10px] uppercase font-medium text-muted-foreground">Retornar em</p>
+                <p className="font-semibold text-purple-700">
+                  {new Date(scheduleInfo.callback_at).toLocaleString("pt-BR")}
+                </p>
+              </div>
+              {scheduleInfo.reason && (
+                <div>
+                  <p className="text-[10px] uppercase font-medium text-muted-foreground">Motivo</p>
+                  <p>{scheduleInfo.reason}</p>
+                </div>
+              )}
+              {scheduleInfo.alt_contact && (scheduleInfo.alt_contact.name || scheduleInfo.alt_contact.phone || scheduleInfo.alt_contact.email) && (
+                <div className="rounded border p-2 bg-muted/30">
+                  <p className="text-[10px] uppercase font-medium text-muted-foreground mb-1">Contato alternativo</p>
+                  {scheduleInfo.alt_contact.name && <p><strong>{scheduleInfo.alt_contact.name}</strong>{scheduleInfo.alt_contact.role ? ` · ${scheduleInfo.alt_contact.role}` : ""}</p>}
+                  {scheduleInfo.alt_contact.phone && <p>📞 {scheduleInfo.alt_contact.phone}</p>}
+                  {scheduleInfo.alt_contact.email && <p>✉️ {scheduleInfo.alt_contact.email}</p>}
+                </div>
+              )}
+              {scheduleInfo.notes && (
+                <div>
+                  <p className="text-[10px] uppercase font-medium text-muted-foreground">Observações</p>
+                  <p className="whitespace-pre-wrap">{scheduleInfo.notes}</p>
+                </div>
+              )}
+              <Button size="sm" variant="outline" className="w-full h-7 text-[11px]" onClick={() => setScheduleOpen(true)}>
+                Editar agendamento
+              </Button>
+            </PopoverContent>
+          </Popover>
         )}
 
         {count > 0 && (
@@ -333,6 +422,14 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
         open={scriptOpen}
         onOpenChange={setScriptOpen}
         contactName={lead.name || undefined}
+      />
+      <ScheduleCallbackDialog
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        initial={scheduleInfo}
+        defaultContactName={lead.name}
+        defaultPhone={phone}
+        onSave={saveSchedule}
       />
     </>
   );
