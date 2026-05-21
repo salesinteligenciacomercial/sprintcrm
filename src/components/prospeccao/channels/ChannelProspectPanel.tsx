@@ -215,10 +215,11 @@ export function ChannelProspectPanel({ channel }: Props) {
     return sorted;
   }, [tagFiltered, outcomeFilter, leadStates, channel]);
 
-  // Contagens por outcome — derivadas de leadStates (fonte da verdade global,
-  // que contém TODOS os registros de pre_sdr_analyses da empresa, não apenas os
-  // 200 leads carregados na lista visível). Isso evita contagens subestimadas
-  // como "Contactados hoje (36)" quando o real é 42+.
+  // Contagens por outcome — derivadas apenas dos leads visíveis (tagFiltered),
+  // cruzando com leadStates. Antes contávamos todos os registros de
+  // pre_sdr_analyses da empresa, o que mostrava números maiores do que a lista
+  // realmente exibida (ex.: "Oportunidade (7)" com só 2 visíveis, pois os
+  // outros leads não estavam no recorte atual de filtro/tag/canal/limite).
   const outcomeCounts = useMemo(() => {
     const c: Record<string, number> = {
       all: tagFiltered.length,
@@ -226,7 +227,8 @@ export function ChannelProspectPanel({ channel }: Props) {
       pendente: 0, prospectado: 0, sem_resposta: 0, oportunidade: 0,
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
-    Object.values(leadStates).forEach((s) => {
+    tagFiltered.forEach((l: any) => {
+      const s = leadStates[l.id];
       const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
       const o = s?.outcome || "pendente";
       if (c[o] !== undefined) c[o] = (c[o] || 0) + 1;
