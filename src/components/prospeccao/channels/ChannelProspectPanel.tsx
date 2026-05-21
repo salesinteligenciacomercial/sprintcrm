@@ -101,7 +101,6 @@ export function ChannelProspectPanel({ channel }: Props) {
           .from("pre_sdr_analyses" as any)
           .select("row_key,outcome,lead_id,attempts,attempts_count,last_attempt_at")
           .eq("company_id", companyIdLocal)
-          .not("lead_id", "is", null)
           .range(from, from + PAGE - 1);
         if (error) {
           console.error("[ChannelProspectPanel] erro carregando estados:", error);
