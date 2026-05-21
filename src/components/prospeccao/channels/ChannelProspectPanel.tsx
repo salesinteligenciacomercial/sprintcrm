@@ -195,9 +195,6 @@ export function ChannelProspectPanel({ channel }: Props) {
     // 🔽 Ordenação por fila: quem ainda NÃO foi prospectado fica no topo;
     // quem já foi registrado/contactado vai descendo automaticamente.
     const sorted = [...list].sort((a: any, b: any) => {
-      const sa = channel === "coldcall" ? leadStates[a.id] : null;
-      const sb = channel === "coldcall" ? leadStates[b.id] : null;
-
       // "Prospectado" = teve alguma tentativa registrada OU outcome diferente de pendente
       // OU (para outros canais) já tem last_prospected_at preenchido.
       const aMetrics = channel === "coldcall" ? getColdCallMetrics(a) : null;
@@ -245,12 +242,13 @@ export function ChannelProspectPanel({ channel }: Props) {
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
     tagFiltered.forEach((l: any) => {
-      const s = leadStates[l.id];
-      const attemptsCount = Math.max(s?.attempts || 0, Array.isArray(s?.attemptsList) ? s.attemptsList.length : 0);
-      const o = s?.outcome || "pendente";
-      if (c[o] !== undefined) c[o] = (c[o] || 0) + 1;
-      if (attemptsCount > 0) c.abordados++;
-      if (s && isToday(s.last_attempt_at)) c.contactados_hoje++;
+      const metrics = getColdCallMetrics(l);
+      if (metrics.wasAddressed) c.abordados++;
+      else c.pendente++;
+      if (isToday(metrics.lastActivityAt)) c.contactados_hoje++;
+      if (metrics.outcome !== "pendente" && c[metrics.outcome] !== undefined) {
+        c[metrics.outcome] = (c[metrics.outcome] || 0) + 1;
+      }
     });
     return c;
   }, [tagFiltered, leadStates]);
