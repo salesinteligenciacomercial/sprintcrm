@@ -38,44 +38,53 @@ export function useProspectingContacts({ channel, onlyMarked = false, search = "
     queryKey: ["prospecting-contacts", channel, onlyMarked, search, tagFilter, limit, companyId],
     enabled: !!companyId,
     queryFn: async () => {
-      let q = supabase
-        .from("leads")
-        .select("id, name, phone, telefone, email, tags, to_prospect, prospecting_priority, last_prospected_at, source, responsavel_id")
-        .eq("company_id", companyId!)
-        .is("lead_origem_id", null)
-        .order("last_prospected_at", { ascending: true, nullsFirst: true })
-        .order("prospecting_priority", { ascending: false, nullsFirst: false })
-        .limit(limit);
+      const rows: any[] = [];
+      const PAGE = Math.min(Math.max(limit || 1000, 1), 1000);
+      let from = 0;
 
-      if (onlyMarked) q = q.eq("to_prospect", true);
+      while (true) {
+        let q = supabase
+          .from("leads")
+          .select("id, name, phone, telefone, email, tags, to_prospect, prospecting_priority, last_prospected_at, source, responsavel_id")
+          .eq("company_id", companyId!)
+          .is("lead_origem_id", null)
+          .order("last_prospected_at", { ascending: true, nullsFirst: true })
+          .order("prospecting_priority", { ascending: false, nullsFirst: false })
+          .range(from, from + PAGE - 1);
 
-      if (tagFilter && tagFilter !== "all") {
-        q = q.contains("tags", [tagFilter]);
+        if (onlyMarked) q = q.eq("to_prospect", true);
+
+        if (tagFilter && tagFilter !== "all") {
+          q = q.contains("tags", [tagFilter]);
+        }
+
+        // Filtros por canal: requer telefone p/ coldcall e whatsapp
+        if (channel === "coldcall" || channel === "whatsapp") {
+          q = q.or("phone.not.is.null,telefone.not.is.null");
+        }
+
+        if (search) {
+          q = q.or(`name.ilike.%${search}%,phone.ilike.%${search}%,telefone.ilike.%${search}%,email.ilike.%${search}%`);
+        }
+
+        const { data, error } = await q;
+        if (error) throw error;
+        rows.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+        from += PAGE;
       }
-
-      // Filtros por canal: requer telefone p/ coldcall e whatsapp
-      if (channel === "coldcall" || channel === "whatsapp") {
-        q = q.or("phone.not.is.null,telefone.not.is.null");
-      }
-
-      if (search) {
-        q = q.or(`name.ilike.%${search}%,phone.ilike.%${search}%,telefone.ilike.%${search}%,email.ilike.%${search}%`);
-      }
-
-      const { data, error } = await q;
-      if (error) throw error;
 
       // Para Instagram filtrar quem tem tag "instagram" ou source instagram
-      let rows = (data || []) as any[];
+      let filteredRows = rows;
       if (channel === "instagram") {
-        rows = rows.filter(
+        filteredRows = rows.filter(
           (l) =>
             (Array.isArray(l.tags) && l.tags.some((t: string) => /instagram|ig/i.test(t))) ||
             /instagram|ig/i.test(l.source || "")
         );
       }
 
-      return rows.map((l) => ({
+      return filteredRows.map((l) => ({
         ...l,
         instagram: null,
       })) as ProspectContact[];
