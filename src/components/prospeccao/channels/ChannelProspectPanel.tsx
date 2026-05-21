@@ -168,7 +168,10 @@ export function ChannelProspectPanel({ channel }: Props) {
     });
   }, [tagFiltered, outcomeFilter, leadStates, channel]);
 
-  // Contagens por outcome (sobre tagFiltered)
+  // Contagens por outcome — derivadas de leadStates (fonte da verdade global,
+  // que contém TODOS os registros de pre_sdr_analyses da empresa, não apenas os
+  // 200 leads carregados na lista visível). Isso evita contagens subestimadas
+  // como "Contactados hoje (36)" quando o real é 42+.
   const outcomeCounts = useMemo(() => {
     const c: Record<string, number> = {
       all: tagFiltered.length,
@@ -176,10 +179,9 @@ export function ChannelProspectPanel({ channel }: Props) {
       pendente: 0, prospectado: 0, sem_resposta: 0, oportunidade: 0,
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
-    tagFiltered.forEach((l: any) => {
-      const s = leadStates[l.id];
+    Object.values(leadStates).forEach((s) => {
       const o = s?.outcome || "pendente";
-      c[o] = (c[o] || 0) + 1;
+      if (c[o] !== undefined) c[o] = (c[o] || 0) + 1;
       if (s && s.attempts > 0) c.abordados++;
       if (s && isToday(s.last_attempt_at)) c.contactados_hoje++;
     });
@@ -219,8 +221,10 @@ export function ChannelProspectPanel({ channel }: Props) {
   const stats = useMemo(() => {
     const total = filteredData.length;
     const marked = filteredData.filter((l: any) => l.to_prospect).length;
+    // Para Cold Call usamos a fonte global (leadStates) para refletir TODOS os
+    // contatos prospectados hoje, e não só os que estão na lista visível (200).
     const contactedToday = channel === "coldcall"
-      ? filteredData.filter((l: any) => isToday(leadStates[l.id]?.last_attempt_at || null)).length
+      ? Object.values(leadStates).filter((s) => isToday(s?.last_attempt_at || null)).length
       : filteredData.filter((l: any) => l.last_prospected_at && new Date(l.last_prospected_at).toDateString() === new Date().toDateString()).length;
     return { total, marked, contactedToday };
   }, [filteredData, channel, leadStates]);
