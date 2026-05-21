@@ -87,6 +87,7 @@ export function ChannelProspectPanel({ channel }: Props) {
     if (channel !== "coldcall") return;
     let cancelled = false;
     let companyIdLocal: string | null = null;
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
     (async () => {
       const { data: cid } = await supabase.rpc("get_my_company_id");
       if (!cid || cancelled) return;
@@ -123,32 +124,41 @@ export function ChannelProspectPanel({ channel }: Props) {
         from += PAGE;
       }
       if (!cancelled) setLeadStates(map);
+      if (cancelled) return;
+      realtimeChannel = supabase
+        .channel(`coldcall_states_${channel}_${companyIdLocal}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses", filter: `company_id=eq.${companyIdLocal}` }, (payload) => {
+          const n: any = payload.new || payload.old;
+          if (!n) return;
+          const id = n.lead_id || (typeof n.row_key === "string" && n.row_key.startsWith("lead:") ? n.row_key.slice(5) : null);
+          if (!id) return;
+          if (payload.eventType === "DELETE") {
+            setLeadStates((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            });
+            return;
+          }
+          const nn: any = payload.new || {};
+          setLeadStates((prev) => {
+            const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null, attemptsList: [] };
+            const attemptsList = Array.isArray(nn.attempts) ? nn.attempts : old.attemptsList;
+            const attemptsCount = Math.max(Number(nn.attempts_count ?? old.attempts ?? 0), attemptsList.length);
+            return {
+              ...prev,
+              [id]: {
+                outcome: nn.outcome ?? old.outcome,
+                attempts: attemptsCount,
+                last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
+                attemptsList,
+              },
+            };
+          });
+        })
+        .subscribe();
     })();
-    const ch = supabase
-      .channel(`coldcall_states_${channel}_${Date.now()}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "pre_sdr_analyses" }, (payload) => {
-        const n: any = payload.new || payload.old;
-        if (!n) return;
-        const id = n.lead_id || (typeof n.row_key === "string" && n.row_key.startsWith("lead:") ? n.row_key.slice(5) : null);
-        if (!id) return;
-        const nn: any = payload.new || {};
-        setLeadStates((prev) => {
-          const old = prev[id] || { outcome: "pendente", attempts: 0, last_attempt_at: null, attemptsList: [] };
-          const attemptsList = Array.isArray(nn.attempts) ? nn.attempts : old.attemptsList;
-          const attemptsCount = Math.max(Number(nn.attempts_count ?? old.attempts ?? 0), attemptsList.length);
-          return {
-            ...prev,
-            [id]: {
-              outcome: nn.outcome ?? old.outcome,
-              attempts: attemptsCount,
-              last_attempt_at: nn.last_attempt_at ?? old.last_attempt_at,
-              attemptsList,
-            },
-          };
-        });
-      })
-      .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => { cancelled = true; if (realtimeChannel) supabase.removeChannel(realtimeChannel); };
   }, [channel]);
 
 
