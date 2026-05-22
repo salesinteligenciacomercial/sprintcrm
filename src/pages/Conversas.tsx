@@ -10318,17 +10318,20 @@ function Conversas() {
                     {/* Quick Actions */}
                     <div>
                       <h4 className="text-foreground font-medium mb-3">Ações Rápidas</h4>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-col gap-2">
+
                         {/* Quick Messages */}
                         {/* Roteiros Comerciais */}
                         <Button
                           variant="outline"
-                          size="icon"
+                          className="w-full justify-start gap-2"
                           title="Roteiros Comerciais"
                           onClick={() => setRoteirosDialogOpen(true)}
                         >
                           <Workflow className="h-4 w-4" />
+                          <span>Roteiros Comerciais</span>
                         </Button>
+
                         {selectedConv && (
                           <RoteirosComerciaisDialog
                             open={roteirosDialogOpen}
@@ -10343,9 +10346,11 @@ function Conversas() {
                         {/* Quick Messages */}
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Mensagens Rápidas">
+                            <Button variant="outline" className="w-full justify-start gap-2" title="Mensagens Rápidas">
                               <Zap className="h-4 w-4" />
+                              <span>Mensagens Rápidas</span>
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -10682,12 +10687,14 @@ function Conversas() {
                         {/* Schedule Message */}
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Agendar Mensagem" className="relative">
+                            <Button variant="outline" className="w-full justify-start gap-2 relative" title="Agendar Mensagem">
                               <Clock className="h-4 w-4" />
-                              {scheduledMessages.filter(m => m.status === 'pending').length > 0 && <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
+                              <span>Agendar Mensagem</span>
+                              {scheduledMessages.filter(m => m.status === 'pending').length > 0 && <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px]">
                                   {scheduledMessages.filter(m => m.status === 'pending').length}
                                 </Badge>}
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -10783,9 +10790,11 @@ function Conversas() {
                         {/* Schedule Reminder */}
                         <Dialog>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Gerenciar Lembretes">
+                            <Button variant="outline" className="w-full justify-start gap-2" title="Gerenciar Lembretes">
                               <Bell className="h-4 w-4" />
+                              <span>Gerenciar Lembretes</span>
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -11026,7 +11035,7 @@ function Conversas() {
                         {/* Compromissos e Reuniões */}
                         <Dialog open={reunioesDialogOpen} onOpenChange={setReunioesDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Compromissos" onClick={async () => {
+                            <Button variant="outline" className="w-full justify-start gap-2" title="Compromissos" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
                           setSyncStatus('syncing');
@@ -11050,7 +11059,9 @@ function Conversas() {
                         setReunioesDialogOpen(true);
                       }}>
                               <Calendar className="h-4 w-4" />
+                              <span>Compromissos</span>
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -11357,7 +11368,7 @@ function Conversas() {
                         {/* Tarefas do Lead */}
                         <Dialog open={tarefasDialogOpen} onOpenChange={setTarefasDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Tarefas" className="relative" onClick={async () => {
+                            <Button variant="outline" className="w-full justify-start gap-2 relative" title="Tarefas" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
                           setSyncStatus('syncing');
@@ -11381,10 +11392,12 @@ function Conversas() {
                         setTarefasDialogOpen(true);
                       }} type="button">
                               <CheckSquare className="h-4 w-4" />
-                              {leadTasks.length > 0 && <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
+                              <span>Tarefas</span>
+                              {leadTasks.length > 0 && <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px]">
                                   {leadTasks.filter(t => t.status !== 'concluida').length}
                                 </Badge>}
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
@@ -11575,9 +11588,8 @@ function Conversas() {
                         {/* Prontuário / Ficha Técnica */}
                         <Button 
                           variant="outline" 
-                          size="icon"
+                          className="w-full justify-start gap-2 relative"
                           title="Prontuário / Ficha Técnica"
-                          className="relative"
                           onClick={() => {
                             if (leadVinculado?.id) {
                               setAttachmentsOpen(true);
@@ -11587,12 +11599,14 @@ function Conversas() {
                           }}
                         >
                           <Paperclip className="h-4 w-4" />
+                          <span>Prontuário / Ficha Técnica</span>
                           {attachmentsCount > 0 && (
-                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
+                            <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px]">
                               {attachmentsCount}
                             </Badge>
                           )}
                         </Button>
+
 
                       </div>
                     </div>
