@@ -255,7 +255,7 @@ export default function Prospeccao() {
             <TabsList className="flex flex-wrap h-auto">
               <TabsTrigger value="cockpit">🎮 {labels.cockpit}</TabsTrigger>
               {/* Visão Geral e Pipeline Pago ocultos — métricas estão em Inteligência */}
-              <TabsTrigger value="followup">{labels.followup}</TabsTrigger>
+              
               <TabsTrigger value="fila">{labels.fila}</TabsTrigger>
               <TabsTrigger value="coldcall">{labels.coldcall}</TabsTrigger>
               <TabsTrigger value="instagram">{labels.instagram}</TabsTrigger>
