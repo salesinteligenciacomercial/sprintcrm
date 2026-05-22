@@ -245,7 +245,9 @@ export function ChannelProspectPanel({ channel }: Props) {
 
   const filteredData = useMemo(() => {
     let list = tagFiltered;
-    if (channel === "coldcall" && outcomeFilter !== "all") {
+    if (outcomeFilter === "minha_fila") {
+      list = list.filter((l: any) => myQueueLeadIds.has(l.id) || myQueueDoneIds.has(l.id));
+    } else if (channel === "coldcall" && outcomeFilter !== "all") {
       list = tagFiltered.filter((l: any) => {
         const metrics = getColdCallMetrics(l);
         if (outcomeFilter === "contactados_hoje") return isToday(metrics.lastActivityAt);
