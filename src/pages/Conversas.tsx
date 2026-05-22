@@ -11059,7 +11059,9 @@ function Conversas() {
                         setReunioesDialogOpen(true);
                       }}>
                               <Calendar className="h-4 w-4" />
+                              <span>Compromissos</span>
                             </Button>
+
                           </DialogTrigger>
                           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
