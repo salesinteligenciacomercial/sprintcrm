@@ -369,6 +369,14 @@ export function ChannelProspectPanel({ channel }: Props) {
               <h3 className="font-bold">{meta.label}</h3>
               <p className="text-xs text-muted-foreground">
                 {stats.total} contatos · {stats.contactedToday} prospectados hoje
+                {(myQueueLeadIds.size + myQueueDoneIds.size) > 0 && (() => {
+                  const total = myQueueLeadIds.size + myQueueDoneIds.size;
+                  const done = myQueueDoneIds.size;
+                  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+                  return (
+                    <> · <span className="text-primary font-medium">Minha fila: {done}/{total} ({pct}%)</span></>
+                  );
+                })()}
               </p>
             </div>
           </div>
