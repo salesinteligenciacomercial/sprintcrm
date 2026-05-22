@@ -1211,7 +1211,7 @@ async function sendEvolutionMessage(
       return { success: false, provider: 'evolution', error: errorMsg };
     }
 
-    console.log("✅ Evolution API - Mensagem enviada");
+    console.log("✅ Evolution API - Mensagem enviada:", JSON.stringify(data).substring(0, 400));
     return { success: true, provider: 'evolution', data };
   } catch (error) {
     const errorStr = String(error);
