@@ -11035,7 +11035,7 @@ function Conversas() {
                         {/* Compromissos e Reuniões */}
                         <Dialog open={reunioesDialogOpen} onOpenChange={setReunioesDialogOpen}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" title="Compromissos" onClick={async () => {
+                            <Button variant="outline" className="w-full justify-start gap-2" title="Compromissos" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
                           setSyncStatus('syncing');
