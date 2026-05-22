@@ -11588,9 +11588,8 @@ function Conversas() {
                         {/* Prontuário / Ficha Técnica */}
                         <Button 
                           variant="outline" 
-                          size="icon"
+                          className="w-full justify-start gap-2 relative"
                           title="Prontuário / Ficha Técnica"
-                          className="relative"
                           onClick={() => {
                             if (leadVinculado?.id) {
                               setAttachmentsOpen(true);
@@ -11600,12 +11599,14 @@ function Conversas() {
                           }}
                         >
                           <Paperclip className="h-4 w-4" />
+                          <span>Prontuário / Ficha Técnica</span>
                           {attachmentsCount > 0 && (
-                            <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
+                            <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px]">
                               {attachmentsCount}
                             </Badge>
                           )}
                         </Button>
+
 
                       </div>
                     </div>
