@@ -69,6 +69,10 @@ export function ChannelProspectPanel({ channel }: Props) {
   const [companyIdGlobal, setCompanyIdGlobal] = useState<string | null>(null);
   const [currentUserGlobal, setCurrentUserGlobal] = useState<{ id: string; name: string } | null>(null);
 
+  // Leads atribuídos ao SDR logado via filas de prospecção (deste canal)
+  const [myQueueLeadIds, setMyQueueLeadIds] = useState<Set<string>>(new Set());
+  const [myQueueDoneIds, setMyQueueDoneIds] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (channel !== "coldcall") return;
     (async () => {
