@@ -6370,6 +6370,63 @@ export type Database = {
           },
         ]
       }
+      nvoip_virtual_numbers: {
+        Row: {
+          active: boolean
+          city: string | null
+          company_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_default_caller_id: boolean
+          label: string | null
+          monthly_cost: number | null
+          notes: string | null
+          number_type: string | null
+          phone_number: string
+          renewal_date: string | null
+          state: string | null
+          updated_at: string
+          whatsapp_enabled: boolean
+        }
+        Insert: {
+          active?: boolean
+          city?: string | null
+          company_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default_caller_id?: boolean
+          label?: string | null
+          monthly_cost?: number | null
+          notes?: string | null
+          number_type?: string | null
+          phone_number: string
+          renewal_date?: string | null
+          state?: string | null
+          updated_at?: string
+          whatsapp_enabled?: boolean
+        }
+        Update: {
+          active?: boolean
+          city?: string | null
+          company_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_default_caller_id?: boolean
+          label?: string | null
+          monthly_cost?: number | null
+          notes?: string | null
+          number_type?: string | null
+          phone_number?: string
+          renewal_date?: string | null
+          state?: string | null
+          updated_at?: string
+          whatsapp_enabled?: boolean
+        }
+        Relationships: []
+      }
       permissions: {
         Row: {
           action: string
