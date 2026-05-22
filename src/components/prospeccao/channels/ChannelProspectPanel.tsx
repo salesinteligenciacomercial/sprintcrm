@@ -292,21 +292,18 @@ export function ChannelProspectPanel({ channel }: Props) {
     });
 
     return sorted;
-  }, [tagFiltered, outcomeFilter, leadStates, channel]);
+  }, [tagFiltered, outcomeFilter, leadStates, channel, myQueueLeadIds, myQueueDoneIds]);
 
-  // Contagens por outcome — derivadas apenas dos leads visíveis (tagFiltered),
-  // cruzando com leadStates. Antes contávamos todos os registros de
-  // pre_sdr_analyses da empresa, o que mostrava números maiores do que a lista
-  // realmente exibida (ex.: "Oportunidade (7)" com só 2 visíveis, pois os
-  // outros leads não estavam no recorte atual de filtro/tag/canal/limite).
   const outcomeCounts = useMemo(() => {
     const c: Record<string, number> = {
       all: tagFiltered.length,
+      minha_fila: 0,
       contactados_hoje: 0, abordados: 0,
       pendente: 0, prospectado: 0, sem_resposta: 0, oportunidade: 0,
       agendamento: 0, follow_up: 0, ganho: 0, descartado: 0,
     };
     tagFiltered.forEach((l: any) => {
+      if (myQueueLeadIds.has(l.id) || myQueueDoneIds.has(l.id)) c.minha_fila++;
       const metrics = getColdCallMetrics(l);
       if (metrics.wasAddressed) c.abordados++;
       else c.pendente++;
@@ -316,7 +313,7 @@ export function ChannelProspectPanel({ channel }: Props) {
       }
     });
     return c;
-  }, [tagFiltered, leadStates]);
+  }, [tagFiltered, leadStates, myQueueLeadIds, myQueueDoneIds]);
 
 
 
