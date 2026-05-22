@@ -11,6 +11,8 @@ import { SDRDashboard } from '@/components/discador/SDRDashboard';
 import { SDRSpecializationPanel } from '@/components/discador/SDRSpecializationPanel';
 import { StartCallFromLeadDialog } from '@/components/discador/StartCallFromLeadDialog';
 import { NvoipAccountPanel } from '@/components/discador/NvoipAccountPanel';
+import { NvoipNumbersPanel } from '@/components/discador/NvoipNumbersPanel';
+import { Hash } from 'lucide-react';
 import { KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibility';
@@ -99,6 +101,10 @@ const Discador = () => {
             </TabsTrigger>
             <TabsTrigger value="especializacao" className="flex items-center gap-2">
               ✨ Especialização SDR
+            </TabsTrigger>
+            <TabsTrigger value="meus-numeros" className="flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              Meus Números
             </TabsTrigger>
             <TabsTrigger value="conta-nvoip" className="flex items-center gap-2">
               <KeyRound className="w-4 h-4" />
@@ -190,6 +196,10 @@ const Discador = () => {
 
           <TabsContent value="especializacao">
             <SDRSpecializationPanel />
+          </TabsContent>
+
+          <TabsContent value="meus-numeros">
+            <NvoipNumbersPanel />
           </TabsContent>
 
           <TabsContent value="conta-nvoip">
