@@ -65,7 +65,7 @@ const navigation: NavEntry[] = [
     items: [
       { name: "Maturidade", href: "/maturidade", icon: Activity, menuKey: "maturidade" },
       { name: "Processos Comerciais", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true },
-      { name: "Prospecção", href: "/prospeccao", icon: Target, menuKey: "prospeccao" },
+      { name: "Prospecção Outbound", href: "/prospeccao", icon: Target, menuKey: "prospeccao" },
       { name: "Call Center", href: "/discador", icon: PhoneCall, menuKey: "discador" },
       { name: "BI", href: "/financeiro", icon: DollarSign, menuKey: "financeiro" },
       { name: "Treinamento", href: "/treinamento", icon: GraduationCap, menuKey: "treinamento" },
