@@ -11,6 +11,8 @@ import { SDRDashboard } from '@/components/discador/SDRDashboard';
 import { SDRSpecializationPanel } from '@/components/discador/SDRSpecializationPanel';
 import { StartCallFromLeadDialog } from '@/components/discador/StartCallFromLeadDialog';
 import { NvoipAccountPanel } from '@/components/discador/NvoipAccountPanel';
+import { NvoipNumbersPanel } from '@/components/discador/NvoipNumbersPanel';
+import { Hash } from 'lucide-react';
 import { KeyRound } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibility';
