@@ -169,7 +169,7 @@ export default function Prospeccao() {
   };
 
   const labels: Record<string, string> = {
-    cockpit: "Cockpit",
+    cockpit: "🎮  Grow Sales Hunter",
     organic: "Visão Geral",
     paid: "Pipeline Pago",
     followup: "Follow-ups",
