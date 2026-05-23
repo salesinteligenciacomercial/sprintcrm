@@ -37,7 +37,7 @@ function isStale(iso: string | null): boolean {
   return Date.now() - new Date(iso).getTime() > 24 * 60 * 60 * 1000;
 }
 
-function HunterCard({ lead, isDragging, onClick }: { lead: HunterLead; isDragging?: boolean; onClick: () => void }) {
+function HunterCard({ lead, isDragging, onClick, onLogAttempt }: { lead: HunterLead; isDragging?: boolean; onClick: () => void; onLogAttempt: (substatus: string) => void }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: lead.id, data: { lead } });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 50 } : undefined;
   const stale = isStale(lead.last_action_at);
