@@ -8,14 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Plus, Phone, GripVertical, AlertTriangle, Target, Users, TrendingUp, Activity } from "lucide-react";
+import { Plus, Phone, GripVertical, AlertTriangle, Target, Users, TrendingUp, Activity, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useHunterPipeline, type HunterLead, type HunterStage } from "@/hooks/useHunterPipeline";
 import { HunterStageForm } from "./HunterStageForm";
-import { HunterLeadDrawer } from "./HunterLeadDrawer";
+import { HunterLeadDrawer, QUICK_REGISTRY, RESULT_OPTIONS } from "./HunterLeadDrawer";
 
 const COLUMNS: { id: HunterStage; label: string; color: string }[] = [
   { id: "novo", label: "Leads Novos", color: "hsl(200, 50%, 60%)" },
@@ -33,7 +37,7 @@ function isStale(iso: string | null): boolean {
   return Date.now() - new Date(iso).getTime() > 24 * 60 * 60 * 1000;
 }
 
-function HunterCard({ lead, isDragging, onClick }: { lead: HunterLead; isDragging?: boolean; onClick: () => void }) {
+function HunterCard({ lead, isDragging, onClick, onLogAttempt }: { lead: HunterLead; isDragging?: boolean; onClick: () => void; onLogAttempt: (substatus: string) => void }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: lead.id, data: { lead } });
   const style = transform ? { transform: `translate(${transform.x}px, ${transform.y}px)`, zIndex: 50 } : undefined;
   const stale = isStale(lead.last_action_at);
@@ -49,9 +53,37 @@ function HunterCard({ lead, isDragging, onClick }: { lead: HunterLead; isDraggin
           <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />
           <span className="font-medium truncate">{lead.lead_company || lead.lead_name || "Lead"}</span>
         </button>
-        {lead.decisor_classificacao && (
-          <Badge variant="outline" className="text-[9px] px-1.5 h-4">{lead.decisor_classificacao}</Badge>
-        )}
+        <div className="flex items-center gap-1">
+          {lead.decisor_classificacao && (
+            <Badge variant="outline" className="text-[9px] px-1.5 h-4">{lead.decisor_classificacao}</Badge>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                aria-label="Registrar ação"
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 z-[60]">
+              <DropdownMenuLabel className="text-[10px]">Registrar ação</DropdownMenuLabel>
+              {QUICK_REGISTRY.map(({ key, label, icon: Icon, color }) => (
+                <DropdownMenuItem key={key} onClick={() => onLogAttempt(key)} className="text-xs">
+                  <Icon className={`h-3.5 w-3.5 mr-2 ${color}`} /> {label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px]">Resultado</DropdownMenuLabel>
+              {RESULT_OPTIONS.map((r) => (
+                <DropdownMenuItem key={r.key} onClick={() => onLogAttempt(r.key)} className="text-xs">
+                  {r.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <button onClick={onClick} className="block text-left w-full space-y-1">
@@ -229,6 +261,7 @@ export function HunterPipelineBoard() {
                         lead={l}
                         isDragging={active?.id === l.id}
                         onClick={() => setDrawer(l)}
+                        onLogAttempt={(s) => logCallAttempt(l.id, s)}
                       />
                     ))}
                   </HunterColumn>
