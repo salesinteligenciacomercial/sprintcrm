@@ -261,6 +261,7 @@ export function HunterPipelineBoard() {
                         lead={l}
                         isDragging={active?.id === l.id}
                         onClick={() => setDrawer(l)}
+                        onLogAttempt={(s) => logCallAttempt(l.id, s)}
                       />
                     ))}
                   </HunterColumn>
