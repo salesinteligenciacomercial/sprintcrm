@@ -839,24 +839,33 @@ export function RotinaInteligente() {
 // TIMELINE COMPONENT
 // ============================================
 function RotinaTimeline({
-  role, blocks, onGenerate, onAdd, onUpdate, onRemove, metricsTop
+  role, blocks, scope, onScopeChange, onGenerate, onAdd, onUpdate, onRemove,
+  onClearScope, onCopyFromPadrao, scopesWithContent, metricsTop,
 }: {
   role: Role;
   blocks: RoutineBlock[];
+  scope: ScopeId;
+  onScopeChange: (s: ScopeId) => void;
   onGenerate: () => void;
   onAdd: () => void;
   onUpdate: (id: string, patch: Partial<RoutineBlock>) => void;
   onRemove: (id: string) => void;
+  onClearScope: () => void;
+  onCopyFromPadrao: () => void;
+  scopesWithContent: ScopeId[];
   metricsTop: { label: string; value: number }[];
 }) {
+  const scopeLabel = SCOPES.find((s) => s.id === scope)?.label ?? scope;
+  const scopeHint = SCOPES.find((s) => s.id === scope)?.hint;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
-        <div>
+        <div className="flex-1 min-w-[260px]">
           <CardTitle className="text-base flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Rotina {role === "sdr" ? "do SDR" : "do Closer"}
+            Rotina {role === "sdr" ? "do SDR" : "do Closer"} — <span className="text-primary">{scopeLabel}</span>
           </CardTitle>
+          {scopeHint && <p className="text-[11px] text-muted-foreground mt-1">{scopeHint}</p>}
           <div className="flex gap-2 mt-2 flex-wrap">
             {metricsTop.map((m) => (
               <Badge key={m.label} variant="secondary" className="text-xs">
@@ -865,7 +874,40 @@ function RotinaTimeline({
             ))}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          <Select value={scope} onValueChange={(v) => onScopeChange(v as ScopeId)}>
+            <SelectTrigger className="h-8 w-[230px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Base</div>
+              {SCOPES.filter((s) => s.group === "base").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Dia da semana</div>
+              {SCOPES.filter((s) => s.group === "semana").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Fase do mês</div>
+              {SCOPES.filter((s) => s.group === "mes").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {scope !== "padrao" && (
+            <Button variant="ghost" size="sm" onClick={onCopyFromPadrao} title="Copiar blocos da rotina Padrão para este escopo">
+              Copiar do Padrão
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onClearScope} title="Limpar blocos deste escopo">
+            <Trash2 className="h-4 w-4 mr-1" /> Limpar
+          </Button>
           <Button variant="outline" size="sm" onClick={onAdd}>
             <Plus className="h-4 w-4 mr-1" /> Bloco
           </Button>
