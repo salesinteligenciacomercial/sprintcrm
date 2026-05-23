@@ -771,17 +771,23 @@ export function RotinaInteligente() {
 
           <RotinaTimeline
             role="closer"
-            blocks={closerBlocks}
+            blocks={getBlocks("closer", closerScope)}
+            scope={closerScope}
+            onScopeChange={setCloserScope}
             onGenerate={() => handleGenerate("closer")}
             onAdd={() => addBlock("closer")}
             onUpdate={(id, patch) => updateBlock("closer", id, patch)}
             onRemove={(id) => removeBlock("closer", id)}
+            onClearScope={() => clearScope("closer")}
+            onCopyFromPadrao={() => copyFromPadrao("closer")}
+            scopesWithContent={Object.entries(closerBlocksByScope).filter(([, v]) => (v?.length || 0) > 0).map(([k]) => k as ScopeId)}
             metricsTop={[
               { label: "Reuniões/dia", value: metrics.reunioesPorCloser },
               { label: "Capacidade real", value: metrics.capacidadeReunioes },
               { label: "Vendas/dia (time)", value: metrics.vendasDia },
             ]}
           />
+
         </TabsContent>
       </Tabs>
 
