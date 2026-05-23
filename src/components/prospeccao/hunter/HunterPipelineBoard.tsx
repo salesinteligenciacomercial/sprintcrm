@@ -53,9 +53,37 @@ function HunterCard({ lead, isDragging, onClick, onLogAttempt }: { lead: HunterL
           <GripVertical className="h-3 w-3 text-muted-foreground flex-shrink-0" />
           <span className="font-medium truncate">{lead.lead_company || lead.lead_name || "Lead"}</span>
         </button>
-        {lead.decisor_classificacao && (
-          <Badge variant="outline" className="text-[9px] px-1.5 h-4">{lead.decisor_classificacao}</Badge>
-        )}
+        <div className="flex items-center gap-1">
+          {lead.decisor_classificacao && (
+            <Badge variant="outline" className="text-[9px] px-1.5 h-4">{lead.decisor_classificacao}</Badge>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={(e) => e.stopPropagation()}
+                className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                aria-label="Registrar ação"
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 z-[60]">
+              <DropdownMenuLabel className="text-[10px]">Registrar ação</DropdownMenuLabel>
+              {QUICK_REGISTRY.map(({ key, label, icon: Icon, color }) => (
+                <DropdownMenuItem key={key} onClick={() => onLogAttempt(key)} className="text-xs">
+                  <Icon className={`h-3.5 w-3.5 mr-2 ${color}`} /> {label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-[10px]">Resultado</DropdownMenuLabel>
+              {RESULT_OPTIONS.map((r) => (
+                <DropdownMenuItem key={r.key} onClick={() => onLogAttempt(r.key)} className="text-xs">
+                  {r.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       <button onClick={onClick} className="block text-left w-full space-y-1">
