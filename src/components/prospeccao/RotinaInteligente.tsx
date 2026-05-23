@@ -163,6 +163,8 @@ export function RotinaInteligente() {
   const [closerBlocksByScope, setCloserBlocksByScope] = useState<BlocksByScope>({});
   const [sdrScope, setSdrScope] = useState<ScopeId>("padrao");
   const [closerScope, setCloserScope] = useState<ScopeId>("padrao");
+  const [sdrViewMode, setSdrViewMode] = useState<"board" | "detail">("board");
+  const [closerViewMode, setCloserViewMode] = useState<"board" | "detail">("board");
   const [recordId, setRecordId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [usedTemplate, setUsedTemplate] = useState<{ sdr: boolean; closer: boolean }>({ sdr: false, closer: false });
