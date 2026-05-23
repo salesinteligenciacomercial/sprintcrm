@@ -347,11 +347,11 @@ export function HunterPipelineBoard() {
 
           <DragOverlay>
             {active && (
-              <div className="rounded-lg border bg-card p-2.5 text-xs shadow-lg w-[250px] rotate-2">
-                <div className="flex items-center gap-1.5">
-                  <GripVertical className="h-3 w-3 text-muted-foreground" />
-                  <span className="font-medium truncate">{active.lead_company || active.lead_name || "Lead"}</span>
-                </div>
+              <div className="rounded-lg border bg-card p-2.5 text-xs shadow-lg w-[250px] rotate-2 flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback className="text-[10px]">{getInitials(active.lead_company || active.lead_name || "?")}</AvatarFallback>
+                </Avatar>
+                <span className="font-medium truncate">{active.lead_company || active.lead_name || "Lead"}</span>
               </div>
             )}
           </DragOverlay>
