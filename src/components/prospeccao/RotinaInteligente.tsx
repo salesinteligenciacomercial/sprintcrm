@@ -714,17 +714,23 @@ export function RotinaInteligente() {
 
           <RotinaTimeline
             role="sdr"
-            blocks={sdrBlocks}
+            blocks={getBlocks("sdr", sdrScope)}
+            scope={sdrScope}
+            onScopeChange={setSdrScope}
             onGenerate={() => handleGenerate("sdr")}
             onAdd={() => addBlock("sdr")}
             onUpdate={(id, patch) => updateBlock("sdr", id, patch)}
             onRemove={(id) => removeBlock("sdr", id)}
+            onClearScope={() => clearScope("sdr")}
+            onCopyFromPadrao={() => copyFromPadrao("sdr")}
+            scopesWithContent={Object.entries(sdrBlocksByScope).filter(([, v]) => (v?.length || 0) > 0).map(([k]) => k as ScopeId)}
             metricsTop={[
               { label: "Leads/dia", value: metrics.leadsPorSdr },
               { label: "Abordagens/dia", value: metrics.leadsPorSdr },
               { label: "Reuniões/dia (time)", value: metrics.reunioesDia },
             ]}
           />
+
         </TabsContent>
 
         {/* CLOSER CONFIG */}
