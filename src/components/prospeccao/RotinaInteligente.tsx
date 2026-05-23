@@ -98,7 +98,7 @@ const DEFAULT_CONFIG: Config = {
 };
 
 const STORAGE_KEY = "prospeccao_rotina_inteligente_v1";
-const ROUTINE_KEY = "prospeccao_rotina_blocos_v1";
+const ROUTINE_KEY = "prospeccao_rotina_blocos_v2";
 
 const BLOCK_STYLES: Record<BlockType, { bg: string; border: string; icon: any; label: string }> = {
   execucao:    { bg: "bg-emerald-500/10", border: "border-l-emerald-500", icon: Zap,         label: "Execução" },
@@ -108,6 +108,35 @@ const BLOCK_STYLES: Record<BlockType, { bg: string; border: string; icon: any; l
   pausa:       { bg: "bg-muted",          border: "border-l-muted-foreground", icon: Coffee, label: "Pausa" },
   reuniao:     { bg: "bg-rose-500/10",    border: "border-l-rose-500",    icon: Phone,       label: "Reunião" },
 };
+
+// ===== Escopos: dia da semana + fase do mês =====
+type ScopeId =
+  | "padrao"
+  | "segunda" | "terca" | "quarta" | "quinta" | "sexta" | "sabado"
+  | "inicio_mes" | "meio_mes" | "fim_mes";
+
+const SCOPES: { id: ScopeId; label: string; group: "semana" | "mes" | "base"; hint?: string }[] = [
+  { id: "padrao",     label: "Padrão (todo dia)", group: "base", hint: "Rotina base — usada quando o dia não tem rotina específica" },
+  { id: "segunda",    label: "Segunda",  group: "semana" },
+  { id: "terca",      label: "Terça",    group: "semana" },
+  { id: "quarta",     label: "Quarta",   group: "semana" },
+  { id: "quinta",     label: "Quinta",   group: "semana" },
+  { id: "sexta",      label: "Sexta (Follow-up & Fechamento)", group: "semana", hint: "Ex.: dia de follow-up + fechamento" },
+  { id: "sabado",     label: "Sábado",   group: "semana" },
+  { id: "inicio_mes", label: "Início do mês", group: "mes", hint: "Primeiros 5 dias úteis — abertura de pipeline" },
+  { id: "meio_mes",   label: "Meio do mês",   group: "mes" },
+  { id: "fim_mes",    label: "Fim do mês (Fechamento de Vendas)", group: "mes", hint: "Últimos 5 dias úteis — corrida de fechamento" },
+];
+
+type BlocksByScope = Partial<Record<ScopeId, RoutineBlock[]>>;
+
+function normalizeScopedBlocks(raw: any): BlocksByScope {
+  if (!raw) return {};
+  // Legado: era um array → vira escopo "padrao"
+  if (Array.isArray(raw)) return raw.length ? { padrao: raw } : {};
+  if (typeof raw === "object") return raw as BlocksByScope;
+  return {};
+}
 
 function addMin(time: string, mins: number): string {
   const [h, m] = time.split(":").map(Number);
@@ -130,8 +159,10 @@ export function RotinaInteligente() {
     catch { return DEFAULT_CONFIG; }
   });
   const [activeRole, setActiveRole] = useState<Role>("sdr");
-  const [sdrBlocks, setSdrBlocks] = useState<RoutineBlock[]>([]);
-  const [closerBlocks, setCloserBlocks] = useState<RoutineBlock[]>([]);
+  const [sdrBlocksByScope, setSdrBlocksByScope] = useState<BlocksByScope>({});
+  const [closerBlocksByScope, setCloserBlocksByScope] = useState<BlocksByScope>({});
+  const [sdrScope, setSdrScope] = useState<ScopeId>("padrao");
+  const [closerScope, setCloserScope] = useState<ScopeId>("padrao");
   const [recordId, setRecordId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [usedTemplate, setUsedTemplate] = useState<{ sdr: boolean; closer: boolean }>({ sdr: false, closer: false });
@@ -145,8 +176,16 @@ export function RotinaInteligente() {
         const s = localStorage.getItem(ROUTINE_KEY);
         if (s) {
           const parsed = JSON.parse(s);
-          setSdrBlocks(parsed.sdr || []);
-          setCloserBlocks(parsed.closer || []);
+          setSdrBlocksByScope(normalizeScopedBlocks(parsed.sdr));
+          setCloserBlocksByScope(normalizeScopedBlocks(parsed.closer));
+        } else {
+          // tentativa de migração da chave v1
+          const old = localStorage.getItem("prospeccao_rotina_blocos_v1");
+          if (old) {
+            const parsed = JSON.parse(old);
+            setSdrBlocksByScope(normalizeScopedBlocks(parsed.sdr));
+            setCloserBlocksByScope(normalizeScopedBlocks(parsed.closer));
+          }
         }
       } catch {}
 
@@ -171,12 +210,14 @@ export function RotinaInteligente() {
         if (personal.config && Object.keys(personal.config as any).length) {
           setConfig({ ...DEFAULT_CONFIG, ...(personal.config as any) });
         }
-        if (Array.isArray(personal.sdr_blocks) && (personal.sdr_blocks as any[]).length) {
-          setSdrBlocks(personal.sdr_blocks as any);
+        const sdrNorm = normalizeScopedBlocks(personal.sdr_blocks);
+        if (Object.keys(sdrNorm).length) {
+          setSdrBlocksByScope(sdrNorm);
           hasPersonalSdr = true;
         }
-        if (Array.isArray(personal.closer_blocks) && (personal.closer_blocks as any[]).length) {
-          setCloserBlocks(personal.closer_blocks as any);
+        const closerNorm = normalizeScopedBlocks(personal.closer_blocks);
+        if (Object.keys(closerNorm).length) {
+          setCloserBlocksByScope(closerNorm);
           hasPersonalCloser = true;
         }
       } else {
@@ -195,15 +236,20 @@ export function RotinaInteligente() {
         if (tpls && tpls.length) {
           const sdrTpl = tpls.find((t: any) => t.template_role === "sdr");
           const closerTpl = tpls.find((t: any) => t.template_role === "closer");
-          if (!hasPersonalSdr && sdrTpl && Array.isArray(sdrTpl.sdr_blocks) && (sdrTpl.sdr_blocks as any[]).length) {
-            setSdrBlocks(sdrTpl.sdr_blocks as any);
-            setUsedTemplate((u) => ({ ...u, sdr: true }));
+          if (!hasPersonalSdr && sdrTpl) {
+            const norm = normalizeScopedBlocks(sdrTpl.sdr_blocks);
+            if (Object.keys(norm).length) {
+              setSdrBlocksByScope(norm);
+              setUsedTemplate((u) => ({ ...u, sdr: true }));
+            }
           }
-          if (!hasPersonalCloser && closerTpl && Array.isArray(closerTpl.closer_blocks) && (closerTpl.closer_blocks as any[]).length) {
-            setCloserBlocks(closerTpl.closer_blocks as any);
-            setUsedTemplate((u) => ({ ...u, closer: true }));
+          if (!hasPersonalCloser && closerTpl) {
+            const norm = normalizeScopedBlocks(closerTpl.closer_blocks);
+            if (Object.keys(norm).length) {
+              setCloserBlocksByScope(norm);
+              setUsedTemplate((u) => ({ ...u, closer: true }));
+            }
           }
-          // Se ainda não tem config pessoal, herda do template SDR (mais completo)
           if (!personal && sdrTpl?.config && Object.keys(sdrTpl.config as any).length) {
             setConfig({ ...DEFAULT_CONFIG, ...(sdrTpl.config as any) });
           }
@@ -354,16 +400,32 @@ export function RotinaInteligente() {
     return blocks;
   };
 
+  // Helpers de escopo
+  const getBlocks = (role: Role, scope: ScopeId): RoutineBlock[] => {
+    const map = role === "sdr" ? sdrBlocksByScope : closerBlocksByScope;
+    return map[scope] || [];
+  };
+  const setBlocksFor = (
+    role: Role,
+    scope: ScopeId,
+    updater: (prev: RoutineBlock[]) => RoutineBlock[],
+  ) => {
+    const setter = role === "sdr" ? setSdrBlocksByScope : setCloserBlocksByScope;
+    setter((map) => ({ ...map, [scope]: updater(map[scope] || []) }));
+  };
+
   const handleGenerate = (role: Role) => {
-    if (role === "sdr") setSdrBlocks(buildSdrRoutine());
-    else setCloserBlocks(buildCloserRoutine());
-    toast.success(`Rotina ${role === "sdr" ? "do SDR" : "do Closer"} gerada com base na sua meta.`);
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    const generated = role === "sdr" ? buildSdrRoutine() : buildCloserRoutine();
+    setBlocksFor(role, scope, () => generated);
+    const scopeLabel = SCOPES.find((s) => s.id === scope)?.label ?? scope;
+    toast.success(`Rotina ${role === "sdr" ? "do SDR" : "do Closer"} (${scopeLabel}) gerada com base na sua meta.`);
   };
 
   const handleSave = async () => {
     // Cache local imediato
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    localStorage.setItem(ROUTINE_KEY, JSON.stringify({ sdr: sdrBlocks, closer: closerBlocks }));
+    localStorage.setItem(ROUTINE_KEY, JSON.stringify({ sdr: sdrBlocksByScope, closer: closerBlocksByScope }));
 
     if (!companyId || !userId) {
       toast.error("Usuário/empresa não identificados. Faça login novamente.");
@@ -374,8 +436,8 @@ export function RotinaInteligente() {
       company_id: companyId,
       user_id: userId,
       config: config as any,
-      sdr_blocks: sdrBlocks as any,
-      closer_blocks: closerBlocks as any,
+      sdr_blocks: sdrBlocksByScope as any,
+      closer_blocks: closerBlocksByScope as any,
     };
 
     const { data, error } = await supabase
@@ -403,8 +465,9 @@ export function RotinaInteligente() {
       toast.error("Empresa não identificada.");
       return;
     }
-    const blocksToSave = role === "sdr" ? sdrBlocks : closerBlocks;
-    if (!blocksToSave.length) {
+    const mapToSave = role === "sdr" ? sdrBlocksByScope : closerBlocksByScope;
+    const totalBlocks = Object.values(mapToSave).reduce((acc, arr) => acc + (arr?.length || 0), 0);
+    if (!totalBlocks) {
       toast.error("Gere ou adicione blocos antes de salvar o template.");
       return;
     }
@@ -424,8 +487,8 @@ export function RotinaInteligente() {
       is_template: true,
       template_role: role,
       config: config as any,
-      sdr_blocks: role === "sdr" ? (sdrBlocks as any) : ([] as any),
-      closer_blocks: role === "closer" ? (closerBlocks as any) : ([] as any),
+      sdr_blocks: role === "sdr" ? (sdrBlocksByScope as any) : ({} as any),
+      closer_blocks: role === "closer" ? (closerBlocksByScope as any) : ({} as any),
     };
 
     const { error } = existing
@@ -441,26 +504,47 @@ export function RotinaInteligente() {
   };
 
   const updateBlock = (role: Role, id: string, patch: Partial<RoutineBlock>) => {
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => bs.map((b) => b.id === id ? { ...b, ...patch } : b));
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, (bs) => bs.map((b) => b.id === id ? { ...b, ...patch } : b));
   };
   const removeBlock = (role: Role, id: string) => {
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => bs.filter((b) => b.id !== id));
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, (bs) => bs.filter((b) => b.id !== id));
   };
   const addBlock = (role: Role) => {
-    const list = role === "sdr" ? sdrBlocks : closerBlocks;
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    const list = getBlocks(role, scope);
     const last = list[list.length - 1];
     const start = last ? last.endTime : "09:00";
     const novo: RoutineBlock = {
       id: crypto.randomUUID(), startTime: start, endTime: addMin(start, 30),
       title: "Novo bloco", type: "execucao", description: ""
     };
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => [...bs, novo]);
+    setBlocksFor(role, scope, (bs) => [...bs, novo]);
+  };
+  const clearScope = (role: Role) => {
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, () => []);
+    toast.info("Escopo limpo.");
+  };
+  const copyFromPadrao = (role: Role) => {
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    if (scope === "padrao") {
+      toast.info("Você já está no escopo padrão.");
+      return;
+    }
+    const padrao = getBlocks(role, "padrao");
+    if (!padrao.length) {
+      toast.error("Não há rotina padrão para copiar. Crie a Padrão primeiro.");
+      return;
+    }
+    setBlocksFor(role, scope, () =>
+      padrao.map((b) => ({ ...b, id: crypto.randomUUID() })),
+    );
+    toast.success("Rotina padrão copiada — agora personalize para este dia.");
   };
 
-  const blocks = activeRole === "sdr" ? sdrBlocks : closerBlocks;
+  const blocks = getBlocks(activeRole, activeRole === "sdr" ? sdrScope : closerScope);
 
   // Período do dia
   const periodOf = (time: string) => {
@@ -630,17 +714,23 @@ export function RotinaInteligente() {
 
           <RotinaTimeline
             role="sdr"
-            blocks={sdrBlocks}
+            blocks={getBlocks("sdr", sdrScope)}
+            scope={sdrScope}
+            onScopeChange={setSdrScope}
             onGenerate={() => handleGenerate("sdr")}
             onAdd={() => addBlock("sdr")}
             onUpdate={(id, patch) => updateBlock("sdr", id, patch)}
             onRemove={(id) => removeBlock("sdr", id)}
+            onClearScope={() => clearScope("sdr")}
+            onCopyFromPadrao={() => copyFromPadrao("sdr")}
+            scopesWithContent={Object.entries(sdrBlocksByScope).filter(([, v]) => (v?.length || 0) > 0).map(([k]) => k as ScopeId)}
             metricsTop={[
               { label: "Leads/dia", value: metrics.leadsPorSdr },
               { label: "Abordagens/dia", value: metrics.leadsPorSdr },
               { label: "Reuniões/dia (time)", value: metrics.reunioesDia },
             ]}
           />
+
         </TabsContent>
 
         {/* CLOSER CONFIG */}
@@ -681,17 +771,23 @@ export function RotinaInteligente() {
 
           <RotinaTimeline
             role="closer"
-            blocks={closerBlocks}
+            blocks={getBlocks("closer", closerScope)}
+            scope={closerScope}
+            onScopeChange={setCloserScope}
             onGenerate={() => handleGenerate("closer")}
             onAdd={() => addBlock("closer")}
             onUpdate={(id, patch) => updateBlock("closer", id, patch)}
             onRemove={(id) => removeBlock("closer", id)}
+            onClearScope={() => clearScope("closer")}
+            onCopyFromPadrao={() => copyFromPadrao("closer")}
+            scopesWithContent={Object.entries(closerBlocksByScope).filter(([, v]) => (v?.length || 0) > 0).map(([k]) => k as ScopeId)}
             metricsTop={[
               { label: "Reuniões/dia", value: metrics.reunioesPorCloser },
               { label: "Capacidade real", value: metrics.capacidadeReunioes },
               { label: "Vendas/dia (time)", value: metrics.vendasDia },
             ]}
           />
+
         </TabsContent>
       </Tabs>
 
@@ -743,24 +839,33 @@ export function RotinaInteligente() {
 // TIMELINE COMPONENT
 // ============================================
 function RotinaTimeline({
-  role, blocks, onGenerate, onAdd, onUpdate, onRemove, metricsTop
+  role, blocks, scope, onScopeChange, onGenerate, onAdd, onUpdate, onRemove,
+  onClearScope, onCopyFromPadrao, scopesWithContent, metricsTop,
 }: {
   role: Role;
   blocks: RoutineBlock[];
+  scope: ScopeId;
+  onScopeChange: (s: ScopeId) => void;
   onGenerate: () => void;
   onAdd: () => void;
   onUpdate: (id: string, patch: Partial<RoutineBlock>) => void;
   onRemove: (id: string) => void;
+  onClearScope: () => void;
+  onCopyFromPadrao: () => void;
+  scopesWithContent: ScopeId[];
   metricsTop: { label: string; value: number }[];
 }) {
+  const scopeLabel = SCOPES.find((s) => s.id === scope)?.label ?? scope;
+  const scopeHint = SCOPES.find((s) => s.id === scope)?.hint;
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
-        <div>
+        <div className="flex-1 min-w-[260px]">
           <CardTitle className="text-base flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
-            Rotina {role === "sdr" ? "do SDR" : "do Closer"}
+            Rotina {role === "sdr" ? "do SDR" : "do Closer"} — <span className="text-primary">{scopeLabel}</span>
           </CardTitle>
+          {scopeHint && <p className="text-[11px] text-muted-foreground mt-1">{scopeHint}</p>}
           <div className="flex gap-2 mt-2 flex-wrap">
             {metricsTop.map((m) => (
               <Badge key={m.label} variant="secondary" className="text-xs">
@@ -769,7 +874,40 @@ function RotinaTimeline({
             ))}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          <Select value={scope} onValueChange={(v) => onScopeChange(v as ScopeId)}>
+            <SelectTrigger className="h-8 w-[230px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Base</div>
+              {SCOPES.filter((s) => s.group === "base").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Dia da semana</div>
+              {SCOPES.filter((s) => s.group === "semana").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-muted-foreground">Fase do mês</div>
+              {SCOPES.filter((s) => s.group === "mes").map((s) => (
+                <SelectItem key={s.id} value={s.id}>
+                  {s.label} {scopesWithContent.includes(s.id) ? "•" : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {scope !== "padrao" && (
+            <Button variant="ghost" size="sm" onClick={onCopyFromPadrao} title="Copiar blocos da rotina Padrão para este escopo">
+              Copiar do Padrão
+            </Button>
+          )}
+          <Button variant="ghost" size="sm" onClick={onClearScope} title="Limpar blocos deste escopo">
+            <Trash2 className="h-4 w-4 mr-1" /> Limpar
+          </Button>
           <Button variant="outline" size="sm" onClick={onAdd}>
             <Plus className="h-4 w-4 mr-1" /> Bloco
           </Button>
