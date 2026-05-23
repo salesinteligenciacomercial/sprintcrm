@@ -98,7 +98,7 @@ const DEFAULT_CONFIG: Config = {
 };
 
 const STORAGE_KEY = "prospeccao_rotina_inteligente_v1";
-const ROUTINE_KEY = "prospeccao_rotina_blocos_v1";
+const ROUTINE_KEY = "prospeccao_rotina_blocos_v2";
 
 const BLOCK_STYLES: Record<BlockType, { bg: string; border: string; icon: any; label: string }> = {
   execucao:    { bg: "bg-emerald-500/10", border: "border-l-emerald-500", icon: Zap,         label: "Execução" },
@@ -108,6 +108,35 @@ const BLOCK_STYLES: Record<BlockType, { bg: string; border: string; icon: any; l
   pausa:       { bg: "bg-muted",          border: "border-l-muted-foreground", icon: Coffee, label: "Pausa" },
   reuniao:     { bg: "bg-rose-500/10",    border: "border-l-rose-500",    icon: Phone,       label: "Reunião" },
 };
+
+// ===== Escopos: dia da semana + fase do mês =====
+type ScopeId =
+  | "padrao"
+  | "segunda" | "terca" | "quarta" | "quinta" | "sexta" | "sabado"
+  | "inicio_mes" | "meio_mes" | "fim_mes";
+
+const SCOPES: { id: ScopeId; label: string; group: "semana" | "mes" | "base"; hint?: string }[] = [
+  { id: "padrao",     label: "Padrão (todo dia)", group: "base", hint: "Rotina base — usada quando o dia não tem rotina específica" },
+  { id: "segunda",    label: "Segunda",  group: "semana" },
+  { id: "terca",      label: "Terça",    group: "semana" },
+  { id: "quarta",     label: "Quarta",   group: "semana" },
+  { id: "quinta",     label: "Quinta",   group: "semana" },
+  { id: "sexta",      label: "Sexta (Follow-up & Fechamento)", group: "semana", hint: "Ex.: dia de follow-up + fechamento" },
+  { id: "sabado",     label: "Sábado",   group: "semana" },
+  { id: "inicio_mes", label: "Início do mês", group: "mes", hint: "Primeiros 5 dias úteis — abertura de pipeline" },
+  { id: "meio_mes",   label: "Meio do mês",   group: "mes" },
+  { id: "fim_mes",    label: "Fim do mês (Fechamento de Vendas)", group: "mes", hint: "Últimos 5 dias úteis — corrida de fechamento" },
+];
+
+type BlocksByScope = Partial<Record<ScopeId, RoutineBlock[]>>;
+
+function normalizeScopedBlocks(raw: any): BlocksByScope {
+  if (!raw) return {};
+  // Legado: era um array → vira escopo "padrao"
+  if (Array.isArray(raw)) return raw.length ? { padrao: raw } : {};
+  if (typeof raw === "object") return raw as BlocksByScope;
+  return {};
+}
 
 function addMin(time: string, mins: number): string {
   const [h, m] = time.split(":").map(Number);
