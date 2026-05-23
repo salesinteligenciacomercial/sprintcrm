@@ -3,11 +3,35 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { PhoneCall, Phone, Clock, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  PhoneCall, Phone, Clock, AlertTriangle,
+  PhoneOff, Voicemail, PhoneOutgoing, XCircle, RotateCcw, MessageCircle, CalendarClock, PhoneCall as PhoneCallIcon,
+} from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { HunterLead, HunterEvent } from "@/hooks/useHunterPipeline";
 import { useCallCenter } from "@/hooks/useCallCenter";
+
+export const QUICK_REGISTRY = [
+  { key: "primeiro_contato", label: "Primeiro contato", icon: PhoneCallIcon, color: "text-sky-600" },
+  { key: "nao_atendeu", label: "Não atendeu", icon: PhoneOff, color: "text-orange-600" },
+  { key: "caixa_postal", label: "Caixa postal", icon: Voicemail, color: "text-orange-500" },
+  { key: "ocupado", label: "Ocupado", icon: PhoneOutgoing, color: "text-amber-600" },
+  { key: "numero_invalido", label: "Número inválido", icon: XCircle, color: "text-red-600" },
+  { key: "follow_up", label: "Follow-up", icon: RotateCcw, color: "text-emerald-600" },
+  { key: "whatsapp_enviado", label: "WhatsApp enviado", icon: MessageCircle, color: "text-emerald-600" },
+  { key: "retornar_depois", label: "Retornar depois", icon: CalendarClock, color: "text-violet-600" },
+] as const;
+
+export const RESULT_OPTIONS = [
+  { key: "pendente", label: "Pendente" },
+  { key: "prospectado", label: "Prospectado" },
+  { key: "sem_resposta", label: "Sem resposta" },
+  { key: "oportunidade", label: "Oportunidade" },
+  { key: "retornar_call_responsavel", label: "Retornar Call / Responsável" },
+  { key: "follow_up", label: "Follow-up" },
+] as const;
 
 interface Props {
   open: boolean;
