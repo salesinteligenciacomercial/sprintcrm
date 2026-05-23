@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   Brain, Target, Phone, MessageCircle, Instagram, Mail, Coffee,
   TrendingUp, AlertTriangle, RefreshCw, Save, Plus, Trash2, GripVertical,
-  Sun, CloudSun, Sunset, Moon, Zap, BookOpen, Calendar
+  Sun, CloudSun, Sunset, Moon, Zap, BookOpen, Calendar, LayoutGrid, List, Copy, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
