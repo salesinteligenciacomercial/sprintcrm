@@ -232,6 +232,9 @@ export default function Prospeccao() {
         </div>
       </div>
 
+      {/* Cockpit do Dia — HUD operacional unificado (Fase 1 redesign) */}
+      <CockpitDoDia />
+
       {/* Topo de Foco — meta do dia, perda estimada, posição */}
       <TopoFoco onRecuperar={() => setActiveTab("followup")} />
 
