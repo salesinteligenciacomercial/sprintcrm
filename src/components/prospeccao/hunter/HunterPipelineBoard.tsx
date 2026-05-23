@@ -164,9 +164,11 @@ export function HunterPipelineBoard() {
         assigned_to: user?.id ?? null,
         stage: "novo" as HunterStage,
       }));
-      const { error } = await supabase.from("hunter_pipeline_leads" as any).insert(rows);
+      const { error } = await supabase
+        .from("hunter_pipeline_leads" as any)
+        .upsert(rows, { onConflict: "company_id,lead_id", ignoreDuplicates: true });
       if (error) throw error;
-      toast.success(`${rows.length} lead(s) adicionado(s) ao pipeline`);
+      toast.success(`${rows.length} lead(s) processado(s)`);
       load();
     } catch (e: any) {
       console.error(e);
