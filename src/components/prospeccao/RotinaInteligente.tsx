@@ -400,16 +400,32 @@ export function RotinaInteligente() {
     return blocks;
   };
 
+  // Helpers de escopo
+  const getBlocks = (role: Role, scope: ScopeId): RoutineBlock[] => {
+    const map = role === "sdr" ? sdrBlocksByScope : closerBlocksByScope;
+    return map[scope] || [];
+  };
+  const setBlocksFor = (
+    role: Role,
+    scope: ScopeId,
+    updater: (prev: RoutineBlock[]) => RoutineBlock[],
+  ) => {
+    const setter = role === "sdr" ? setSdrBlocksByScope : setCloserBlocksByScope;
+    setter((map) => ({ ...map, [scope]: updater(map[scope] || []) }));
+  };
+
   const handleGenerate = (role: Role) => {
-    if (role === "sdr") setSdrBlocks(buildSdrRoutine());
-    else setCloserBlocks(buildCloserRoutine());
-    toast.success(`Rotina ${role === "sdr" ? "do SDR" : "do Closer"} gerada com base na sua meta.`);
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    const generated = role === "sdr" ? buildSdrRoutine() : buildCloserRoutine();
+    setBlocksFor(role, scope, () => generated);
+    const scopeLabel = SCOPES.find((s) => s.id === scope)?.label ?? scope;
+    toast.success(`Rotina ${role === "sdr" ? "do SDR" : "do Closer"} (${scopeLabel}) gerada com base na sua meta.`);
   };
 
   const handleSave = async () => {
     // Cache local imediato
     localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    localStorage.setItem(ROUTINE_KEY, JSON.stringify({ sdr: sdrBlocks, closer: closerBlocks }));
+    localStorage.setItem(ROUTINE_KEY, JSON.stringify({ sdr: sdrBlocksByScope, closer: closerBlocksByScope }));
 
     if (!companyId || !userId) {
       toast.error("Usuário/empresa não identificados. Faça login novamente.");
@@ -420,8 +436,8 @@ export function RotinaInteligente() {
       company_id: companyId,
       user_id: userId,
       config: config as any,
-      sdr_blocks: sdrBlocks as any,
-      closer_blocks: closerBlocks as any,
+      sdr_blocks: sdrBlocksByScope as any,
+      closer_blocks: closerBlocksByScope as any,
     };
 
     const { data, error } = await supabase
@@ -449,8 +465,9 @@ export function RotinaInteligente() {
       toast.error("Empresa não identificada.");
       return;
     }
-    const blocksToSave = role === "sdr" ? sdrBlocks : closerBlocks;
-    if (!blocksToSave.length) {
+    const mapToSave = role === "sdr" ? sdrBlocksByScope : closerBlocksByScope;
+    const totalBlocks = Object.values(mapToSave).reduce((acc, arr) => acc + (arr?.length || 0), 0);
+    if (!totalBlocks) {
       toast.error("Gere ou adicione blocos antes de salvar o template.");
       return;
     }
@@ -470,8 +487,8 @@ export function RotinaInteligente() {
       is_template: true,
       template_role: role,
       config: config as any,
-      sdr_blocks: role === "sdr" ? (sdrBlocks as any) : ([] as any),
-      closer_blocks: role === "closer" ? (closerBlocks as any) : ([] as any),
+      sdr_blocks: role === "sdr" ? (sdrBlocksByScope as any) : ({} as any),
+      closer_blocks: role === "closer" ? (closerBlocksByScope as any) : ({} as any),
     };
 
     const { error } = existing
@@ -487,26 +504,47 @@ export function RotinaInteligente() {
   };
 
   const updateBlock = (role: Role, id: string, patch: Partial<RoutineBlock>) => {
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => bs.map((b) => b.id === id ? { ...b, ...patch } : b));
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, (bs) => bs.map((b) => b.id === id ? { ...b, ...patch } : b));
   };
   const removeBlock = (role: Role, id: string) => {
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => bs.filter((b) => b.id !== id));
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, (bs) => bs.filter((b) => b.id !== id));
   };
   const addBlock = (role: Role) => {
-    const list = role === "sdr" ? sdrBlocks : closerBlocks;
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    const list = getBlocks(role, scope);
     const last = list[list.length - 1];
     const start = last ? last.endTime : "09:00";
     const novo: RoutineBlock = {
       id: crypto.randomUUID(), startTime: start, endTime: addMin(start, 30),
       title: "Novo bloco", type: "execucao", description: ""
     };
-    const setter = role === "sdr" ? setSdrBlocks : setCloserBlocks;
-    setter((bs) => [...bs, novo]);
+    setBlocksFor(role, scope, (bs) => [...bs, novo]);
+  };
+  const clearScope = (role: Role) => {
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    setBlocksFor(role, scope, () => []);
+    toast.info("Escopo limpo.");
+  };
+  const copyFromPadrao = (role: Role) => {
+    const scope = role === "sdr" ? sdrScope : closerScope;
+    if (scope === "padrao") {
+      toast.info("Você já está no escopo padrão.");
+      return;
+    }
+    const padrao = getBlocks(role, "padrao");
+    if (!padrao.length) {
+      toast.error("Não há rotina padrão para copiar. Crie a Padrão primeiro.");
+      return;
+    }
+    setBlocksFor(role, scope, () =>
+      padrao.map((b) => ({ ...b, id: crypto.randomUUID() })),
+    );
+    toast.success("Rotina padrão copiada — agora personalize para este dia.");
   };
 
-  const blocks = activeRole === "sdr" ? sdrBlocks : closerBlocks;
+  const blocks = getBlocks(activeRole, activeRole === "sdr" ? sdrScope : closerScope);
 
   // Período do dia
   const periodOf = (time: string) => {
