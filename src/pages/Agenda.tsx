@@ -3433,6 +3433,7 @@ export default function Agenda() {
               )}
             </CardContent>
           </Card>
+          </div>
         </TabsContent>
 
 
