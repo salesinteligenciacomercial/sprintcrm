@@ -575,68 +575,204 @@ export function RotinaInteligente() {
         </CardHeader>
       </Card>
 
-      {/* INPUTS DA EMPRESA */}
-      <Card>
-        <CardHeader>
+      {/* CENTRAL DE METAS & CAPACIDADE — tudo sincronizado em um só lugar */}
+      <Card className="border-emerald-500/20">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Target className="h-5 w-5 text-emerald-500" /> Configuração da Empresa
+            <Target className="h-5 w-5 text-emerald-500" /> Metas & Capacidade da Empresa
           </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Defina a meta uma única vez. O sistema calcula automaticamente as missões do dia, semana e mês e dimensiona a rotina do SDR e do Closer.
+          </p>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-1">
-            <Label className="text-xs">Meta de Faturamento (R$/mês)</Label>
-            <Input type="number" value={config.metaFaturamento} onChange={(e) => update("metaFaturamento", Number(e.target.value))} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Ticket Médio (R$)</Label>
-            <Input type="number" value={config.ticketMedio} onChange={(e) => update("ticketMedio", Number(e.target.value))} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Taxa Conversão Reunião → Venda (%)</Label>
-            <Input type="number" value={config.taxaConversao} onChange={(e) => update("taxaConversao", Number(e.target.value))} />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">Dias úteis no mês</Label>
-            <Input type="number" value={config.diasUteis} onChange={(e) => update("diasUteis", Number(e.target.value))} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* CÁLCULOS AUTOMÁTICOS */}
-      <Card className="bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-500" /> Cálculo Automático — O que sua meta exige
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            {[
-              { label: "Vendas/mês", value: metrics.vendasMes },
-              { label: "Vendas/dia", value: metrics.vendasDia },
-              { label: "Reuniões/dia", value: metrics.reunioesDia },
-              { label: "Respostas/dia", value: metrics.respostasDia },
-              { label: "Leads/dia (total)", value: metrics.leadsDia },
-              { label: "Leads/SDR/dia", value: metrics.leadsPorSdr, highlight: true },
-            ].map((m) => (
-              <div key={m.label} className={`p-3 rounded-lg border ${m.highlight ? "border-primary bg-primary/5" : "border-border bg-background"}`}>
-                <p className="text-xs text-muted-foreground">{m.label}</p>
-                <p className="text-2xl font-bold text-foreground">{m.value}</p>
+        <CardContent className="space-y-6">
+          {/* 1. META DA EMPRESA */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-5 w-1 rounded-full bg-emerald-500" />
+              <h3 className="text-sm font-semibold text-foreground">1. Meta da Empresa</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Meta de Faturamento (R$/mês)</Label>
+                <Input type="number" value={config.metaFaturamento} onChange={(e) => update("metaFaturamento", Number(e.target.value))} />
               </div>
-            ))}
-          </div>
-          {metrics.sobrecarga && (
-            <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-destructive">Sobrecarga detectada no Closer</p>
-                <p className="text-muted-foreground">
-                  Sua meta exige <b>{metrics.reunioesPorCloser} reuniões/closer/dia</b>, mas a capacidade real é <b>{metrics.capacidadeReunioes}</b>.
-                  Aumente o time, reduza o tempo médio de reunião ou ajuste a meta.
-                </p>
+              <div className="space-y-1">
+                <Label className="text-xs">Ticket Médio (R$)</Label>
+                <Input type="number" value={config.ticketMedio} onChange={(e) => update("ticketMedio", Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Taxa Conversão Reunião → Venda (%)</Label>
+                <Input type="number" value={config.taxaConversao} onChange={(e) => update("taxaConversao", Number(e.target.value))} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Dias úteis no mês</Label>
+                <Input type="number" value={config.diasUteis} onChange={(e) => update("diasUteis", Number(e.target.value))} />
               </div>
             </div>
-          )}
+          </div>
+
+          <Separator />
+
+          {/* 2. MISSÕES (DIA / SEMANA / MÊS) */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-5 w-1 rounded-full bg-blue-500" />
+              <h3 className="text-sm font-semibold text-foreground">2. Missões — o que a meta exige</h3>
+              <Badge variant="outline" className="text-[10px]">calculado automaticamente</Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { label: "Por dia", color: "emerald", vendas: metrics.vendasDia, reunioes: metrics.reunioesDia, leads: metrics.leadsDia },
+                { label: "Por semana", color: "blue", vendas: metrics.vendasDia * 5, reunioes: metrics.reunioesDia * 5, leads: metrics.leadsDia * 5 },
+                { label: "Por mês", color: "purple", vendas: metrics.vendasMes, reunioes: metrics.reunioesMes, leads: metrics.leadsDia * config.diasUteis },
+              ].map((m) => (
+                <div key={m.label} className="p-3 rounded-lg border border-border bg-muted/30">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{m.label}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Vendas</p>
+                      <p className="text-xl font-bold text-foreground">{m.vendas}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Reuniões</p>
+                      <p className="text-xl font-bold text-foreground">{m.reunioes}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Leads</p>
+                      <p className="text-xl font-bold text-foreground">{m.leads}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* 3. ROTINA DO SDR + CLOSER lado a lado */}
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="h-5 w-1 rounded-full bg-primary" />
+              <h3 className="text-sm font-semibold text-foreground">3. Capacidade do Time — SDR & Closer</h3>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* SDR */}
+              <div className="rounded-lg border border-border p-3 bg-background">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🎯 Rotina do SDR</h4>
+                  <Badge variant="secondary" className="text-[10px]">{metrics.leadsPorSdr} leads/SDR/dia</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nº de SDRs</Label>
+                    <Input type="number" value={config.sdrCount} onChange={(e) => update("sdrCount", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Horas/dia</Label>
+                    <Input type="number" value={config.sdrHoras} onChange={(e) => update("sdrHoras", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Canal Principal</Label>
+                    <Select value={config.sdrCanal} onValueChange={(v) => update("sdrCanal", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                        <SelectItem value="ligacao">Ligação</SelectItem>
+                        <SelectItem value="instagram">Instagram</SelectItem>
+                        <SelectItem value="email">E-mail</SelectItem>
+                        <SelectItem value="linkedin">LinkedIn</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nível</Label>
+                    <Select value={config.sdrNivel} onValueChange={(v) => update("sdrNivel", v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="iniciante">Iniciante</SelectItem>
+                        <SelectItem value="intermediario">Intermediário</SelectItem>
+                        <SelectItem value="avancado">Avançado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Início</Label>
+                    <Input type="time" value={config.sdrInicio} onChange={(e) => update("sdrInicio", e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Taxa Lead → Resposta (%)</Label>
+                    <Input type="number" value={config.taxaLeadResposta} onChange={(e) => update("taxaLeadResposta", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Almoço início</Label>
+                    <Input type="time" value={config.sdrAlmocoInicio} onChange={(e) => update("sdrAlmocoInicio", e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Almoço fim</Label>
+                    <Input type="time" value={config.sdrAlmocoFim} onChange={(e) => update("sdrAlmocoFim", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              {/* CLOSER */}
+              <div className="rounded-lg border border-border p-3 bg-background">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">💼 Rotina do Closer</h4>
+                  <Badge variant="secondary" className="text-[10px]">{metrics.reunioesPorCloser} reuniões/closer/dia</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nº de Closers</Label>
+                    <Input type="number" value={config.closerCount} onChange={(e) => update("closerCount", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Horas/dia</Label>
+                    <Input type="number" value={config.closerHoras} onChange={(e) => update("closerHoras", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Tempo médio reunião (min)</Label>
+                    <Input type="number" value={config.tempoReuniaoMin} onChange={(e) => update("tempoReuniaoMin", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Taxa de fechamento (%)</Label>
+                    <Input type="number" value={config.taxaFechamento} onChange={(e) => update("taxaFechamento", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Início</Label>
+                    <Input type="time" value={config.closerInicio} onChange={(e) => update("closerInicio", e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Capacidade real</Label>
+                    <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/30 text-sm font-semibold">
+                      {metrics.capacidadeReunioes} reuniões
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Almoço início</Label>
+                    <Input type="time" value={config.closerAlmocoInicio} onChange={(e) => update("closerAlmocoInicio", e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Almoço fim</Label>
+                    <Input type="time" value={config.closerAlmocoFim} onChange={(e) => update("closerAlmocoFim", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {metrics.sobrecarga && (
+              <div className="mt-3 p-3 rounded-lg bg-destructive/10 border border-destructive/30 flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-destructive">Sobrecarga detectada no Closer</p>
+                  <p className="text-muted-foreground">
+                    Sua meta exige <b>{metrics.reunioesPorCloser} reuniões/closer/dia</b>, mas a capacidade real é <b>{metrics.capacidadeReunioes}</b>.
+                    Aumente o time, reduza o tempo médio de reunião ou ajuste a meta.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -662,59 +798,7 @@ export function RotinaInteligente() {
 
         {/* SDR CONFIG */}
         <TabsContent value="sdr" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Parâmetros do SDR</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs">Nº de SDRs</Label>
-                <Input type="number" value={config.sdrCount} onChange={(e) => update("sdrCount", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Horas disponíveis/dia</Label>
-                <Input type="number" value={config.sdrHoras} onChange={(e) => update("sdrHoras", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Canal Principal</Label>
-                <Select value={config.sdrCanal} onValueChange={(v) => update("sdrCanal", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    <SelectItem value="ligacao">Ligação</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="email">E-mail</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Nível</Label>
-                <Select value={config.sdrNivel} onValueChange={(v) => update("sdrNivel", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="iniciante">Iniciante</SelectItem>
-                    <SelectItem value="intermediario">Intermediário</SelectItem>
-                    <SelectItem value="avancado">Avançado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Início do expediente</Label>
-                <Input type="time" value={config.sdrInicio} onChange={(e) => update("sdrInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — início</Label>
-                <Input type="time" value={config.sdrAlmocoInicio} onChange={(e) => update("sdrAlmocoInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — fim</Label>
-                <Input type="time" value={config.sdrAlmocoFim} onChange={(e) => update("sdrAlmocoFim", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Taxa Lead → Resposta (%)</Label>
-                <Input type="number" value={config.taxaLeadResposta} onChange={(e) => update("taxaLeadResposta", Number(e.target.value))} />
-              </div>
-            </CardContent>
-          </Card>
+
 
           <RotinaViewSwitcher
             role="sdr"
@@ -742,39 +826,6 @@ export function RotinaInteligente() {
 
         {/* CLOSER CONFIG */}
         <TabsContent value="closer" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Parâmetros do Closer</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs">Nº de Closers</Label>
-                <Input type="number" value={config.closerCount} onChange={(e) => update("closerCount", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Horas disponíveis/dia</Label>
-                <Input type="number" value={config.closerHoras} onChange={(e) => update("closerHoras", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Tempo médio de reunião (min)</Label>
-                <Input type="number" value={config.tempoReuniaoMin} onChange={(e) => update("tempoReuniaoMin", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Taxa de fechamento (%)</Label>
-                <Input type="number" value={config.taxaFechamento} onChange={(e) => update("taxaFechamento", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Início do expediente</Label>
-                <Input type="time" value={config.closerInicio} onChange={(e) => update("closerInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — início</Label>
-                <Input type="time" value={config.closerAlmocoInicio} onChange={(e) => update("closerAlmocoInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — fim</Label>
-                <Input type="time" value={config.closerAlmocoFim} onChange={(e) => update("closerAlmocoFim", e.target.value)} />
-              </div>
-            </CardContent>
-          </Card>
 
           <RotinaViewSwitcher
             role="closer"
