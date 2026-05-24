@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CockpitDoDia } from "@/components/prospeccao/cockpit/CockpitDoDia";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -560,7 +560,7 @@ export function RotinaInteligente() {
 
   return (
     <div className="space-y-6">
-      <CockpitDoDia />
+      
       {/* HERO */}
       <Card className="border-l-4 border-l-primary bg-gradient-to-br from-primary/5 to-transparent">
         <CardHeader>
