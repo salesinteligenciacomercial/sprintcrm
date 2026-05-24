@@ -3208,6 +3208,46 @@ export default function Agenda() {
                       </Button>}
                   </div>}
               </div>
+              ) : (
+              <div className="flex gap-4 flex-wrap">
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={filtroStatusLembrete} onValueChange={setFiltroStatusLembrete}>
+                    <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="enviado">Enviado</SelectItem>
+                      <SelectItem value="erro">Erro</SelectItem>
+                      <SelectItem value="retry">Retry</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Canal</Label>
+                  <Select value={filtroCanalLembrete} onValueChange={setFiltroCanalLembrete}>
+                    <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="email">E-mail</SelectItem>
+                      <SelectItem value="push">Push</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select value={filtroRecorrencia} onValueChange={setFiltroRecorrencia}>
+                    <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos</SelectItem>
+                      <SelectItem value="unico">Único</SelectItem>
+                      <SelectItem value="recorrente">Recorrente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              )}
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-[600px]">
