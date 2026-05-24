@@ -50,7 +50,7 @@ import { RotinaInteligente } from "@/components/prospeccao/RotinaInteligente";
 import { PerformanceHubPanel } from "@/components/prospeccao/PerformanceHubPanel";
 import { TopoFoco } from "@/components/prospeccao/foco/TopoFoco";
 import { HunterCockpit } from "@/components/prospeccao/HunterCockpit";
-import { CockpitDoDia } from "@/components/prospeccao/cockpit/CockpitDoDia";
+
 import { usePermissions } from "@/hooks/usePermissions";
 
 
