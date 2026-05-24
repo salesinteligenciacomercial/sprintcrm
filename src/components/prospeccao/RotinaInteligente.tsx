@@ -1166,7 +1166,7 @@ function RotinaWeekBoard({
   const endMin = Math.min(24 * 60, Math.max(19 * 60, ...allBlocks.map((b) => toMin(b.endTime))));
   const startHour = Math.floor(startMin / 60);
   const endHour = Math.ceil(endMin / 60);
-  const HOUR_HEIGHT = 56; // px por hora
+  const HOUR_HEIGHT = viewMode === "dia" ? 140 : 110; // px por hora — bem mais espaçado para leitura
   const gridHeight = (endHour - startHour) * HOUR_HEIGHT;
   const hours = Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
 
@@ -1174,7 +1174,7 @@ function RotinaWeekBoard({
     return ((toMin(b.startTime) - startHour * 60) / 60) * HOUR_HEIGHT;
   }
   function heightFor(b: RoutineBlock): number {
-    return Math.max(28, ((toMin(b.endTime) - toMin(b.startTime)) / 60) * HOUR_HEIGHT - 2);
+    return Math.max(44, ((toMin(b.endTime) - toMin(b.startTime)) / 60) * HOUR_HEIGHT - 4);
   }
 
   // ===== Conteúdo de UMA coluna de dia (com posicionamento por horário) =====
@@ -1217,18 +1217,18 @@ function RotinaWeekBoard({
               style={{ top: topFor(b), height: heightFor(b), borderLeftWidth: 3 }}
               title={`${b.startTime} – ${b.endTime} · ${b.title}`}
             >
-              <div className="px-2 py-1">
-                <div className="flex items-center gap-1 text-[9px] font-mono text-muted-foreground tabular-nums leading-tight">
+              <div className="px-2 py-1.5">
+                <div className="flex items-center gap-1 text-[10px] font-mono text-muted-foreground tabular-nums leading-tight">
                   {b.startTime} – {b.endTime}
                 </div>
-                <div className="flex items-start gap-1 mt-0.5">
-                  <Icon className="h-3 w-3 mt-0.5 text-foreground/60 shrink-0" />
-                  <p className={`${compact ? "text-[10px]" : "text-[11px]"} font-medium text-foreground leading-tight line-clamp-2`}>
+                <div className="flex items-start gap-1.5 mt-1">
+                  <Icon className="h-3.5 w-3.5 mt-0.5 text-foreground/70 shrink-0" />
+                  <p className={`${compact ? "text-[11px]" : "text-[12px]"} font-semibold text-foreground leading-tight line-clamp-2`}>
                     {b.title}
                   </p>
                 </div>
-                {!compact && b.goal && heightFor(b) > 50 && (
-                  <p className="text-[9px] text-primary mt-0.5 pl-4 line-clamp-1 font-medium">🎯 {b.goal}</p>
+                {b.goal && heightFor(b) > 64 && (
+                  <p className="text-[10px] text-primary mt-1 pl-5 line-clamp-2 font-medium">🎯 {b.goal}</p>
                 )}
               </div>
             </button>
