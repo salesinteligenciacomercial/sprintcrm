@@ -3374,6 +3374,63 @@ export default function Agenda() {
                       </Card>)}
                 </div>
               </ScrollArea>
+              ) : (
+              <ScrollArea className="h-[600px]">
+                {lembretesFiltrados.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Bell className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>{lembretes.length === 0 ? "Nenhum lembrete criado" : "Nenhum lembrete encontrado com os filtros aplicados"}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {lembretesFiltrados.map(lembrete => (
+                      <Card key={lembrete.id} className={`border-l-4 ${lembrete.status_envio === 'enviado' ? 'border-l-green-500' : lembrete.status_envio === 'pendente' ? 'border-l-yellow-500' : 'border-l-red-500'}`}>
+                        <CardContent className="pt-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium">
+                                {lembrete.compromisso?.titulo || lembrete.compromisso?.tipo_servico || 'Compromisso'}
+                              </span>
+                              <Badge variant={lembrete.status_envio === 'enviado' ? 'default' : lembrete.status_envio === 'pendente' ? 'secondary' : lembrete.status_envio === 'retry' ? 'outline' : 'destructive'}>
+                                {lembrete.status_envio === 'enviado' ? '✓ Enviado' : lembrete.status_envio === 'pendente' ? '⏳ Pendente' : lembrete.status_envio === 'retry' ? '🔄 Retry' : '✗ Erro'}
+                              </Badge>
+                              {lembrete.recorrencia && (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                                  🔄 {lembrete.recorrencia === 'semanal' ? 'Semanal' : lembrete.recorrencia === 'quinzenal' ? 'Quinzenal' : lembrete.recorrencia === 'mensal' ? 'Mensal' : 'Recorrente'}
+                                </Badge>
+                              )}
+                              {(lembrete.status_envio === 'erro' || lembrete.status_envio === 'retry') && (
+                                <Button size="sm" variant="outline" onClick={() => reenviarLembrete(lembrete.id)} className="h-6 px-2 text-xs">
+                                  Reenviar
+                                </Button>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {lembrete.compromisso?.data_hora_inicio && format(parseISO(lembrete.compromisso.data_hora_inicio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              <strong>Canal:</strong> {lembrete.canal.toUpperCase()} • <strong>Antecedência:</strong> {lembrete.horas_antecedencia}h
+                            </p>
+                            {lembrete.data_envio && (
+                              <p className="text-xs text-muted-foreground">
+                                {lembrete.status_envio === 'enviado' ? 'Enviado em: ' : 'Última tentativa: '}
+                                {format(parseISO(lembrete.data_envio), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </p>
+                            )}
+                            {lembrete.mensagem && (
+                              <p className="text-xs text-muted-foreground mt-2 p-2 bg-muted rounded">
+                                {lembrete.mensagem}
+                              </p>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
