@@ -798,59 +798,7 @@ export function RotinaInteligente() {
 
         {/* SDR CONFIG */}
         <TabsContent value="sdr" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader><CardTitle className="text-base">Parâmetros do SDR</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label className="text-xs">Nº de SDRs</Label>
-                <Input type="number" value={config.sdrCount} onChange={(e) => update("sdrCount", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Horas disponíveis/dia</Label>
-                <Input type="number" value={config.sdrHoras} onChange={(e) => update("sdrHoras", Number(e.target.value))} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Canal Principal</Label>
-                <Select value={config.sdrCanal} onValueChange={(v) => update("sdrCanal", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    <SelectItem value="ligacao">Ligação</SelectItem>
-                    <SelectItem value="instagram">Instagram</SelectItem>
-                    <SelectItem value="email">E-mail</SelectItem>
-                    <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Nível</Label>
-                <Select value={config.sdrNivel} onValueChange={(v) => update("sdrNivel", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="iniciante">Iniciante</SelectItem>
-                    <SelectItem value="intermediario">Intermediário</SelectItem>
-                    <SelectItem value="avancado">Avançado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Início do expediente</Label>
-                <Input type="time" value={config.sdrInicio} onChange={(e) => update("sdrInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — início</Label>
-                <Input type="time" value={config.sdrAlmocoInicio} onChange={(e) => update("sdrAlmocoInicio", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Almoço — fim</Label>
-                <Input type="time" value={config.sdrAlmocoFim} onChange={(e) => update("sdrAlmocoFim", e.target.value)} />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs">Taxa Lead → Resposta (%)</Label>
-                <Input type="number" value={config.taxaLeadResposta} onChange={(e) => update("taxaLeadResposta", Number(e.target.value))} />
-              </div>
-            </CardContent>
-          </Card>
+
 
           <RotinaViewSwitcher
             role="sdr"
