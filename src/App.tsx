@@ -121,7 +121,7 @@ const App = () => (
               <Route path="mentoria" element={<Mentoria />} />
               <Route path="juridico" element={<Juridico />} />
               <Route path="configuracoes/gamificacao" element={<ConfiguracoesGamificacao />} />
-              <Route path="gamificacao" element={<Gamificacao />} />
+              
               <Route path="configuracoes/comercial" element={<ConfiguracoesComercial />} />
               <Route path="financeiro" element={<GrowSalesBI />} />
               <Route path="master-billing" element={<Financeiro />} />
