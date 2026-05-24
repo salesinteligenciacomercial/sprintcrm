@@ -3122,10 +3122,7 @@ export default function Agenda() {
           </div>
 
           {/* Lista de Compromissos abaixo do calendário */}
-          <div className="hidden-lista-marker" />
-        </TabsContent>
 
-        <TabsContent value="lista-removed" className="hidden">
 
           <Card>
             <CardHeader>
