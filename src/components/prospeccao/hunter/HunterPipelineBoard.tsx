@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import { useHunterPipeline, type HunterLead, type HunterStage } from "@/hooks/useHunterPipeline";
 import { HunterStageForm } from "./HunterStageForm";
 import { HunterLeadDrawer, QUICK_REGISTRY, RESULT_OPTIONS } from "./HunterLeadDrawer";
+import { ConversaPopup } from "@/components/leads/ConversaPopup";
+import { AgendaModal } from "@/components/agenda/AgendaModal";
 
 const COLUMNS: { id: HunterStage; label: string; color: string }[] = [
   { id: "novo", label: "Leads Novos", color: "hsl(200, 50%, 60%)" },
