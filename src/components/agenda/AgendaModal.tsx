@@ -239,13 +239,24 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
   // Função para normalizar telefone brasileiro
   const normalizePhoneBR = (phone: string): string | null => {
     if (!phone) return null;
-    const cleaned = phone.replace(/\D/g, "");
+    let cleaned = phone.replace(/\D/g, "");
     if (cleaned.length < 10) return null;
-    if (cleaned.length === 10) return `55${cleaned}`;
-    if (cleaned.length === 11) return `55${cleaned}`;
-    if (cleaned.startsWith("55") && cleaned.length === 13) return cleaned;
-    if (cleaned.startsWith("55") && cleaned.length === 12) return cleaned;
-    return cleaned;
+
+    // Remover DDI 55 para normalizar o miolo
+    if ((cleaned.length === 12 || cleaned.length === 13) && cleaned.startsWith("55")) {
+      cleaned = cleaned.slice(2);
+    }
+
+    // Agora deve ter 10 (DDD + 8 = fixo OU celular sem 9) ou 11 (DDD + 9 + 8)
+    if (cleaned.length === 10) {
+      // Adicionar 9º dígito (WhatsApp não aceita fixo, então tratamos como celular)
+      const ddd = cleaned.slice(0, 2);
+      const numero = cleaned.slice(2);
+      cleaned = `${ddd}9${numero}`;
+    }
+
+    if (cleaned.length !== 11) return null;
+    return `55${cleaned}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
