@@ -210,11 +210,6 @@ export const useCallCenter = () => {
       }
 
       const numberSip = configResult.config.number_sip;
-      const callerNumber = configResult.config.caller_number;
-      if (!callerNumber) {
-        toast.error('Configure o "Número do ramal/DID" em Call Center → Conta Telefônica para fazer ligações reais.');
-        return false;
-      }
       if (!configResult.config.napikey) {
         toast.error('Configure a Napikey da Nvoip em Call Center → Conta Telefônica.');
         return false;
