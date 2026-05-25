@@ -209,6 +209,8 @@ export function HunterPipelineBoard() {
   const [active, setActive] = useState<HunterLead | null>(null);
   const [pendingMove, setPendingMove] = useState<{ lead: HunterLead; to: HunterStage } | null>(null);
   const [drawer, setDrawer] = useState<HunterLead | null>(null);
+  const [conversaLead, setConversaLead] = useState<HunterLead | null>(null);
+  const [agendaLead, setAgendaLead] = useState<HunterLead | null>(null);
   const [importing, setImporting] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
