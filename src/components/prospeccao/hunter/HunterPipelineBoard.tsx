@@ -384,6 +384,28 @@ export function HunterPipelineBoard() {
         fetchEvents={fetchEvents}
         onLogAttempt={(s) => drawer && logCallAttempt(drawer.id, s)}
       />
+
+      {conversaLead && conversaLead.lead_id && (
+        <ConversaPopup
+          open={!!conversaLead}
+          onOpenChange={(o) => { if (!o) setConversaLead(null); }}
+          leadId={conversaLead.lead_id}
+          leadName={conversaLead.lead_company || conversaLead.lead_name || "Lead"}
+          leadPhone={conversaLead.lead_phone || undefined}
+        />
+      )}
+
+      {agendaLead && agendaLead.lead_id && (
+        <AgendaModal
+          open={!!agendaLead}
+          onOpenChange={(o) => { if (!o) setAgendaLead(null); }}
+          lead={{
+            id: agendaLead.lead_id,
+            nome: agendaLead.lead_company || agendaLead.lead_name || "Lead",
+            telefone: agendaLead.lead_phone || undefined,
+          }}
+        />
+      )}
     </Card>
   );
 }
