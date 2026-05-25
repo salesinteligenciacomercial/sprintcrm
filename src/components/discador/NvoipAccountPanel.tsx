@@ -117,6 +117,7 @@ export const NvoipAccountPanel: React.FC = () => {
           user_token: passwordToSave || undefined,
           napikey: form.napikey,
           login_email: form.login_email,
+          caller_number: form.caller_number,
         },
       });
       if (error) throw error;
