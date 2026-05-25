@@ -247,9 +247,8 @@ export const useCallCenter = () => {
         isMuted: false
       });
 
-      // Make real call via Nvoip (caller = DID/ramal, called = cliente)
+      // Make real call via Nvoip (caller = NumberSIP, called = cliente)
       const nvoipResult = await callNvoip('make-call', {
-        caller: callerNumber,
         called: cleanPhone
       });
 
