@@ -183,19 +183,8 @@ Deno.serve(async (req) => {
         result = await endCallApi(callId, supabase, companyId);
         break;
       }
-      case "get-config": {
-        const { data: config } = await supabase
-          .from("nvoip_config")
-          .select("id, number_sip, napikey, login_email, is_active, user_token")
-          .eq("company_id", companyId)
-          .maybeSingle();
-        // Mask token in response
-        const safe = config ? { ...config, user_token: config.user_token ? "••••••••" : null, has_token: !!config.user_token } : null;
-        result = { config: safe, company_id: companyId };
-        break;
-      }
       case "save-config": {
-        const { number_sip, user_token, napikey, login_email } = body;
+        const { number_sip, user_token, napikey, login_email, caller_number } = body;
         if (!number_sip) throw new Error("number_sip é obrigatório");
         if (!user_token || user_token === "••••••••") {
           const { userToken } = await resolveCreds(supabase, companyId);
@@ -209,10 +198,10 @@ Deno.serve(async (req) => {
           number_sip,
           napikey: napikey ?? null,
           login_email: login_email ?? null,
+          caller_number: caller_number ? String(caller_number).replace(/\D/g, "") : null,
           is_active: true,
           updated_at: new Date().toISOString(),
         };
-        // Only overwrite token if a new one was provided
         if (user_token && user_token !== "••••••••") payload.user_token = user_token;
 
         const { error: upErr } = await admin
