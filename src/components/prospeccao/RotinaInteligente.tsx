@@ -267,15 +267,32 @@ export function RotinaInteligente() {
   const update = (k: keyof Config, v: any) => setConfig((c) => ({ ...c, [k]: v }));
 
   // ===== CÁLCULOS =====
+  // Derivar tudo a partir do MÊS (mais preciso). Semana e dia são derivações.
   const metrics = useMemo(() => {
-    const vendasMes = Math.ceil(config.metaFaturamento / Math.max(1, config.ticketMedio));
-    const vendasDia = Math.ceil(vendasMes / Math.max(1, config.diasUteis));
-    const reunioesMes = Math.ceil(vendasMes / Math.max(0.01, config.taxaConversao / 100));
-    const reunioesDia = Math.ceil(reunioesMes / Math.max(1, config.diasUteis));
-    const respostasDia = Math.ceil(reunioesDia / Math.max(0.01, config.taxaRespostaReuniao / 100));
-    const leadsDia = Math.ceil(respostasDia / Math.max(0.01, config.taxaLeadResposta / 100));
+    const dias = Math.max(1, config.diasUteis);
+    const conv = Math.max(0.01, config.taxaConversao / 100);
+    const respReun = Math.max(0.01, config.taxaRespostaReuniao / 100);
+    const leadResp = Math.max(0.01, config.taxaLeadResposta / 100);
 
-    // Por SDR
+    // Funil mensal (base de verdade)
+    const vendasMes = Math.ceil(config.metaFaturamento / Math.max(1, config.ticketMedio));
+    const reunioesMes = Math.ceil(vendasMes / conv);
+    const respostasMes = Math.ceil(reunioesMes / respReun);
+    const leadsMes = Math.ceil(respostasMes / leadResp);
+
+    // Diário = mensal / dias úteis (arredondado pra cima 1x só)
+    const vendasDia = Math.ceil(vendasMes / dias);
+    const reunioesDia = Math.ceil(reunioesMes / dias);
+    const respostasDia = Math.ceil(respostasMes / dias);
+    const leadsDia = Math.ceil(leadsMes / dias);
+
+    // Semanal = mensal / 4.33 semanas (não dia*5, que infla por arredondamento)
+    const SEMANAS_MES = 4.33;
+    const vendasSemana = Math.ceil(vendasMes / SEMANAS_MES);
+    const reunioesSemana = Math.ceil(reunioesMes / SEMANAS_MES);
+    const leadsSemana = Math.ceil(leadsMes / SEMANAS_MES);
+
+    // Por pessoa
     const leadsPorSdr = Math.ceil(leadsDia / Math.max(1, config.sdrCount));
     const reunioesPorCloser = Math.ceil(reunioesDia / Math.max(1, config.closerCount));
 
@@ -284,7 +301,12 @@ export function RotinaInteligente() {
     const capacidadeReunioes = Math.floor(minDisponiveis / Math.max(15, config.tempoReuniaoMin));
     const sobrecarga = reunioesPorCloser > capacidadeReunioes;
 
-    return { vendasMes, vendasDia, reunioesMes, reunioesDia, respostasDia, leadsDia, leadsPorSdr, reunioesPorCloser, capacidadeReunioes, sobrecarga };
+    return {
+      vendasMes, vendasDia, vendasSemana,
+      reunioesMes, reunioesDia, reunioesSemana,
+      respostasDia, leadsDia, leadsMes, leadsSemana,
+      leadsPorSdr, reunioesPorCloser, capacidadeReunioes, sobrecarga,
+    };
   }, [config]);
 
   // ===== GERADOR DE ROTINA =====
@@ -624,8 +646,8 @@ export function RotinaInteligente() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {[
                 { label: "Por dia", color: "emerald", vendas: metrics.vendasDia, reunioes: metrics.reunioesDia, leads: metrics.leadsDia },
-                { label: "Por semana", color: "blue", vendas: metrics.vendasDia * 5, reunioes: metrics.reunioesDia * 5, leads: metrics.leadsDia * 5 },
-                { label: "Por mês", color: "purple", vendas: metrics.vendasMes, reunioes: metrics.reunioesMes, leads: metrics.leadsDia * config.diasUteis },
+                { label: "Por semana", color: "blue", vendas: metrics.vendasSemana, reunioes: metrics.reunioesSemana, leads: metrics.leadsSemana },
+                { label: "Por mês", color: "purple", vendas: metrics.vendasMes, reunioes: metrics.reunioesMes, leads: metrics.leadsMes },
               ].map((m) => (
                 <div key={m.label} className="p-3 rounded-lg border border-border bg-muted/30">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{m.label}</p>
@@ -686,6 +708,18 @@ export function RotinaInteligente() {
                     </Select>
                   </div>
                   <div className="space-y-1">
+                    <Label className="text-xs">Início</Label>
+                    <Input type="time" value={config.sdrInicio} onChange={(e) => update("sdrInicio", e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Taxa Lead → Resposta (%)</Label>
+                    <Input type="number" value={config.taxaLeadResposta} onChange={(e) => update("taxaLeadResposta", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Taxa Resposta → Reunião (%)</Label>
+                    <Input type="number" value={config.taxaRespostaReuniao} onChange={(e) => update("taxaRespostaReuniao", Number(e.target.value))} />
+                  </div>
+                  <div className="space-y-1">
                     <Label className="text-xs">Nível</Label>
                     <Select value={config.sdrNivel} onValueChange={(v) => update("sdrNivel", v)}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
@@ -695,14 +729,6 @@ export function RotinaInteligente() {
                         <SelectItem value="avancado">Avançado</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Início</Label>
-                    <Input type="time" value={config.sdrInicio} onChange={(e) => update("sdrInicio", e.target.value)} />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Taxa Lead → Resposta (%)</Label>
-                    <Input type="number" value={config.taxaLeadResposta} onChange={(e) => update("taxaLeadResposta", Number(e.target.value))} />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Almoço início</Label>
@@ -743,18 +769,21 @@ export function RotinaInteligente() {
                     <Input type="time" value={config.closerInicio} onChange={(e) => update("closerInicio", e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Capacidade real</Label>
-                    <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/30 text-sm font-semibold">
-                      {metrics.capacidadeReunioes} reuniões
-                    </div>
-                  </div>
-                  <div className="space-y-1">
                     <Label className="text-xs">Almoço início</Label>
                     <Input type="time" value={config.closerAlmocoInicio} onChange={(e) => update("closerAlmocoInicio", e.target.value)} />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Almoço fim</Label>
                     <Input type="time" value={config.closerAlmocoFim} onChange={(e) => update("closerAlmocoFim", e.target.value)} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Capacidade real (reuniões/dia)</Label>
+                    <div className="h-10 flex items-center justify-between px-3 rounded-md border border-border bg-muted/30 text-sm">
+                      <span className="font-semibold text-foreground">{metrics.capacidadeReunioes} reuniões</span>
+                      <span className="text-xs text-muted-foreground">
+                        meta: {metrics.reunioesPorCloser} • {metrics.sobrecarga ? "sobrecarga" : "dentro da capacidade"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
