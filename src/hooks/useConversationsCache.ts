@@ -301,8 +301,9 @@ export const useConversationsCache = (companyId: string | null) => {
                 leadsData.forEach(lead => {
                   if (lead.phone) {
                     const normalizedPhone = lead.phone.replace(/[^0-9]/g, '');
-                    const responsaveisIds = lead.responsaveis || (lead.responsavel_id ? [lead.responsavel_id] : []);
-                    const responsaveisNames = responsaveisIds
+                    const responsaveisIds: string[] = (lead.responsaveis as string[] | null) || (lead.responsavel_id ? [lead.responsavel_id] : []);
+                    const validIds = responsaveisIds.filter((id) => profilesById.has(id));
+                    const responsaveisNames = validIds
                       .map((id: string) => profilesById.get(id))
                       .filter(Boolean)
                       .map((p: any) => p.full_name || p.email);
@@ -310,6 +311,8 @@ export const useConversationsCache = (companyId: string | null) => {
                     if (responsaveisNames.length > 0) {
                       responsaveisMap.set(normalizedPhone, responsaveisNames);
                       responsaveisMap.set(lead.phone, responsaveisNames);
+                      responsaveisIdsMap.set(normalizedPhone, validIds);
+                      responsaveisIdsMap.set(lead.phone, validIds);
                     }
                   }
                 });
