@@ -184,6 +184,7 @@ interface Conversation {
   tags: string[];
   funnelStage?: string;
   responsavel?: string;
+  responsavelIds?: string[];
   produto?: string;
   valor?: string;
   anotacoes?: string;
