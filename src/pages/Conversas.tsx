@@ -4002,9 +4002,9 @@ function Conversas() {
         const telKey = telefone.replace(/[^0-9]/g, '');
         const assignedUserData = assignmentsMap.get(telKey); // ⚡ CORRIGIDO: Agora é {id, nome} do usuário
         const manualResponsavelIds: string[] = leadInfo
-          ? (Array.isArray((leadInfo as any).responsaveis)
-            ? ((leadInfo as any).responsaveis as string[]).filter(Boolean)
-            : ((leadInfo as any).responsavel_id ? [(leadInfo as any).responsavel_id] : []))
+          ? (Array.isArray(leadInfo.responsaveis)
+            ? leadInfo.responsaveis.filter(Boolean)
+            : (leadInfo.responsavel_id ? [leadInfo.responsavel_id] : []))
           : [];
         const manualResponsavelNames = manualResponsavelIds
           .map(id => manualResponsibleNamesMap.get(id))
