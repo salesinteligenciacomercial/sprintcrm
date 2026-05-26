@@ -255,9 +255,21 @@ function ConversationListItemComponent({
                   {lastRespondedBy}
                 </span>
               )}
-              {responsavel && !(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(responsavel.split(',')[0]?.trim() || '')) && (
-                <span className="text-muted-foreground truncate">👤 {responsavel}</span>
-              )}
+              {(() => {
+                const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+                const respName = responsavel && !isUuid(responsavel.split(',')[0]?.trim() || '')
+                  ? responsavel
+                  : (assignedUser?.name && !isUuid(assignedUser.name) ? assignedUser.name : null);
+                if (!respName) return null;
+                // Evita duplicar com a badge "atendendo" se for o mesmo nome
+                if (attendingUser?.name && respName.split(',')[0].trim() === attendingUser.name) return null;
+                return (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-medium border border-violet-200 dark:border-violet-700 max-w-[180px] truncate">
+                    <User className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{respName}</span>
+                  </span>
+                );
+              })()}
               {funnelStage && (
                 <span className="text-muted-foreground truncate">📊 {funnelStage}</span>
               )}
