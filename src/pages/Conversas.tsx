@@ -1509,6 +1509,7 @@ function Conversas() {
             const existingAvatar = avatarMap.get(phoneKey);
             const existingAssignedUser = assignedUserMap.get(phoneKey);
             const existingResponsavel = responsavelMap.get(phoneKey);
+            const existingResponsavelIds = responsavelIdsMap.get(phoneKey);
             const existingMessages = existingMessagesMap.get(phoneKey);
             
             // Se a conversa existente já tem mais mensagens (carregadas ou recebidas em tempo real),
