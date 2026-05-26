@@ -184,6 +184,7 @@ interface Conversation {
   tags: string[];
   funnelStage?: string;
   responsavel?: string;
+  responsavelIds?: string[];
   produto?: string;
   valor?: string;
   anotacoes?: string;
@@ -1280,7 +1281,11 @@ function Conversas() {
         }
         
         // Manter lógica legada: responsável ou transferido para mim
-        const isLegacyResponsible = conv.responsavel === currentUserId || conv.assignedUser?.id === currentUserId;
+        const isLegacyResponsible =
+          conv.assignedUser?.id === currentUserId ||
+          (Array.isArray(conv.responsavelIds) && currentUserId
+            ? conv.responsavelIds.includes(currentUserId)
+            : false);
         if (isLegacyResponsible) {
           console.log(`✅ [RESPONSIBLE] ${conv.contactName} é responsável legado`);
         }
@@ -1313,8 +1318,8 @@ function Conversas() {
     // Filtrar por responsáveis
     if (advancedFilters.responsaveis.length > 0) {
       filtered = filtered.filter(conv => {
-        const respId = conv.responsavel || conv.assignedUser?.id;
-        return respId && advancedFilters.responsaveis.includes(respId);
+        const ids = conv.responsavelIds || (conv.assignedUser?.id ? [conv.assignedUser.id] : []);
+        return ids.some(id => advancedFilters.responsaveis.includes(id));
       });
     }
 
@@ -1470,6 +1475,7 @@ function Conversas() {
             avatar?: string;
           }>();
           const responsavelMap = new Map<string, string>();
+          const responsavelIdsMap = new Map<string, string[]>();
           prev.forEach(c => {
             const phoneKey = c.phoneNumber || c.id;
             if (c.avatarUrl && !c.avatarUrl.includes('ui-avatars.com')) {
@@ -1481,6 +1487,9 @@ function Conversas() {
             }
             if (c.responsavel) {
               responsavelMap.set(phoneKey, c.responsavel);
+            }
+            if (c.responsavelIds && c.responsavelIds.length > 0) {
+              responsavelIdsMap.set(phoneKey, c.responsavelIds);
             }
           });
 
@@ -1500,6 +1509,7 @@ function Conversas() {
             const existingAvatar = avatarMap.get(phoneKey);
             const existingAssignedUser = assignedUserMap.get(phoneKey);
             const existingResponsavel = responsavelMap.get(phoneKey);
+            const existingResponsavelIds = responsavelIdsMap.get(phoneKey);
             const existingMessages = existingMessagesMap.get(phoneKey);
             
             // Se a conversa existente já tem mais mensagens (carregadas ou recebidas em tempo real),
@@ -1534,6 +1544,7 @@ function Conversas() {
               avatarUrl: existingAvatar || conv.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.contactName)}&background=0ea5e9&color=fff`,
               assignedUser: conv.assignedUser || existingAssignedUser,
               responsavel: conv.responsavel || existingResponsavel,
+              responsavelIds: (conv.responsavelIds && conv.responsavelIds.length > 0) ? conv.responsavelIds : existingResponsavelIds,
               // ✅ FIX: Preservar enriquecimento de lead (tags/funil/valor) — evita pisca-pisca
               tags: (conv.tags && conv.tags.length > 0) ? conv.tags : (existingConv?.tags ?? []),
               funnelStage: conv.funnelStage ?? existingConv?.funnelStage,

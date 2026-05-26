@@ -250,7 +250,8 @@ export const useConversationsCache = (companyId: string | null) => {
       // 🆕 FASE 2.4: Buscar leads vinculados para todas as conversas
       const allPhones = Array.from(conversasMap.keys());
       const leadsMap = new Map<string, any>();
-      const responsaveisMap = new Map<string, any[]>();
+      const responsaveisMap = new Map<string, string[]>();
+      const responsaveisIdsMap = new Map<string, string[]>();
       
       if (allPhones.length > 0) {
         try {
@@ -300,8 +301,9 @@ export const useConversationsCache = (companyId: string | null) => {
                 leadsData.forEach(lead => {
                   if (lead.phone) {
                     const normalizedPhone = lead.phone.replace(/[^0-9]/g, '');
-                    const responsaveisIds = lead.responsaveis || (lead.responsavel_id ? [lead.responsavel_id] : []);
-                    const responsaveisNames = responsaveisIds
+                    const responsaveisIds: string[] = (lead.responsaveis as string[] | null) || (lead.responsavel_id ? [lead.responsavel_id] : []);
+                    const validIds = responsaveisIds.filter((id) => profilesById.has(id));
+                    const responsaveisNames = validIds
                       .map((id: string) => profilesById.get(id))
                       .filter(Boolean)
                       .map((p: any) => p.full_name || p.email);
@@ -309,6 +311,8 @@ export const useConversationsCache = (companyId: string | null) => {
                     if (responsaveisNames.length > 0) {
                       responsaveisMap.set(normalizedPhone, responsaveisNames);
                       responsaveisMap.set(lead.phone, responsaveisNames);
+                      responsaveisIdsMap.set(normalizedPhone, validIds);
+                      responsaveisIdsMap.set(lead.phone, validIds);
                     }
                   }
                 });
@@ -464,6 +468,7 @@ export const useConversationsCache = (companyId: string | null) => {
         const normalizedPhone = telefone.replace(/^ig_/, '').replace(/[^0-9]/g, '');
         const lead = leadsMap.get(normalizedPhone) || leadsMap.get(telefone);
         const responsaveis = responsaveisMap.get(normalizedPhone) || responsaveisMap.get(telefone) || [];
+        const responsavelIds = responsaveisIdsMap.get(normalizedPhone) || responsaveisIdsMap.get(telefone) || [];
         
         // Formatar valor
         let valorFormatado = '';
@@ -491,8 +496,9 @@ export const useConversationsCache = (companyId: string | null) => {
           funnelStage,
           valor: valorFormatado || undefined,
           responsavel: responsaveis.join(', ') || undefined,
+          responsavelIds: responsavelIds.length > 0 ? responsavelIds : undefined,
           assignedUser: responsaveis.length > 0 ? {
-            id: lead?.responsavel_id || '',
+            id: responsavelIds[0] || lead?.responsavel_id || '',
             name: responsaveis[0],
           } : undefined,
         };
