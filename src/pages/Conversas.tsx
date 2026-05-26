@@ -1186,6 +1186,7 @@ function Conversas() {
       if (isCurrentUserAttending(telefone)) return true;
       if (!currentUserId) return false;
       if (conv.assignedUser?.id === currentUserId) return true;
+      if (conv.responsavel === currentUserId) return true;
       if (Array.isArray(conv.responsavelIds) && conv.responsavelIds.includes(currentUserId)) return true;
       return false;
     }).length;
@@ -1287,6 +1288,7 @@ function Conversas() {
         // Manter lógica legada: responsável ou transferido para mim
         const isLegacyResponsible =
           conv.assignedUser?.id === currentUserId ||
+          conv.responsavel === currentUserId ||
           (Array.isArray(conv.responsavelIds) && currentUserId
             ? conv.responsavelIds.includes(currentUserId)
             : false);
@@ -1322,7 +1324,7 @@ function Conversas() {
     // Filtrar por responsáveis
     if (advancedFilters.responsaveis.length > 0) {
       filtered = filtered.filter(conv => {
-        const ids = conv.responsavelIds || (conv.assignedUser?.id ? [conv.assignedUser.id] : []);
+        const ids = conv.responsavelIds || [conv.assignedUser?.id, conv.responsavel].filter(Boolean) as string[];
         return ids.some(id => advancedFilters.responsaveis.includes(id));
       });
     }
@@ -2175,7 +2177,8 @@ function Conversas() {
             return {
               ...c,
               assignedUser: { id: data.assigned_user_id, name: userName },
-              responsavel: data.assigned_user_id
+              responsavel: data.assigned_user_id,
+              responsavelIds: c.responsavelIds?.length ? c.responsavelIds : [data.assigned_user_id]
             };
           }
           return c;
@@ -2570,6 +2573,7 @@ function Conversas() {
         ...selectedConv,
         responsavel: userId,
         // ID do responsável
+        responsavelIds: selectedConv.responsavelIds?.length ? selectedConv.responsavelIds : [userId],
         assignedUser: {
           id: userId,
           name: displayName
@@ -2578,6 +2582,7 @@ function Conversas() {
       setConversations(prev => prev.map(c => c.id === selectedConv.id ? {
         ...c,
         responsavel: userId,
+        responsavelIds: c.responsavelIds?.length ? c.responsavelIds : [userId],
         assignedUser: {
           id: userId,
           name: displayName
@@ -3553,7 +3558,7 @@ function Conversas() {
           for (let i = 0; i < phoneConditions.length; i += BATCH_SIZE) {
             const batch = phoneConditions.slice(i, i + BATCH_SIZE);
             const orCondition = batch.join(',');
-            const leadsResult = await supabase.from('leads').select('id, phone, name, telefone, tags, profile_picture_url, stage, value').eq('company_id', companyId).or(orCondition).limit(500); // Limite maior por lote
+            const leadsResult = await supabase.from('leads').select('id, phone, name, telefone, tags, profile_picture_url, stage, value, responsaveis, responsavel_id').eq('company_id', companyId).or(orCondition).limit(500); // Limite maior por lote
 
             if (!leadsResult.error && leadsResult.data) {
               allLeads = [...allLeads, ...leadsResult.data];
@@ -3563,6 +3568,21 @@ function Conversas() {
         }
       }
       console.log(`📊 [LOAD] ${conversasData.length} mensagens processadas, ${conversasMap.size} conversas únicas, ${leadsData.length} leads encontrados`);
+
+      const manualResponsibleIds = new Set<string>();
+      leadsData.forEach(lead => {
+        if (Array.isArray(lead.responsaveis)) {
+          lead.responsaveis.forEach((id: string) => id && manualResponsibleIds.add(id));
+        }
+        if (lead.responsavel_id) manualResponsibleIds.add(lead.responsavel_id);
+      });
+      const manualResponsibleNamesMap = new Map<string, string>();
+      if (manualResponsibleIds.size > 0) {
+        const { data: manualResponsibleProfiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(manualResponsibleIds));
+        manualResponsibleProfiles?.forEach(profile => {
+          manualResponsibleNamesMap.set(profile.id, profile.full_name || profile.email || 'Usuário');
+        });
+      }
 
       // ETAPA 3.5: Buscar nomes dos usuários que enviaram mensagens (para exibir quem respondeu)
       const ownerIds = new Set<string>();
@@ -3698,6 +3718,8 @@ function Conversas() {
         profilePictureUrl?: string;
         stage?: string;
         value?: number;
+        responsaveis?: string[];
+        responsavel_id?: string | null;
       }>();
       leadsData.forEach(lead => {
         const phoneRaw = lead.phone || lead.telefone;
@@ -3711,6 +3733,8 @@ function Conversas() {
             profilePictureUrl: lead.profile_picture_url || undefined,
             stage: lead.stage || undefined,
             value: lead.value != null ? Number(lead.value) : undefined,
+            responsaveis: Array.isArray(lead.responsaveis) ? lead.responsaveis : [],
+            responsavel_id: lead.responsavel_id || null,
           };
           // Armazenar com chave original
           leadsMap.set(phoneKey, leadEntry);
@@ -3977,6 +4001,17 @@ function Conversas() {
         // Buscar responsável da conversa (se houver) - agora retorna {id, nome}
         const telKey = telefone.replace(/[^0-9]/g, '');
         const assignedUserData = assignmentsMap.get(telKey); // ⚡ CORRIGIDO: Agora é {id, nome} do usuário
+        const manualResponsavelIds: string[] = leadInfo
+          ? (Array.isArray(leadInfo.responsaveis)
+            ? leadInfo.responsaveis.filter(Boolean)
+            : (leadInfo.responsavel_id ? [leadInfo.responsavel_id] : []))
+          : [];
+        const manualResponsavelNames = manualResponsavelIds
+          .map(id => manualResponsibleNamesMap.get(id))
+          .filter(Boolean) as string[];
+        const displayedResponsible = assignedUserData || (manualResponsavelIds[0]
+          ? { id: manualResponsavelIds[0], name: manualResponsavelNames[0] || 'Usuário' }
+          : undefined);
 
         // Detectar canal baseado na origem das mensagens
         const isInstagramConv = telefone.startsWith('ig_') || mensagens.some(m => {
@@ -4013,12 +4048,13 @@ function Conversas() {
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName.substring(0, 2))}&background=E1306C&color=fff`
                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName.substring(0, 2))}&background=0ea5e9&color=fff`),
           isGroup: isGroup,
-          // ⚡ CORREÇÃO: Incluir assignedUser com id e nome para filtros funcionarem
-          responsavel: assignedUserData?.id || undefined,
+          // ⚡ CORREÇÃO: Incluir responsável manual persistente + atendimento transferido
+          responsavel: manualResponsavelNames.join(', ') || displayedResponsible?.id || undefined,
+          responsavelIds: manualResponsavelIds.length > 0 ? manualResponsavelIds : (assignedUserData ? [assignedUserData.id] : undefined),
           // ID do responsável para filtros
-          assignedUser: assignedUserData ? {
-            id: assignedUserData.id,
-            name: assignedUserData.name
+          assignedUser: displayedResponsible ? {
+            id: displayedResponsible.id,
+            name: displayedResponsible.name
           } : undefined, // Objeto completo para exibição
           // ⚡ CORREÇÃO: Definir origemApi para roteamento correto de envio
           origemApi: detectedOrigemApi,
@@ -4198,6 +4234,7 @@ function Conversas() {
                 funnelStage: novaConv.funnelStage ?? conversaExistente.funnelStage,
                 tags: (novaConv.tags && novaConv.tags.length > 0) ? novaConv.tags : conversaExistente.tags,
                 responsavel: novaConv.responsavel ?? conversaExistente.responsavel,
+                responsavelIds: (novaConv.responsavelIds && novaConv.responsavelIds.length > 0) ? novaConv.responsavelIds : conversaExistente.responsavelIds,
                 assignedUser: novaConv.assignedUser ?? conversaExistente.assignedUser,
                 leadId: novaConv.leadId ?? conversaExistente.leadId,
               };
@@ -4227,6 +4264,7 @@ function Conversas() {
               funnelStage: novaConv.funnelStage ?? conversaExistente?.funnelStage,
               tags: (novaConv.tags && novaConv.tags.length > 0) ? novaConv.tags : (conversaExistente?.tags ?? []),
               responsavel: novaConv.responsavel ?? conversaExistente?.responsavel,
+              responsavelIds: (novaConv.responsavelIds && novaConv.responsavelIds.length > 0) ? novaConv.responsavelIds : conversaExistente?.responsavelIds,
               assignedUser: novaConv.assignedUser ?? conversaExistente?.assignedUser,
               leadId: novaConv.leadId ?? conversaExistente?.leadId,
             };

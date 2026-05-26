@@ -47,6 +47,7 @@ export interface Conversation {
   funnelStage?: string;
   valor?: string;
   responsavel?: string;
+  responsavelIds?: string[];
   leadId?: string;
   assignedUser?: {
     id: string;
