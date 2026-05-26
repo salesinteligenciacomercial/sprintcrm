@@ -1182,8 +1182,12 @@ function Conversas() {
     return conversations.filter(conv => {
       if (conv.isGroup) return false;
       const telefone = (conv.phoneNumber || conv.id).replace(/[^0-9]/g, '');
-      // Incluir: atendimentos ativos do usuário atual OU responsáveis legados
-      return isCurrentUserAttending(telefone) || conv.responsavel === currentUserId || conv.assignedUser?.id === currentUserId;
+      // Incluir: atendimentos ativos do usuário atual OU responsáveis manuais (assignedUser/responsavelIds)
+      if (isCurrentUserAttending(telefone)) return true;
+      if (!currentUserId) return false;
+      if (conv.assignedUser?.id === currentUserId) return true;
+      if (Array.isArray(conv.responsavelIds) && conv.responsavelIds.includes(currentUserId)) return true;
+      return false;
     }).length;
   }, [conversations, isCurrentUserAttending, currentUserId, activeAttendances]);
   const filteredConversations = useMemo(() => {
