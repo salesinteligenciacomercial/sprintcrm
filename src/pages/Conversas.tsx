@@ -3553,7 +3553,7 @@ function Conversas() {
           for (let i = 0; i < phoneConditions.length; i += BATCH_SIZE) {
             const batch = phoneConditions.slice(i, i + BATCH_SIZE);
             const orCondition = batch.join(',');
-            const leadsResult = await supabase.from('leads').select('id, phone, name, telefone, tags, profile_picture_url, stage, value').eq('company_id', companyId).or(orCondition).limit(500); // Limite maior por lote
+            const leadsResult = await supabase.from('leads').select('id, phone, name, telefone, tags, profile_picture_url, stage, value, responsaveis, responsavel_id').eq('company_id', companyId).or(orCondition).limit(500); // Limite maior por lote
 
             if (!leadsResult.error && leadsResult.data) {
               allLeads = [...allLeads, ...leadsResult.data];
@@ -3563,6 +3563,21 @@ function Conversas() {
         }
       }
       console.log(`📊 [LOAD] ${conversasData.length} mensagens processadas, ${conversasMap.size} conversas únicas, ${leadsData.length} leads encontrados`);
+
+      const manualResponsibleIds = new Set<string>();
+      leadsData.forEach(lead => {
+        if (Array.isArray(lead.responsaveis)) {
+          lead.responsaveis.forEach((id: string) => id && manualResponsibleIds.add(id));
+        }
+        if (lead.responsavel_id) manualResponsibleIds.add(lead.responsavel_id);
+      });
+      const manualResponsibleNamesMap = new Map<string, string>();
+      if (manualResponsibleIds.size > 0) {
+        const { data: manualResponsibleProfiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Array.from(manualResponsibleIds));
+        manualResponsibleProfiles?.forEach(profile => {
+          manualResponsibleNamesMap.set(profile.id, profile.full_name || profile.email || 'Usuário');
+        });
+      }
 
       // ETAPA 3.5: Buscar nomes dos usuários que enviaram mensagens (para exibir quem respondeu)
       const ownerIds = new Set<string>();
