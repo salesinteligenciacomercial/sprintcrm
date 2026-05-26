@@ -1475,6 +1475,7 @@ function Conversas() {
             avatar?: string;
           }>();
           const responsavelMap = new Map<string, string>();
+          const responsavelIdsMap = new Map<string, string[]>();
           prev.forEach(c => {
             const phoneKey = c.phoneNumber || c.id;
             if (c.avatarUrl && !c.avatarUrl.includes('ui-avatars.com')) {
