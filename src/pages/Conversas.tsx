@@ -3992,6 +3992,17 @@ function Conversas() {
         // Buscar responsável da conversa (se houver) - agora retorna {id, nome}
         const telKey = telefone.replace(/[^0-9]/g, '');
         const assignedUserData = assignmentsMap.get(telKey); // ⚡ CORRIGIDO: Agora é {id, nome} do usuário
+        const manualResponsavelIds: string[] = leadInfo
+          ? (Array.isArray((leadInfo as any).responsaveis)
+            ? ((leadInfo as any).responsaveis as string[]).filter(Boolean)
+            : ((leadInfo as any).responsavel_id ? [(leadInfo as any).responsavel_id] : []))
+          : [];
+        const manualResponsavelNames = manualResponsavelIds
+          .map(id => manualResponsibleNamesMap.get(id))
+          .filter(Boolean) as string[];
+        const displayedResponsible = assignedUserData || (manualResponsavelIds[0]
+          ? { id: manualResponsavelIds[0], name: manualResponsavelNames[0] || 'Usuário' }
+          : undefined);
 
         // Detectar canal baseado na origem das mensagens
         const isInstagramConv = telefone.startsWith('ig_') || mensagens.some(m => {
@@ -4028,12 +4039,13 @@ function Conversas() {
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName.substring(0, 2))}&background=E1306C&color=fff`
                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(contactName.substring(0, 2))}&background=0ea5e9&color=fff`),
           isGroup: isGroup,
-          // ⚡ CORREÇÃO: Incluir assignedUser com id e nome para filtros funcionarem
-          responsavel: assignedUserData?.id || undefined,
+          // ⚡ CORREÇÃO: Incluir responsável manual persistente + atendimento transferido
+          responsavel: manualResponsavelNames.join(', ') || displayedResponsible?.id || undefined,
+          responsavelIds: manualResponsavelIds.length > 0 ? manualResponsavelIds : (assignedUserData ? [assignedUserData.id] : undefined),
           // ID do responsável para filtros
-          assignedUser: assignedUserData ? {
-            id: assignedUserData.id,
-            name: assignedUserData.name
+          assignedUser: displayedResponsible ? {
+            id: displayedResponsible.id,
+            name: displayedResponsible.name
           } : undefined, // Objeto completo para exibição
           // ⚡ CORREÇÃO: Definir origemApi para roteamento correto de envio
           origemApi: detectedOrigemApi,
