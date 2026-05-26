@@ -1318,8 +1318,8 @@ function Conversas() {
     // Filtrar por responsáveis
     if (advancedFilters.responsaveis.length > 0) {
       filtered = filtered.filter(conv => {
-        const respId = conv.responsavel || conv.assignedUser?.id;
-        return respId && advancedFilters.responsaveis.includes(respId);
+        const ids = conv.responsavelIds || (conv.assignedUser?.id ? [conv.assignedUser.id] : []);
+        return ids.some(id => advancedFilters.responsaveis.includes(id));
       });
     }
 
