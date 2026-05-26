@@ -4229,6 +4229,7 @@ function Conversas() {
                 funnelStage: novaConv.funnelStage ?? conversaExistente.funnelStage,
                 tags: (novaConv.tags && novaConv.tags.length > 0) ? novaConv.tags : conversaExistente.tags,
                 responsavel: novaConv.responsavel ?? conversaExistente.responsavel,
+                responsavelIds: (novaConv.responsavelIds && novaConv.responsavelIds.length > 0) ? novaConv.responsavelIds : conversaExistente.responsavelIds,
                 assignedUser: novaConv.assignedUser ?? conversaExistente.assignedUser,
                 leadId: novaConv.leadId ?? conversaExistente.leadId,
               };
@@ -4258,6 +4259,7 @@ function Conversas() {
               funnelStage: novaConv.funnelStage ?? conversaExistente?.funnelStage,
               tags: (novaConv.tags && novaConv.tags.length > 0) ? novaConv.tags : (conversaExistente?.tags ?? []),
               responsavel: novaConv.responsavel ?? conversaExistente?.responsavel,
+              responsavelIds: (novaConv.responsavelIds && novaConv.responsavelIds.length > 0) ? novaConv.responsavelIds : conversaExistente?.responsavelIds,
               assignedUser: novaConv.assignedUser ?? conversaExistente?.assignedUser,
               leadId: novaConv.leadId ?? conversaExistente?.leadId,
             };
