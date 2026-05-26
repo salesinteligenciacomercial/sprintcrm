@@ -2177,7 +2177,8 @@ function Conversas() {
             return {
               ...c,
               assignedUser: { id: data.assigned_user_id, name: userName },
-              responsavel: data.assigned_user_id
+              responsavel: data.assigned_user_id,
+              responsavelIds: c.responsavelIds?.length ? c.responsavelIds : [data.assigned_user_id]
             };
           }
           return c;
@@ -2572,6 +2573,7 @@ function Conversas() {
         ...selectedConv,
         responsavel: userId,
         // ID do responsável
+        responsavelIds: selectedConv.responsavelIds?.length ? selectedConv.responsavelIds : [userId],
         assignedUser: {
           id: userId,
           name: displayName
@@ -2580,6 +2582,7 @@ function Conversas() {
       setConversations(prev => prev.map(c => c.id === selectedConv.id ? {
         ...c,
         responsavel: userId,
+        responsavelIds: c.responsavelIds?.length ? c.responsavelIds : [userId],
         assignedUser: {
           id: userId,
           name: displayName
