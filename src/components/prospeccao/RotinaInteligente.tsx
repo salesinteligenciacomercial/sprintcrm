@@ -769,18 +769,21 @@ export function RotinaInteligente() {
                     <Input type="time" value={config.closerInicio} onChange={(e) => update("closerInicio", e.target.value)} />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Capacidade real</Label>
-                    <div className="h-10 flex items-center px-3 rounded-md border border-border bg-muted/30 text-sm font-semibold">
-                      {metrics.capacidadeReunioes} reuniões
-                    </div>
-                  </div>
-                  <div className="space-y-1">
                     <Label className="text-xs">Almoço início</Label>
                     <Input type="time" value={config.closerAlmocoInicio} onChange={(e) => update("closerAlmocoInicio", e.target.value)} />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Almoço fim</Label>
                     <Input type="time" value={config.closerAlmocoFim} onChange={(e) => update("closerAlmocoFim", e.target.value)} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">Capacidade real (reuniões/dia)</Label>
+                    <div className="h-10 flex items-center justify-between px-3 rounded-md border border-border bg-muted/30 text-sm">
+                      <span className="font-semibold text-foreground">{metrics.capacidadeReunioes} reuniões</span>
+                      <span className="text-xs text-muted-foreground">
+                        meta: {metrics.reunioesPorCloser} • {metrics.sobrecarga ? "sobrecarga" : "dentro da capacidade"}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
