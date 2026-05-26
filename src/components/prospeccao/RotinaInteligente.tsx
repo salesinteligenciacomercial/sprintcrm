@@ -646,8 +646,8 @@ export function RotinaInteligente() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {[
                 { label: "Por dia", color: "emerald", vendas: metrics.vendasDia, reunioes: metrics.reunioesDia, leads: metrics.leadsDia },
-                { label: "Por semana", color: "blue", vendas: metrics.vendasDia * 5, reunioes: metrics.reunioesDia * 5, leads: metrics.leadsDia * 5 },
-                { label: "Por mês", color: "purple", vendas: metrics.vendasMes, reunioes: metrics.reunioesMes, leads: metrics.leadsDia * config.diasUteis },
+                { label: "Por semana", color: "blue", vendas: metrics.vendasSemana, reunioes: metrics.reunioesSemana, leads: metrics.leadsSemana },
+                { label: "Por mês", color: "purple", vendas: metrics.vendasMes, reunioes: metrics.reunioesMes, leads: metrics.leadsMes },
               ].map((m) => (
                 <div key={m.label} className="p-3 rounded-lg border border-border bg-muted/30">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">{m.label}</p>
