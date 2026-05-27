@@ -151,6 +151,29 @@ export function ColdCallActions({ lead, externalState, externalCompanyId, extern
     return () => { supabase.removeChannel(ch); };
   }, [companyId, lead.id, rowKey, externalState]);
 
+  // Resolve row_key real: se já existe uma linha p/ este lead_id (ex.: criada pelo
+  // Pré-SDR com row_key=cnpj|...), reutiliza em vez de criar "lead:{id}" duplicado.
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("pre_sdr_analyses" as any)
+        .select("row_key, attempts_count, last_attempt_at, updated_at")
+        .eq("company_id", companyId)
+        .eq("lead_id", lead.id)
+        .order("last_attempt_at", { ascending: false, nullsFirst: false })
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      const existingKey = (data as any)?.row_key;
+      if (existingKey && existingKey !== rowKey) setRowKey(existingKey);
+    })();
+    return () => { cancelled = true; };
+  }, [companyId, lead.id]);
+
+
 
   async function ensureRow() {
     if (!companyId) return false;
