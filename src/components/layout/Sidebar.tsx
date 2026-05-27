@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Users, MessageSquare, Calendar, Bot, Settings, LogOut, Video, PhoneCall, Target, Lock, X, Brain, DollarSign, GraduationCap, Activity, Sparkles, Scale, Rocket, ChevronDown, ChevronRight } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Calendar, Bot, Settings, LogOut, Video, PhoneCall, Target, Lock, X, Brain, DollarSign, GraduationCap, Activity, Sparkles, Scale, Rocket, ChevronDown, ChevronRight, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +27,7 @@ type NavItem = {
   showAIBadge?: boolean;
   masterOnly?: boolean;
   juridicoOnly?: boolean;
+  clinicaOnly?: boolean;
 };
 
 type NavGroup = {
@@ -71,6 +72,7 @@ const navigation: NavEntry[] = [
       
       { name: "Call Center", href: "/discador", icon: PhoneCall, menuKey: "discador" },
       { name: "Business Intelligence (BI)", href: "/financeiro", icon: DollarSign, menuKey: "financeiro" },
+      { name: "BI Clínico", href: "/bi-clinico", icon: Stethoscope, menuKey: "analytics", clinicaOnly: true },
       { name: "Treinamento Comerciais", href: "/treinamento", icon: GraduationCap, menuKey: "treinamento" },
     ],
   },
@@ -93,7 +95,7 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   const { unreadCount: conversasUnread } = useConversasNotifications();
   const { alertCount: tarefasAlert } = useTarefasNotifications();
   const { todayCount: agendaToday } = useAgendaNotifications();
-  const { isJuridico, isMasterAccount: isMasterFromSegmento, loading: segmentoLoading } = useCompanySegmento();
+  const { isJuridico, isClinica, isMasterAccount: isMasterFromSegmento, loading: segmentoLoading } = useCompanySegmento();
 
   const [aiInsightsCount, setAiInsightsCount] = useState(0);
 
@@ -172,6 +174,10 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
       if (isMaster) return true;
       if (segmentoLoading) return true;
       if (!isJuridico) return false;
+    }
+    if (item.clinicaOnly) {
+      if (segmentoLoading) return true;
+      if (!isClinica && !isMasterAccount) return false;
     }
     const isPremiumModule = premiumModules.includes(item.menuKey);
     if (isPremiumModule && !isMasterAccount) {

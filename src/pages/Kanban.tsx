@@ -11,6 +11,8 @@ import { DroppableColumn } from "@/components/funil/DroppableColumn";
 import { NovoLeadDialog } from "@/components/funil/NovoLeadDialog";
 import { AdicionarLeadExistenteDialog } from "@/components/funil/AdicionarLeadExistenteDialog";
 import { NovoFunilDialog } from "@/components/funil/NovoFunilDialog";
+import { CriarFunilClinicaButton } from "@/components/funil/CriarFunilClinicaButton";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 import { EditarFunilDialog } from "@/components/funil/EditarFunilDialog";
 import { AdicionarEtapaDialog } from "@/components/funil/AdicionarEtapaDialog";
 import { FollowInteligentePanel } from "@/components/funil/FollowInteligentePanel";
@@ -105,6 +107,7 @@ function SortableColumn({
 export default function KanbanPage() {
   const { canManageStructure, isAdmin, isGestor, currentUserId, currentCompanyId, hasPermission } = usePermissions();
   const [canCreateFunil, setCanCreateFunil] = useState(true); // Padrão: permitir (comportamento atual)
+  const { isClinica } = useCompanySegmento();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [funis, setFunis] = useState<Funil[]>([]);
@@ -1159,6 +1162,9 @@ export default function KanbanPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          {canCreateFunil && isClinica && (
+            <CriarFunilClinicaButton onFunilCreated={async () => { await refreshFunis(); await refreshEtapas(); }} />
+          )}
           {canCreateFunil && (
             <NovoFunilDialog onFunilCreated={async () => { await refreshFunis(); await refreshEtapas(); }} />
           )}

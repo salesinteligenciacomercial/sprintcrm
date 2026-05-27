@@ -36,10 +36,21 @@ export const SEGMENTOS_JURIDICOS = [
   "advocacia",
 ];
 
+// Segmentos que ativam a Versão Clínica (funil padrão, BI clínico, rotina clínica, labels)
+export const SEGMENTOS_CLINICA = [
+  "clinica_medica",
+  "clinica_odontologica",
+  "clinica_estetica",
+];
+
 export function isSegmentoFinanceiro(segmento?: string | null): boolean {
   return !!segmento && SEGMENTOS_FINANCEIROS.includes(segmento);
 }
 
 export function isSegmentoJuridico(segmento?: string | null): boolean {
   return !!segmento && SEGMENTOS_JURIDICOS.includes(segmento);
+}
+
+export function isSegmentoClinica(segmento?: string | null): boolean {
+  return !!segmento && SEGMENTOS_CLINICA.includes(segmento);
 }
