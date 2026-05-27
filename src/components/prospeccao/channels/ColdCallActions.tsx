@@ -61,7 +61,9 @@ interface Props {
 
 export function ColdCallActions({ lead, externalState, externalCompanyId, externalUser }: Props) {
   const phone = lead.phone || lead.telefone || "";
-  const rowKey = `lead:${lead.id}`;
+  // row_key efetivo: se já existir linha no DB para este lead (criada pelo Pré-SDR
+  // com row_key=cnpj|...), reutilizamos para não criar uma 2ª linha "lead:{id}".
+  const [rowKey, setRowKey] = useState<string>(`lead:${lead.id}`);
   const [companyId, setCompanyId] = useState<string | null>(externalCompanyId || null);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(externalUser || null);
   const [attempts, setAttempts] = useState<Attempt[]>(Array.isArray(externalState?.attempts) ? externalState!.attempts! : []);
