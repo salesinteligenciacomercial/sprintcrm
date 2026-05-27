@@ -28,6 +28,9 @@ type NavItem = {
   masterOnly?: boolean;
   juridicoOnly?: boolean;
   clinicaOnly?: boolean;
+  clinicaLabel?: string;
+  clinicaHref?: string;
+  clinicaIcon?: any;
 };
 
 type NavGroup = {
@@ -71,8 +74,7 @@ const navigation: NavEntry[] = [
       { name: "Processos Comerciais", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true },
       
       { name: "Call Center", href: "/discador", icon: PhoneCall, menuKey: "discador" },
-      { name: "Business Intelligence (BI)", href: "/financeiro", icon: DollarSign, menuKey: "financeiro" },
-      { name: "BI Clínico", href: "/bi-clinico", icon: Stethoscope, menuKey: "analytics", clinicaOnly: true },
+      { name: "Business Intelligence (BI)", href: "/financeiro", icon: DollarSign, menuKey: "financeiro", clinicaLabel: "BI Clínico", clinicaHref: "/bi-clinico", clinicaIcon: Stethoscope },
       { name: "Treinamento Comerciais", href: "/treinamento", icon: GraduationCap, menuKey: "treinamento" },
     ],
   },
@@ -187,7 +189,15 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
   };
 
   // Renders a single nav item link
-  const renderItem = (item: NavItem, indented: boolean = false) => {
+  const renderItem = (rawItem: NavItem, indented: boolean = false) => {
+    const item: NavItem = isClinica
+      ? {
+          ...rawItem,
+          name: rawItem.clinicaLabel ?? rawItem.name,
+          href: rawItem.clinicaHref ?? rawItem.href,
+          icon: rawItem.clinicaIcon ?? rawItem.icon,
+        }
+      : rawItem;
     const isPremiumModule = premiumModules.includes(item.menuKey);
     const hasModuleAccess = isMasterAccount || canAccessModule(item.menuKey);
     const isLocked = isPremiumModule && !hasModuleAccess && !moduleLoading;
