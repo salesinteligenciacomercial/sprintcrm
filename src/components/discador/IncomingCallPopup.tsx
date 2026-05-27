@@ -2,10 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Phone, PhoneOff, User } from 'lucide-react';
-import { useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-// Lazy import to avoid circular dep
 import { useWebphone } from './WebphoneProvider';
 
 export const IncomingCallPopup: React.FC = () => {
