@@ -63,6 +63,11 @@ interface LeadCardProps {
     produto_id?: string | null;
     status?: string;
     title?: string | null; // Título da negociação/oportunidade
+    last_interaction_at?: string | null;
+    last_movement_at?: string | null;
+    lead_score?: number;
+    follow_count?: number;
+    lead_temperature?: string | null;
   };
   onDelete: (leadId: string) => void;
   onLeadMoved?: () => void;
