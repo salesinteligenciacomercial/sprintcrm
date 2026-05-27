@@ -24,12 +24,17 @@ export const NvoipAccountPanel: React.FC = () => {
   const [account, setAccount] = useState<AccountInfo | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [hasSipPassword, setHasSipPassword] = useState(false);
   const [form, setForm] = useState({
     number_sip: '',
     user_token: '',
     napikey: '',
     login_email: '',
     caller_number: '',
+    sip_password: '',
+    sip_ws_uri: 'wss://app.nvoip.com.br:7443',
+    sip_domain: 'app.nvoip.com.br',
+    telephony_mode: 'webphone' as 'webphone' | 'callback' | 'microsip',
   });
 
   const loadAccount = useCallback(async () => {
@@ -73,8 +78,13 @@ export const NvoipAccountPanel: React.FC = () => {
           napikey: cfg.napikey || '',
           login_email: cfg.login_email || '',
           caller_number: cfg.caller_number || '',
+          sip_password: cfg.has_sip_password ? '••••••••' : '',
+          sip_ws_uri: cfg.sip_ws_uri || 'wss://app.nvoip.com.br:7443',
+          sip_domain: cfg.sip_domain || 'app.nvoip.com.br',
+          telephony_mode: cfg.telephony_mode || 'webphone',
         }));
         setHasToken(!!cfg.has_token);
+        setHasSipPassword(!!cfg.has_sip_password);
         if (cfg.has_token) {
           const ok = await loadAccount();
           if (!ok) setShowForm(true);
