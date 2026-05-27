@@ -13,6 +13,7 @@ import { AdicionarLeadExistenteDialog } from "@/components/funil/AdicionarLeadEx
 import { NovoFunilDialog } from "@/components/funil/NovoFunilDialog";
 import { EditarFunilDialog } from "@/components/funil/EditarFunilDialog";
 import { AdicionarEtapaDialog } from "@/components/funil/AdicionarEtapaDialog";
+import { FollowInteligentePanel } from "@/components/funil/FollowInteligentePanel";
 import { toast } from "sonner";
 import { CriarTarefaAoMoverDialog } from "@/components/funil/CriarTarefaAoMoverDialog";
 import { useGlobalSync } from "@/hooks/useGlobalSync";
