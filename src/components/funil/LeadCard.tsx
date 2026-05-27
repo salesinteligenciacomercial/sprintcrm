@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { LeadAttachments } from "@/components/leads/LeadAttachments";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
 import { safeFormatPhoneNumber } from "@/utils/phoneFormatter";
+import { FollowTemperatureBadge } from "@/components/funil/FollowTemperatureBadge";
 
 /**
  * ✅ BACKUP ATUALIZADO - 2024-11-01
