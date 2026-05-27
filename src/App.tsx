@@ -30,6 +30,7 @@ import GrowSalesBI from "./pages/GrowSalesBI";
 import Prospeccao from "./pages/Prospeccao";
 import MetasVendas from "./pages/MetasVendas";
 import RotinaInteligentePage from "./pages/RotinaInteligente";
+import BIClinico from "./pages/BIClinico";
 
 import Maturidade from "./pages/Maturidade";
 import Mentoria from "./pages/Mentoria";
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="prospeccao" element={<Prospeccao />} />
               <Route path="metas-vendas" element={<MetasVendas />} />
               <Route path="rotina" element={<RotinaInteligentePage />} />
+              <Route path="bi-clinico" element={<BIClinico />} />
               <Route path="revenue-engine" element={<Navigate to="/analytics" replace />} />
               <Route path="maturidade" element={<Maturidade />} />
               <Route path="mentoria" element={<Mentoria />} />

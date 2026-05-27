@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { isSegmentoFinanceiro, isSegmentoJuridico } from "@/lib/segmentos";
+import { isSegmentoFinanceiro, isSegmentoJuridico, isSegmentoClinica } from "@/lib/segmentos";
 
 interface CompanySegmentoResult {
   segmento: string | null;
   isJuridico: boolean;
   isFinanceiro: boolean;
+  isClinica: boolean;
   isMasterAccount: boolean;
   companyId: string | null;
   loading: boolean;
@@ -53,6 +54,7 @@ export function useCompanySegmento(): CompanySegmentoResult {
     segmento,
     isJuridico: isMasterAccount || isSegmentoJuridico(segmento),
     isFinanceiro: isMasterAccount || isSegmentoFinanceiro(segmento),
+    isClinica: isSegmentoClinica(segmento),
     isMasterAccount,
     companyId,
     loading,
