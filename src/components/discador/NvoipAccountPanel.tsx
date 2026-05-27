@@ -120,6 +120,7 @@ export const NvoipAccountPanel: React.FC = () => {
     }
     setSaving(true);
     try {
+      const sipPwdToSend = form.sip_password && form.sip_password !== '••••••••' ? form.sip_password : undefined;
       const { data, error } = await supabase.functions.invoke('nvoip-call', {
         body: {
           action: 'save-config',
@@ -128,6 +129,10 @@ export const NvoipAccountPanel: React.FC = () => {
           napikey: form.napikey,
           login_email: form.login_email,
           caller_number: form.caller_number,
+          sip_password: sipPwdToSend,
+          sip_ws_uri: form.sip_ws_uri,
+          sip_domain: form.sip_domain,
+          telephony_mode: form.telephony_mode,
         },
       });
       if (error) throw error;
