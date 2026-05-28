@@ -2245,6 +2245,28 @@ export default function Agenda() {
       toast.error("Não foi possível copiar o link");
     }
   };
+
+  const confirmarManualmente = async (id: string, novoStatus: 'confirmado' | 'recusado' | 'pendente') => {
+    try {
+      const { error } = await supabase
+        .from('compromissos')
+        .update({ status_confirmacao: novoStatus })
+        .eq('id', id);
+      if (error) throw error;
+      toast.success(
+        novoStatus === 'confirmado'
+          ? 'Agendamento confirmado pelo atendente'
+          : novoStatus === 'recusado'
+            ? 'Agendamento marcado como recusado'
+            : 'Confirmação resetada para pendente'
+      );
+      carregarCompromissos();
+    } catch (e: any) {
+      console.error('Erro ao confirmar manualmente:', e);
+      toast.error('Não foi possível atualizar a confirmação');
+    }
+  };
+
   const reenviarLembrete = async (lembreteId: string) => {
     try {
       const {
@@ -3343,9 +3365,34 @@ export default function Agenda() {
                                 </p>}
                             </div>
                             <div className="flex gap-1 flex-wrap items-center">
+                              {compromisso.status === 'agendado' && (compromisso.status_confirmacao || 'pendente') !== 'confirmado' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="gap-1 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-500/10"
+                                  title="Confirmar manualmente (atendente)"
+                                  onClick={() => confirmarManualmente(compromisso.id, 'confirmado')}
+                                >
+                                  <CheckCircle2 className="h-4 w-4" />
+                                  <span className="hidden md:inline text-xs">Confirmar</span>
+                                </Button>
+                              )}
+                              {compromisso.status === 'agendado' && compromisso.status_confirmacao === 'confirmado' && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="gap-1 text-muted-foreground hover:text-foreground"
+                                  title="Desfazer confirmação"
+                                  onClick={() => confirmarManualmente(compromisso.id, 'pendente')}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  <span className="hidden md:inline text-xs">Desfazer</span>
+                                </Button>
+                              )}
                               <Button size="sm" variant="ghost" onClick={() => copiarLinkConfirmacao(compromisso.confirmation_token)} title="Copiar link de confirmação">
                                 <Link2 className="h-4 w-4" />
                               </Button>
+
                               <Button size="sm" variant="ghost" onClick={() => duplicarCompromisso(compromisso)} title="Duplicar compromisso">
                                 <Copy className="h-4 w-4" />
                               </Button>
