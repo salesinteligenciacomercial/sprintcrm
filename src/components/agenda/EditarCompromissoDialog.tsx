@@ -685,8 +685,10 @@ export function EditarCompromissoDialog({
         toast.error(`Erro ao atualizar compromisso: ${errorMessage || errorCode || 'Erro desconhecido'}`);
       }
     }
+  };
 
   return (
+
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
