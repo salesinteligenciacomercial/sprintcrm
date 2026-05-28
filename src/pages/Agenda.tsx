@@ -2212,13 +2212,16 @@ export default function Agenda() {
     }));
   }, [compromissos]);
   const getStatusBadge = (status: string) => {
-    const badges = {
+    const badges: Record<string, JSX.Element> = {
       agendado: <Badge className="bg-blue-500"><Clock className="h-3 w-3 mr-1" /> Agendado</Badge>,
       concluido: <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" /> Concluído</Badge>,
-      cancelado: <Badge className="bg-red-500"><XCircle className="h-3 w-3 mr-1" /> Cancelado</Badge>
+      cancelado: <Badge className="bg-red-500"><XCircle className="h-3 w-3 mr-1" /> Cancelado</Badge>,
+      remarcado: <Badge className="bg-amber-500"><RefreshCw className="h-3 w-3 mr-1" /> Remarcado</Badge>,
+      alterado: <Badge className="bg-orange-500"><AlertCircle className="h-3 w-3 mr-1" /> Alterado</Badge>,
     };
     return badges[status] || badges.agendado;
   };
+
   const getConfirmacaoBadge = (statusConfirmacao?: string | null) => {
     const sc = statusConfirmacao || 'pendente';
     if (sc === 'confirmado') {
