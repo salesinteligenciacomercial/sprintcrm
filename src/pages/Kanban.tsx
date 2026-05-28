@@ -185,6 +185,38 @@ export default function KanbanPage() {
   const isMovingRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const formatLead = useCallback((lead: any): Lead => ({
+    ...lead,
+    nome: lead.name || "",
+    name: lead.name || "",
+  }), []);
+
+  const fetchLeadsForFunil = useCallback(async (funilId?: string) => {
+    const PAGE_SIZE = 1000;
+    let from = 0;
+    const allLeads: any[] = [];
+
+    while (true) {
+      let query = supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (funilId) query = query.eq("funil_id", funilId);
+      if (currentCompanyId) query = query.eq("company_id", currentCompanyId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      allLeads.push(...(data || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+
+    return allLeads.map(formatLead);
+  }, [currentCompanyId, formatLead]);
+
   // 🎯 Filtros de visibilidade por responsável (controle de pipeline por usuário)
   const VIEW_MODE_KEY = "kanban:viewMode";
   const RESP_FILTER_KEY = "kanban:responsavelFiltro";
