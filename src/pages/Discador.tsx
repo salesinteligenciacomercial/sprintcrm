@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Phone, History, BarChart3, PhoneCall } from 'lucide-react';
 import { useCallCenter } from '@/hooks/useCallCenter';
-import { CallModal } from '@/components/discador/CallModal';
 import { PostCallNotesDialog } from '@/components/discador/PostCallNotesDialog';
 import { CallHistory } from '@/components/discador/CallHistory';
 import { SDRDashboard } from '@/components/discador/SDRDashboard';
@@ -28,13 +27,11 @@ const Discador = () => {
     callState,
     callHistory,
     isLoading,
-    startCall,
-    endCall,
     saveCallNotes,
-    toggleMute,
     loadCallHistory,
     getSDRMetrics
   } = useCallCenter();
+  const webphone = useWebphone();
   const { dialerVisible, toggleDialer } = useFloatingButtonsVisibility();
   useEffect(() => {
     loadCallHistory();
@@ -46,14 +43,18 @@ const Discador = () => {
       setShowNotesDialog(true);
     }
   }, [callState.status, callState.isActive]);
-  const handleStartCall = async (leadId: string, leadName: string, phoneNumber: string) => {
-    const success = await startCall(leadId, leadName, phoneNumber);
-    if (success) {
-      setShowCallDialog(false);
+  const handleStartCall = async (_leadId: string, leadName: string, phoneNumber: string) => {
+    if (webphone.mode !== 'webphone' || !webphone.configured) {
+      await webphone.reload();
     }
-  };
-  const handleEndCall = () => {
-    endCall();
+    if (webphone.mode !== 'webphone' || !webphone.configured) {
+      return;
+    }
+    if (webphone.regStatus !== 'registered') {
+      return;
+    }
+    webphone.call(phoneNumber, leadName);
+    setShowCallDialog(false);
   };
   const handleSaveNotes = async (notes: string, result: string) => {
     // Update call result first
