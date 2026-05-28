@@ -2212,13 +2212,16 @@ export default function Agenda() {
     }));
   }, [compromissos]);
   const getStatusBadge = (status: string) => {
-    const badges = {
+    const badges: Record<string, JSX.Element> = {
       agendado: <Badge className="bg-blue-500"><Clock className="h-3 w-3 mr-1" /> Agendado</Badge>,
       concluido: <Badge className="bg-green-500"><CheckCircle2 className="h-3 w-3 mr-1" /> Concluído</Badge>,
-      cancelado: <Badge className="bg-red-500"><XCircle className="h-3 w-3 mr-1" /> Cancelado</Badge>
+      cancelado: <Badge className="bg-red-500"><XCircle className="h-3 w-3 mr-1" /> Cancelado</Badge>,
+      remarcado: <Badge className="bg-amber-500"><RefreshCw className="h-3 w-3 mr-1" /> Remarcado</Badge>,
+      alterado: <Badge className="bg-orange-500"><AlertCircle className="h-3 w-3 mr-1" /> Alterado</Badge>,
     };
     return badges[status] || badges.agendado;
   };
+
   const getConfirmacaoBadge = (statusConfirmacao?: string | null) => {
     const sc = statusConfirmacao || 'pendente';
     if (sc === 'confirmado') {
@@ -3339,14 +3342,63 @@ export default function Agenda() {
                                   R$ {compromisso.custo_estimado.toFixed(2)}
                                 </p>}
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 flex-wrap items-center">
                               <Button size="sm" variant="ghost" onClick={() => copiarLinkConfirmacao(compromisso.confirmation_token)} title="Copiar link de confirmação">
                                 <Link2 className="h-4 w-4" />
                               </Button>
                               <Button size="sm" variant="ghost" onClick={() => duplicarCompromisso(compromisso)} title="Duplicar compromisso">
                                 <Copy className="h-4 w-4" />
                               </Button>
+                              {/* Remarcar (abre editar com foco em data/hora) */}
+                              <EditarCompromissoDialog
+                                compromisso={compromisso}
+                                onCompromissoUpdated={carregarCompromissos}
+                                trigger={
+                                  <Button size="sm" variant="ghost" className="gap-1 text-amber-600 hover:text-amber-700 hover:bg-amber-500/10" title="Remarcar compromisso" onClick={(e) => e.stopPropagation()}>
+                                    <RefreshCw className="h-4 w-4" />
+                                    <span className="hidden md:inline text-xs">Remarcar</span>
+                                  </Button>
+                                }
+                              />
+                              {/* Agendar Retorno (clínica) */}
+                              <AgendarRetornoDialog
+                                compromissoOriginal={compromisso as any}
+                                onRetornoAgendado={carregarCompromissos}
+                                trigger={
+                                  <Button size="sm" variant="ghost" className="gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-500/10" title="Agendar retorno" onClick={(e) => e.stopPropagation()}>
+                                    <Repeat className="h-4 w-4" />
+                                    <span className="hidden md:inline text-xs">Retorno</span>
+                                  </Button>
+                                }
+                              />
+                              {/* Edição padrão */}
                               <EditarCompromissoDialog compromisso={compromisso} onCompromissoUpdated={carregarCompromissos} />
+                              {/* Mudar status */}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="sm" variant="ghost" className="gap-1" title="Alterar status">
+                                    <ChevronDown className="h-4 w-4" />
+                                    <span className="hidden md:inline text-xs">Status</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => atualizarStatus(compromisso.id, 'agendado')} className="gap-2">
+                                    <Clock className="h-4 w-4 text-blue-500" /> Agendado
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => atualizarStatus(compromisso.id, 'concluido')} className="gap-2">
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" /> Concluído
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => atualizarStatus(compromisso.id, 'remarcado')} className="gap-2">
+                                    <RefreshCw className="h-4 w-4 text-amber-500" /> Remarcado
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => atualizarStatus(compromisso.id, 'alterado')} className="gap-2">
+                                    <AlertCircle className="h-4 w-4 text-orange-500" /> Alterado
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => atualizarStatus(compromisso.id, 'cancelado')} className="gap-2 text-destructive">
+                                    <XCircle className="h-4 w-4" /> Cancelado
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                   <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10" title="Deletar compromisso">
@@ -3369,6 +3421,7 @@ export default function Agenda() {
                                 </AlertDialogContent>
                               </AlertDialog>
                             </div>
+
                           </div>
                         </CardContent>
                       </Card>)}

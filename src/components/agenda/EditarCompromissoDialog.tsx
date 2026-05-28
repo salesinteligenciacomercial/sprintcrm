@@ -69,12 +69,15 @@ interface Lead {
 interface EditarCompromissoDialogProps {
   compromisso: Compromisso;
   onCompromissoUpdated: () => void;
+  trigger?: React.ReactNode;
 }
 
 export function EditarCompromissoDialog({
   compromisso,
   onCompromissoUpdated,
+  trigger,
 }: EditarCompromissoDialogProps) {
+
   const [open, setOpen] = useState(false);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [agendas, setAgendas] = useState<Agenda[]>([]);
@@ -685,17 +688,21 @@ export function EditarCompromissoDialog({
   };
 
   return (
+
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => e.stopPropagation()}
-          className="h-8 w-8 p-0"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
+        {trigger ?? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => e.stopPropagation()}
+            className="h-8 w-8 p-0"
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
+
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Compromisso</DialogTitle>
