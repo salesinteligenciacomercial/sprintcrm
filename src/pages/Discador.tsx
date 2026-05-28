@@ -18,7 +18,7 @@ import { useFloatingButtonsVisibility } from '@/hooks/useFloatingButtonsVisibili
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useWebphone } from '@/components/discador/WebphoneProvider';
-import { WebphoneDialer } from '@/components/discador/WebphoneDialer';
+import { toast } from 'sonner';
 const Discador = () => {
   const [activeTab, setActiveTab] = useState('fazer-ligacao');
   const [showCallDialog, setShowCallDialog] = useState(false);
@@ -48,9 +48,11 @@ const Discador = () => {
       await webphone.reload();
     }
     if (webphone.mode !== 'webphone' || !webphone.configured) {
+      toast.error('Configure a Conta Telefônica no modo Webphone NVOIP para ligar direto pelo CRM.');
       return;
     }
     if (webphone.regStatus !== 'registered') {
+      toast.error('Aguarde o Webphone SIP conectar antes de ligar.');
       return;
     }
     webphone.call(phoneNumber, leadName);
