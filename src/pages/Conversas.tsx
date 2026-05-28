@@ -7523,15 +7523,23 @@ function Conversas() {
       const etapaSelecionada = etapas.find(e => e.id === selectedFunnel);
       const nomeEtapa = etapaSelecionada?.nome || "Adicionado";
 
+      await supabase
+        .from('conversas')
+        .update({ lead_id: leadData.id })
+        .eq('company_id', leadData.company_id || userCompanyId)
+        .eq('telefone_formatado', (selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, ''));
+
       // Atualizar localmente (será sincronizado via realtime)
       const updatedConversations = conversations.map(conv => conv.id === selectedConv.id ? {
         ...conv,
-        funnelStage: nomeEtapa
+        funnelStage: nomeEtapa,
+        leadId: leadData.id
       } : conv);
       saveConversations(updatedConversations);
       setSelectedConv({
         ...selectedConv,
-        funnelStage: nomeEtapa
+        funnelStage: nomeEtapa,
+        leadId: leadData.id
       });
       setSelectedFunilId("");
       setSelectedFunnel("");
@@ -7944,6 +7952,17 @@ function Conversas() {
         console.warn('⚠️ [LEAD] Usuário sem company_id');
         return null;
       }
+
+      if (conversation.leadId) {
+        const { data: linkedLead } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('company_id', userRole.company_id)
+          .eq('id', conversation.leadId)
+          .maybeSingle();
+        if (linkedLead) return linkedLead;
+      }
+
       console.log('📞 [LEAD] Buscando lead com variações de telefone:', {
         variations,
         companyId: userRole.company_id
@@ -7952,9 +7971,9 @@ function Conversas() {
       // Buscar lead por telefone exato e variações
       const phoneConditions = variations.map(v => `phone.eq.${v},telefone.eq.${v}`).join(',');
       const {
-        data: existingLead,
+        data: existingLeads,
         error: searchError
-      } = await supabase.from('leads').select('*').eq('company_id', userRole.company_id).or(phoneConditions).maybeSingle();
+      } = await supabase.from('leads').select('*').eq('company_id', userRole.company_id).or(phoneConditions).order('updated_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(10);
       if (searchError && searchError.code !== 'PGRST116') {
         console.error('❌ [LEAD] Erro ao buscar lead:', {
           error: searchError,
@@ -7963,6 +7982,8 @@ function Conversas() {
         });
         return null;
       }
+
+      const existingLead = existingLeads?.find((lead: any) => lead.funil_id && lead.etapa_id) || existingLeads?.[0];
 
       // Se encontrou, vincular conversa ao lead
       if (existingLead) {
@@ -8169,6 +8190,21 @@ function Conversas() {
         return;
       }
 
+      if (conversation.leadId) {
+        const { data: linkedLead } = await supabase
+          .from('leads')
+          .select('*')
+          .eq('company_id', userRole.company_id)
+          .eq('id', conversation.leadId)
+          .maybeSingle();
+
+        if (linkedLead) {
+          setLeadVinculado(linkedLead);
+          setMostrarBotaoCriarLead(false);
+          return;
+        }
+      }
+
       // MELHORIA 1 e 2: Validar e normalizar número de telefone
       const phoneRaw = conversation.phoneNumber || conversation.id;
       const {
@@ -8190,9 +8226,9 @@ function Conversas() {
       // MELHORIA 3: Buscar lead por telefone exato e variações
       const phoneConditions = variations.map(v => `phone.eq.${v},telefone.eq.${v}`).join(',');
       const {
-        data: existingLead,
+        data: existingLeads,
         error
-      } = await supabase.from('leads').select('*').eq('company_id', userRole.company_id).or(phoneConditions).maybeSingle();
+      } = await supabase.from('leads').select('*').eq('company_id', userRole.company_id).or(phoneConditions).order('updated_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false }).limit(10);
 
       // MELHORIA 6: Logs detalhados para debug
       if (error && error.code !== 'PGRST116') {
@@ -8203,6 +8239,7 @@ function Conversas() {
           companyId: userRole.company_id
         });
       }
+      const existingLead = existingLeads?.find((lead: any) => lead.funil_id && lead.etapa_id) || existingLeads?.[0];
       if (existingLead) {
         console.log('✅ [LEAD] Lead vinculado encontrado:', {
           leadId: existingLead.id,

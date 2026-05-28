@@ -185,6 +185,38 @@ export default function KanbanPage() {
   const isMovingRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const formatLead = useCallback((lead: any): Lead => ({
+    ...lead,
+    nome: lead.name || "",
+    name: lead.name || "",
+  }), []);
+
+  const fetchLeadsForFunil = useCallback(async (funilId?: string) => {
+    const PAGE_SIZE = 1000;
+    let from = 0;
+    const allLeads: any[] = [];
+
+    while (true) {
+      let query = supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (funilId) query = query.eq("funil_id", funilId);
+      if (currentCompanyId) query = query.eq("company_id", currentCompanyId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      allLeads.push(...(data || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+
+    return allLeads.map(formatLead);
+  }, [currentCompanyId, formatLead]);
+
   // 🎯 Filtros de visibilidade por responsável (controle de pipeline por usuário)
   const VIEW_MODE_KEY = "kanban:viewMode";
   const RESP_FILTER_KEY = "kanban:responsavelFiltro";
@@ -283,20 +315,13 @@ export default function KanbanPage() {
 
         setEtapas(etapasData || []);
 
-        // Carregar leads
-        const { data: leadsData, error: leadsError } = await supabase
-          .from("leads")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (leadsError) throw leadsError;
         if (!mounted) return;
 
-        setLeads((leadsData || []).map(lead => ({
-          ...lead,
-          nome: lead.name || "",
-          name: lead.name || ""
-        })));
+        const targetFunil = selectedFunil || loadedFunis[0]?.id || "";
+        const leadsData = await fetchLeadsForFunil(targetFunil);
+        if (!mounted) return;
+
+        setLeads(leadsData);
 
       } catch (err: any) {
         // Ignore AbortError from auth lock contention - just retry silently
@@ -324,21 +349,13 @@ export default function KanbanPage() {
     return () => {
       mounted = false;
     };
-  }, [selectedFunil]);
+  }, [selectedFunil, fetchLeadsForFunil]);
 
   // Atualiza apenas os leads sem recarregar a página
   const refreshLeads = async () => {
     try {
-      const { data: leadsData, error: leadsError } = await supabase
-        .from("leads")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (leadsError) throw leadsError;
-      setLeads((leadsData || []).map(lead => ({
-        ...lead,
-        nome: lead.name || "",
-        name: lead.name || ""
-      })));
+      const leadsData = await fetchLeadsForFunil(selectedFunil);
+      setLeads(leadsData);
     } catch (err) {
       console.error("Erro ao atualizar leads:", err);
     }
@@ -449,12 +466,6 @@ export default function KanbanPage() {
     let reconnectAttempts = 0;
     const MAX_RECONNECT_ATTEMPTS = 5;
 
-    const formatLead = (lead: any): Lead => ({
-      ...lead,
-      nome: lead.name || '',
-      name: lead.name || ''
-    });
-
     const setupRealtimeChannel = () => {
       console.log('🔄 [REALTIME] Configurando canal consolidado...');
 
@@ -470,14 +481,26 @@ export default function KanbanPage() {
             return;
           }
 
+          const leadFunilId = payload.new?.funil_id || payload.old?.funil_id;
+          const belongsToSelectedFunil = leadFunilId === selectedFunil;
+
           if (payload.eventType === 'INSERT') {
+            if (!belongsToSelectedFunil) return;
             setLeads(prev => {
               // Evitar duplicatas
               if (prev.some(l => l.id === payload.new.id)) return prev;
               return [formatLead(payload.new), ...prev];
             });
           } else if (payload.eventType === 'UPDATE') {
-            setLeads(prev => prev.map(l => l.id === payload.new.id ? formatLead(payload.new) : l));
+            setLeads(prev => {
+              const alreadyLoaded = prev.some(l => l.id === payload.new.id);
+              if (belongsToSelectedFunil) {
+                return alreadyLoaded
+                  ? prev.map(l => l.id === payload.new.id ? formatLead(payload.new) : l)
+                  : [formatLead(payload.new), ...prev];
+              }
+              return prev.filter(l => l.id !== payload.new.id);
+            });
           } else if (payload.eventType === 'DELETE') {
             setLeads(prev => prev.filter(l => l.id !== payload.old.id));
           }
@@ -551,7 +574,7 @@ export default function KanbanPage() {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (realtimeChannel) supabase.removeChannel(realtimeChannel);
     };
-  }, [selectedFunil]);
+  }, [selectedFunil, formatLead]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
