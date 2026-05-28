@@ -7523,15 +7523,23 @@ function Conversas() {
       const etapaSelecionada = etapas.find(e => e.id === selectedFunnel);
       const nomeEtapa = etapaSelecionada?.nome || "Adicionado";
 
+      await supabase
+        .from('conversas')
+        .update({ lead_id: leadData.id })
+        .eq('company_id', leadData.company_id || userCompanyId)
+        .eq('telefone_formatado', (selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, ''));
+
       // Atualizar localmente (será sincronizado via realtime)
       const updatedConversations = conversations.map(conv => conv.id === selectedConv.id ? {
         ...conv,
-        funnelStage: nomeEtapa
+        funnelStage: nomeEtapa,
+        leadId: leadData.id
       } : conv);
       saveConversations(updatedConversations);
       setSelectedConv({
         ...selectedConv,
-        funnelStage: nomeEtapa
+        funnelStage: nomeEtapa,
+        leadId: leadData.id
       });
       setSelectedFunilId("");
       setSelectedFunnel("");
