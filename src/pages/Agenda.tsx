@@ -2245,6 +2245,28 @@ export default function Agenda() {
       toast.error("Não foi possível copiar o link");
     }
   };
+
+  const confirmarManualmente = async (id: string, novoStatus: 'confirmado' | 'recusado' | 'pendente') => {
+    try {
+      const { error } = await supabase
+        .from('compromissos')
+        .update({ status_confirmacao: novoStatus })
+        .eq('id', id);
+      if (error) throw error;
+      toast.success(
+        novoStatus === 'confirmado'
+          ? 'Agendamento confirmado pelo atendente'
+          : novoStatus === 'recusado'
+            ? 'Agendamento marcado como recusado'
+            : 'Confirmação resetada para pendente'
+      );
+      carregarCompromissos();
+    } catch (e: any) {
+      console.error('Erro ao confirmar manualmente:', e);
+      toast.error('Não foi possível atualizar a confirmação');
+    }
+  };
+
   const reenviarLembrete = async (lembreteId: string) => {
     try {
       const {
