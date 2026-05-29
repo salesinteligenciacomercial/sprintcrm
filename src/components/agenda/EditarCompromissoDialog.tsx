@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 
 interface Agenda {
   id: string;
