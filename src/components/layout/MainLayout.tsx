@@ -12,12 +12,15 @@ import { FloatingChatButton } from "@/components/internal-chat";
 import { FloatingDialerButton } from "@/components/discador/FloatingDialerButton";
 import { FloatingSupportButton } from "@/components/support-chat/FloatingSupportButton";
 import { useFloatingButtonsVisibility } from "@/hooks/useFloatingButtonsVisibility";
+import { useClinicaSeeds } from "@/hooks/useClinicaSeeds";
 
 export function MainLayout() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
   const { chatVisible, dialerVisible, supportVisible } = useFloatingButtonsVisibility();
+  // Seeds clínicos — só executa quando segmento === clínica (gated dentro do hook).
+  useClinicaSeeds();
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const isSupabaseConfigured = supabaseUrl && supabaseKey && 
