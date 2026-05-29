@@ -19,6 +19,8 @@ export function MainLayout() {
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
   const { chatVisible, dialerVisible, supportVisible } = useFloatingButtonsVisibility();
+  // Seeds clínicos — só executa quando segmento === clínica (gated dentro do hook).
+  useClinicaSeeds();
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   const isSupabaseConfigured = supabaseUrl && supabaseKey && 
