@@ -101,6 +101,7 @@ function StageColumn({ stage, entries }: { stage: FollowUpStage; entries: Follow
 export function FunilFollowUp() {
   const { entries, isLoading: loadingEntries } = useFollowUpEsteira();
   const { stages, isLoading: loadingFunnel, moveEntry } = useFollowUpFunnel();
+  const { isClinica } = useCompanySegmento();
   const [managerOpen, setManagerOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [showOnlyOverdue, setShowOnlyOverdue] = useState(false);
