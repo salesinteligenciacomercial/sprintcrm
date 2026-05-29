@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 
 interface Agenda {
   id: string;
@@ -101,6 +102,7 @@ export function EditarCompromissoDialog({
   };
   
   const [duracaoMinutos, setDuracaoMinutos] = useState(calcularDuracao());
+  const { isClinica } = useCompanySegmento();
   const [tipoServico, setTipoServico] = useState(compromisso.tipo_servico);
   const [observacoes, setObservacoes] = useState(compromisso.observacoes || "");
   const [custoEstimado, setCustoEstimado] = useState(
@@ -883,19 +885,33 @@ export function EditarCompromissoDialog({
           </div>
 
           <div>
-            <Label>Tipo de serviço *</Label>
+            <Label>{isClinica ? "Tipo de atendimento *" : "Tipo de serviço *"}</Label>
             <Select value={tipoServico} onValueChange={setTipoServico}>
               <SelectTrigger className={errors.tipoServico ? "border-destructive" : ""}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="reuniao">Reunião</SelectItem>
-                <SelectItem value="consultoria">Consultoria</SelectItem>
-                <SelectItem value="atendimento">Atendimento</SelectItem>
-                <SelectItem value="visita">Visita</SelectItem>
-                <SelectItem value="apresentacao">Apresentação</SelectItem>
-                <SelectItem value="retorno">Retorno</SelectItem>
-                <SelectItem value="outro">Outro</SelectItem>
+                {isClinica ? (
+                  <>
+                    <SelectItem value="consulta">Consulta</SelectItem>
+                    <SelectItem value="retorno">Retorno</SelectItem>
+                    <SelectItem value="procedimento">Procedimento</SelectItem>
+                    <SelectItem value="exame">Exame</SelectItem>
+                    <SelectItem value="cirurgia">Cirurgia</SelectItem>
+                    <SelectItem value="avaliacao">Avaliação</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="reuniao">Reunião</SelectItem>
+                    <SelectItem value="consultoria">Consultoria</SelectItem>
+                    <SelectItem value="atendimento">Atendimento</SelectItem>
+                    <SelectItem value="visita">Visita</SelectItem>
+                    <SelectItem value="apresentacao">Apresentação</SelectItem>
+                    <SelectItem value="retorno">Retorno</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
             {errors.tipoServico && (

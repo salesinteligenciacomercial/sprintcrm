@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import { HorarioSeletor } from "./HorarioSeletor";
 import { HorarioComercial, criarHorarioPadrao } from "./HorarioComercialConfig";
 import { ProfissionalSelector } from "./ProfissionalSelector";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
 
 interface AgendaModalProps {
   open: boolean;
@@ -27,6 +28,7 @@ interface AgendaModalProps {
 
 export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: AgendaModalProps) {
   const [loading, setLoading] = useState(false);
+  const { isClinica } = useCompanySegmento();
   const [horarioComercial, setHorarioComercial] = useState<HorarioComercial>(criarHorarioPadrao());
   const [compromissosExistentes, setCompromissosExistentes] = useState<any[]>([]);
   const [agendaSelecionada, setAgendaSelecionada] = useState<any>(null);
@@ -633,7 +635,7 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="tipo_servico" className="text-sm">Tipo de Serviço *</Label>
+              <Label htmlFor="tipo_servico" className="text-sm">{isClinica ? "Tipo de Atendimento *" : "Tipo de Serviço *"}</Label>
               <Select
                 value={formData.tipo_servico}
                 onValueChange={(value) => setFormData({ ...formData, tipo_servico: value })}
@@ -643,16 +645,30 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent className="!z-[500]">
-                  <SelectItem value="reuniao">Reunião</SelectItem>
-                  <SelectItem value="apresentacao">Apresentação</SelectItem>
-                  <SelectItem value="visita">Visita</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
+                  {isClinica ? (
+                    <>
+                      <SelectItem value="consulta">Consulta</SelectItem>
+                      <SelectItem value="retorno">Retorno</SelectItem>
+                      <SelectItem value="procedimento">Procedimento</SelectItem>
+                      <SelectItem value="exame">Exame</SelectItem>
+                      <SelectItem value="cirurgia">Cirurgia</SelectItem>
+                      <SelectItem value="avaliacao">Avaliação</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="reuniao">Reunião</SelectItem>
+                      <SelectItem value="apresentacao">Apresentação</SelectItem>
+                      <SelectItem value="visita">Visita</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label htmlFor="custo_estimado" className="text-sm">Custo Estimado (R$)</Label>
+              <Label htmlFor="custo_estimado" className="text-sm">{isClinica ? "Valor (R$)" : "Custo Estimado (R$)"}</Label>
               <Input
                 id="custo_estimado"
                 type="number"
@@ -671,7 +687,7 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
               id="descricao"
               value={formData.descricao}
               onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              placeholder="Ex: Apresentação do produto para cliente"
+              placeholder={isClinica ? "Ex: Consulta de avaliação inicial" : "Ex: Apresentação do produto para cliente"}
               className="h-9"
             />
           </div>
