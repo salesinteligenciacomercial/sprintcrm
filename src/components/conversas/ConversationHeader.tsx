@@ -330,66 +330,15 @@ import { MarkProspectionButton } from "./MarkProspectionButton";
               )}
               {/* Botão Finalizar */}
               {onFinalizeAtendimento && (
-                <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      title="Finalizar atendimento"
-                    >
-                      <CheckCircle2 className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="w-[95vw] max-w-lg mx-auto">
-                    <UIDialogHeader>
-                      <DialogTitle>Mensagem de finalização</DialogTitle>
-                    </UIDialogHeader>
-                    <div className="space-y-3">
-                      <Textarea
-                        rows={6}
-                        value={finalizeMessage}
-                        onChange={(e) => setFinalizeMessage(e.target.value)}
-                      />
-                      <div className="flex flex-col gap-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            localStorage.setItem("continuum_finalize_template", finalizeMessage);
-                          }}
-                        >
-                          Salvar como padrão
-                        </Button>
-                        <div className="flex flex-col gap-2">
-                          <Button variant="outline" className="w-full" onClick={() => setFinalizeOpen(false)}>Cancelar</Button>
-                          <Button
-                            variant="secondary"
-                            className="w-full"
-                            onClick={() => {
-                              if (onFinalizeAtendimentoSilent) {
-                                onFinalizeAtendimentoSilent();
-                              }
-                              setFinalizeOpen(false);
-                            }}
-                          >
-                            Só finalizar
-                          </Button>
-                          <Button
-                            className="w-full"
-                            onClick={() => {
-                              onFinalizeAtendimento(finalizeMessage);
-                              localStorage.setItem("continuum_finalize_template", finalizeMessage);
-                              setFinalizeOpen(false);
-                            }}
-                          >
-                            Enviar e finalizar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Finalizar atendimento"
+                  onClick={() => setFinalizeOpen(true)}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
               )}
               {/* Botão Info */}
               <Button 
