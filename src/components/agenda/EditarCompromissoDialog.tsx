@@ -102,6 +102,7 @@ export function EditarCompromissoDialog({
   };
   
   const [duracaoMinutos, setDuracaoMinutos] = useState(calcularDuracao());
+  const { isClinica } = useCompanySegmento();
   const [tipoServico, setTipoServico] = useState(compromisso.tipo_servico);
   const [observacoes, setObservacoes] = useState(compromisso.observacoes || "");
   const [custoEstimado, setCustoEstimado] = useState(
