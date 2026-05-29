@@ -708,7 +708,7 @@ export function SiteRenderer({ config, companyId, companyName, slug, previewMode
       {/* Footer */}
       <footer className="py-8 bg-slate-900 text-slate-400 text-center text-sm">
         <div>© {new Date().getFullYear()} {isLanding ? especialistaName : companyName}. Todos os direitos reservados.</div>
-        <div className="text-xs mt-2 opacity-60">Site criado com Waze CRM</div>
+        <div className="text-xs mt-2 opacity-60">Site criado com GROW OS</div>
         {previewMode && <div className="text-xs mt-2 opacity-70">[Modo Preview]</div>}
       </footer>
 

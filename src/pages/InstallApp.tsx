@@ -47,7 +47,7 @@ export default function InstallApp() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 mb-2">
             <Download className="w-10 h-10 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight">Instalar o WAZE CRM</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Instalar o GROW OS</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Tenha o CRM como um aplicativo no seu celular ou computador. Acesso rápido,
             tela cheia e ícone próprio — sem precisar abrir o navegador.
@@ -61,7 +61,7 @@ export default function InstallApp() {
               <div>
                 <h3 className="font-semibold text-lg">App já instalado!</h3>
                 <p className="text-muted-foreground text-sm">
-                  Você já está usando o WAZE CRM como aplicativo. Pode fechar esta página.
+                  Você já está usando o GROW OS como aplicativo. Pode fechar esta página.
                 </p>
               </div>
             </CardContent>
@@ -129,7 +129,7 @@ export default function InstallApp() {
               <ol className="space-y-2 list-decimal list-inside text-muted-foreground">
                 <li>Abra no <strong className="text-foreground">Chrome</strong> ou <strong className="text-foreground">Edge</strong></li>
                 <li>Procure o ícone <Download className="w-4 h-4 inline" /> de instalação na barra de endereço</li>
-                <li>Ou vá em menu → <strong className="text-foreground">"Instalar WAZE CRM"</strong></li>
+                <li>Ou vá em menu → <strong className="text-foreground">"Instalar GROW OS"</strong></li>
                 <li>Confirme em <strong className="text-foreground">"Instalar"</strong></li>
               </ol>
             </CardContent>
