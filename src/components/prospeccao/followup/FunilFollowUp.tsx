@@ -147,10 +147,10 @@ export function FunilFollowUp() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="flex items-center gap-2">
-            Funil de Follow-up
+            {followUpFunnelLabel(isClinica)}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            Arraste os cards entre as etapas. Mover para uma etapa terminal finaliza o follow.
+            Arraste os cards entre as etapas. Mover para uma etapa terminal finaliza o {isClinica ? "pós-consulta" : "follow"}.
           </p>
         </div>
         <div className="flex gap-2">
