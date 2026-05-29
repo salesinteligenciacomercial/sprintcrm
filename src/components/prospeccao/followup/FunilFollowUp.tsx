@@ -17,6 +17,8 @@ import { Settings, Filter, Phone, Mail } from "lucide-react";
 import { useFollowUpEsteira, FollowUpEntry } from "@/hooks/useFollowUpEsteira";
 import { useFollowUpFunnel, FollowUpStage } from "@/hooks/useFollowUpFunnel";
 import { StageManagerDialog } from "./StageManagerDialog";
+import { useCompanySegmento } from "@/hooks/useCompanySegmento";
+import { followUpFunnelLabel } from "@/lib/clinicaLabels";
 
 function FunnelCard({ entry }: { entry: FollowUpEntry }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: entry.id });
