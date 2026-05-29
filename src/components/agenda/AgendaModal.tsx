@@ -690,16 +690,6 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
               placeholder={isClinica ? "Ex: Consulta de avaliação inicial" : "Ex: Apresentação do produto para cliente"}
               className="h-9"
             />
-
-          <div>
-            <Label htmlFor="descricao" className="text-sm">Descrição</Label>
-            <Input
-              id="descricao"
-              value={formData.descricao}
-              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-              placeholder="Ex: Apresentação do produto para cliente"
-              className="h-9"
-            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
