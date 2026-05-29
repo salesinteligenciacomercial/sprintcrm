@@ -84,7 +84,7 @@ export default function SitePublicoAgenda() {
       </main>
 
       <footer className="py-6 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} {companyName} · Powered by Waze CRM
+        © {new Date().getFullYear()} {companyName} · Powered by GROW OS
       </footer>
     </div>
   );

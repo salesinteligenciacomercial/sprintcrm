@@ -219,7 +219,7 @@ button[data-conversation-menu="true"] * {
     /* Radius */
     --radius: 0.75rem;
 
-    /* Sidebar - Deep green-black (matches Waze Sales OS proposal) */
+    /* Sidebar - Deep green-black (matches GROW OS proposal) */
     --sidebar-background: 160 30% 7%;
     --sidebar-foreground: 150 20% 92%;
     --sidebar-primary: 142 71% 45%;
@@ -251,7 +251,7 @@ button[data-conversation-menu="true"] * {
     --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
-  /* Dark Theme - Waze Sales OS (deep green-black) */
+  /* Dark Theme - GROW OS (deep green-black) */
   .dark {
     /* Base colors - very dark green-black like the proposal */
     --background: 160 35% 5%;
