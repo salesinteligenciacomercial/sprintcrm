@@ -28,6 +28,7 @@ export default function RotinaInteligentePage() {
         </Badge>
       </div>
 
+      <PainelRotinaDia />
       <CockpitDoDia />
       {isClinica ? <RotinaClinica /> : <RotinaInteligenteComponent />}
     </div>
