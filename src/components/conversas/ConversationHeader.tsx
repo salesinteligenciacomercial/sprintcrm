@@ -436,6 +436,68 @@ import { MarkProspectionButton } from "./MarkProspectionButton";
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Dialog único de finalização (compartilhado entre desktop/mobile) */}
+      {onFinalizeAtendimento && (
+        <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
+          <DialogContent className="sm:max-w-lg w-[95vw] mx-auto">
+            <UIDialogHeader>
+              <DialogTitle>Mensagem de finalização</DialogTitle>
+            </UIDialogHeader>
+            <div className="space-y-3">
+              <Textarea
+                rows={6}
+                value={finalizeMessage}
+                onChange={(e) => setFinalizeMessage(e.target.value)}
+              />
+              <div className="flex flex-col gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    localStorage.setItem("continuum_finalize_template", finalizeMessage);
+                    toast.success("Mensagem padrão salva");
+                  }}
+                >
+                  Salvar como padrão
+                </Button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full sm:flex-1"
+                    onClick={() => setFinalizeOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    className="w-full sm:flex-1"
+                    onClick={async () => {
+                      setFinalizeOpen(false);
+                      if (onFinalizeAtendimentoSilent) {
+                        await onFinalizeAtendimentoSilent();
+                      }
+                    }}
+                  >
+                    Só finalizar
+                  </Button>
+                  <Button
+                    className="w-full sm:flex-1"
+                    onClick={async () => {
+                      const msg = finalizeMessage;
+                      localStorage.setItem("continuum_finalize_template", msg);
+                      setFinalizeOpen(false);
+                      await onFinalizeAtendimento(msg);
+                    }}
+                  >
+                    Enviar e finalizar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
   }
