@@ -8966,13 +8966,21 @@ function Conversas() {
     }
   };
   return <div className="flex w-full bg-background overflow-hidden" style={{ height: 'calc(100vh - 80px)', maxHeight: 'calc(100vh - 80px)' }}>
-      {/* Sidebar esquerda - tema cinza claro */}
+      {/* Sidebar esquerda - visual refinado */}
       {/* No mobile: esconder quando uma conversa está selecionada */}
-      <div className={`${isMobile ? (selectedConv ? 'hidden' : 'w-full') : 'w-[380px]'} flex-shrink-0 bg-muted/30 border-r border-border flex flex-col overflow-hidden`}>
+      <div className={`${isMobile ? (selectedConv ? 'hidden' : 'w-full') : 'w-[380px]'} flex-shrink-0 bg-card border-r border-border flex flex-col overflow-hidden`}>
         {/* Header - Fixo, não move com scroll */}
-        <div className="px-3 py-4 bg-background border-b border-border flex-shrink-0">
+        <div className="px-4 py-4 bg-card border-b border-border flex-shrink-0">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold text-foreground">Bate-Papo Multicanal </h1>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shadow-primary/30">
+                <MessageSquare className="h-4.5 w-4.5 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-[15px] font-bold text-foreground leading-tight tracking-tight">Bate-Papo</h1>
+                <p className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">Multicanal</p>
+              </div>
+            </div>
             <div className="flex gap-2 items-center">
               <NovaConversaDialog onNovaConversa={async (nome, numero) => {
               try {
