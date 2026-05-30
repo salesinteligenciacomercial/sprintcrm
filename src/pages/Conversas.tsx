@@ -9249,66 +9249,67 @@ function Conversas() {
               </span>}
           </div>
           
-          {/* Filters */}
-          <div className="flex gap-0.5 flex-wrap items-center">
-            <Button variant={filter === "all" ? "default" : "ghost"} size="sm" onClick={() => setFilter("all")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="secondary" className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+          {/* Filters - pill style */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+            <Button variant={filter === "all" ? "default" : "ghost"} size="sm" onClick={() => setFilter("all")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "all" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Todos</span>
+              <span className={`px-1.5 py-0 rounded-full text-[10px] font-bold ${filter === "all" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background text-muted-foreground"}`}>
                 {conversations.filter(c => !c.isGroup || !blockedGroups.has(c.phoneNumber || c.id)).length}
-              </Badge>
-              <span className="text-xs">Todos</span>
+              </span>
             </Button>
-            <Button variant={filter === "waiting" ? "default" : "ghost"} size="sm" onClick={() => setFilter("waiting")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="destructive" className="bg-red-500 hover:bg-red-600 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+            <Button variant={filter === "waiting" ? "default" : "ghost"} size="sm" onClick={() => setFilter("waiting")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "waiting" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Esperando</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-red-500 text-white">
                 {waitingCount}
-              </Badge>
-              <span className="text-xs">Esperando</span>
+              </span>
             </Button>
-            <Button variant={filter === "answered" ? "default" : "ghost"} size="sm" onClick={() => setFilter("answered")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="default" className="bg-blue-500 hover:bg-blue-600 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+            <Button variant={filter === "answered" ? "default" : "ghost"} size="sm" onClick={() => setFilter("answered")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "answered" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Em Atend.</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-blue-500 text-white">
                 {answeredCount}
-              </Badge>
-              <span className="text-xs">Em Atend.</span>
+              </span>
             </Button>
-            <Button variant={filter === "resolved" ? "default" : "ghost"} size="sm" onClick={() => setFilter("resolved")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="secondary" className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+            <Button variant={filter === "resolved" ? "default" : "ghost"} size="sm" onClick={() => setFilter("resolved")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "resolved" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Finalizados</span>
+              <span className={`px-1.5 py-0 rounded-full text-[10px] font-bold ${filter === "resolved" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background text-muted-foreground"}`}>
                 {conversations.filter(c => !c.isGroup && c.status === 'resolved').length}
-              </Badge>
-              <span className="text-xs">Finalizados</span>
+              </span>
             </Button>
             {/* 🔐 Filtro de Grupos - APENAS SUPER ADMIN */}
             {isSuperAdmin && (
-              <Button variant={filter === "group" ? "default" : "ghost"} size="sm" onClick={() => setFilter("group")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-                <Badge variant="secondary" className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+              <Button variant={filter === "group" ? "default" : "ghost"} size="sm" onClick={() => setFilter("group")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "group" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+                <span>Grupos</span>
+                <span className={`px-1.5 py-0 rounded-full text-[10px] font-bold ${filter === "group" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-background text-muted-foreground"}`}>
                   {conversations.filter(c => c.isGroup === true).length}
-                </Badge>
-                <span className="text-xs">Grupos</span>
+                </span>
               </Button>
             )}
-             <Button variant={filter === "instagram" ? "default" : "ghost"} size="sm" onClick={() => setFilter("instagram")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-               <Badge variant="secondary" className="bg-pink-500 hover:bg-pink-600 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
-                 {conversations.filter(c => c.channel === 'instagram').length}
-               </Badge>
-               <span className="text-xs flex items-center gap-0.5"><Instagram className="h-3 w-3" />Instagram</span>
-             </Button>
-             <Button variant={filter === "messenger" ? "default" : "ghost"} size="sm" onClick={() => setFilter("messenger")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-               <Badge variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
-                 {conversations.filter(c => c.channel === 'facebook').length}
-               </Badge>
-               <span className="text-xs flex items-center gap-0.5"><Facebook className="h-3 w-3" />Messenger</span>
-             </Button>
-            <Button variant={filter === "responsible" ? "default" : "ghost"} size="sm" onClick={() => setFilter("responsible")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="secondary" className="bg-green-500 hover:bg-green-600 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+            <Button variant={filter === "instagram" ? "default" : "ghost"} size="sm" onClick={() => setFilter("instagram")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "instagram" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <Instagram className="h-3 w-3" />
+              <span>Instagram</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-pink-500 text-white">
+                {conversations.filter(c => c.channel === 'instagram').length}
+              </span>
+            </Button>
+            <Button variant={filter === "messenger" ? "default" : "ghost"} size="sm" onClick={() => setFilter("messenger")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "messenger" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <Facebook className="h-3 w-3" />
+              <span>Messenger</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-blue-600 text-white">
+                {conversations.filter(c => c.channel === 'facebook').length}
+              </span>
+            </Button>
+            <Button variant={filter === "responsible" ? "default" : "ghost"} size="sm" onClick={() => setFilter("responsible")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "responsible" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Responsável</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-green-500 text-white">
                 {responsibleCount}
-              </Badge>
-              <span className="text-xs">Responsável</span>
+              </span>
             </Button>
-            <Button variant={filter === "transferred" ? "default" : "ghost"} size="sm" onClick={() => setFilter("transferred")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
-              <Badge variant="secondary" className="bg-purple-500 hover:bg-purple-600 text-white min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
+            <Button variant={filter === "transferred" ? "default" : "ghost"} size="sm" onClick={() => setFilter("transferred")} className={`flex-shrink-0 h-7 rounded-full px-3 gap-1.5 text-[11.5px] font-semibold transition-all ${filter === "transferred" ? "shadow-sm shadow-primary/30" : "bg-muted/50 hover:bg-muted"}`}>
+              <span>Transferidos</span>
+              <span className="px-1.5 py-0 rounded-full text-[10px] font-bold bg-purple-500 text-white">
                 {conversations.filter(c => !c.isGroup && c.assignedUser?.id === currentUserId).length}
-              </Badge>
-              <span className="text-xs">Transferidos</span>
+              </span>
             </Button>
-            
           </div>
         </div>
 
