@@ -52,7 +52,7 @@ const navigation: NavEntry[] = [
     key: "crm",
     label: "CRM",
     items: [
-      { name: "Relatórios", href: "/analytics", icon: LayoutDashboard, menuKey: "analytics", clinicaLabel: "Painel Clínico" },
+      { name: "Relatórios", href: "/relatorios", icon: LayoutDashboard, menuKey: "analytics", clinicaLabel: "Painel Clínico" },
       { name: "Contatos", href: "/leads", icon: Users, menuKey: "leads", clinicaLabel: "Pacientes" },
       { name: "Funil de Vendas", href: "/kanban", icon: LayoutDashboard, menuKey: "funil", clinicaLabel: "Jornada do Paciente" },
       { name: "Bate-Papo", href: "/conversas", icon: MessageSquare, menuKey: "conversas", showConversasBadge: true, clinicaLabel: "Atendimento" },
