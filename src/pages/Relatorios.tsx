@@ -80,7 +80,7 @@ function KpiCard({
 
   if (loading) {
     return (
-      <div className={`animate-pulse rounded-2xl border p-5 ${styles}`}>
+      <div className={`animate-pulse rounded-2xl border p-4 ${styles}`}>
         <div className="h-3 w-24 rounded bg-slate-700/80" />
         <div className="mt-3 h-8 w-20 rounded bg-slate-700/80" />
         <div className="mt-3 h-3 w-full rounded bg-slate-800/80" />
@@ -89,12 +89,16 @@ function KpiCard({
   }
 
   return (
-    <div className={`group relative overflow-hidden rounded-2xl border p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-background/50 ${styles}`}>
+    <div className={`group relative overflow-hidden rounded-2xl border p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-2xl hover:shadow-background/50 ${styles}`}>
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-current opacity-10 blur-2xl" />
       <div className="text-[0.58rem] font-black uppercase tracking-[0.12em] opacity-60">{label}</div>
       <div className="mt-2 text-2xl font-black tracking-normal text-current">{value}</div>
       <div className="mt-2 text-[0.64rem] leading-relaxed text-slate-500">{sub}</div>
-      <div className={`mt-3 inline-flex rounded-md px-2 py-1 text-[0.62rem] font-black ${delta.includes("▼") ? "bg-red-500/10 text-red-300" : "bg-emerald-500/10 text-emerald-300"}`}>{delta}</div>
+      {delta ? (
+        <div className={`mt-3 inline-flex rounded-md px-2 py-1 text-[0.62rem] font-black ${delta.includes("▼") ? "bg-red-500/10 text-red-300" : "bg-emerald-500/10 text-emerald-300"}`}>
+          {delta}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -287,7 +291,8 @@ function DonutChart({ ganhos, perdidos, emAndamento }: { ganhos: number; perdido
 
 export default function Relatorios() {
   const [range, setRange] = useState<BIRange>("30d");
-  const { data: bi, isLoading, isFetching, refetch, dataUpdatedAt } = useGrowSalesBI(range);
+  const [selectedFunilId, setSelectedFunilId] = useState<string | null>(null);
+  const { data: bi, isLoading, isFetching, refetch, dataUpdatedAt } = useGrowSalesBI(range, selectedFunilId);
   const { data: ops, isLoading: opsLoading } = useRelatoriosOperacional(range);
 
   const loading = isLoading || opsLoading;
@@ -408,67 +413,115 @@ export default function Relatorios() {
         </div>
       </div>
 
-      <main className="mx-auto flex max-w-[1600px] flex-col gap-6 px-7 py-5">
+      <main className="mx-auto flex max-w-[1220px] flex-col gap-5 px-6 py-5">
         <section>
           <SectionHeader icon="⚙️" title="Pipeline & Operação" tag={rangeLabel} tone="bg-cyan-500/10 text-cyan-300" />
           <p className="-mt-1 mb-3 text-[0.65rem] text-slate-600">
             Métricas ligadas aos módulos do CRM: Agenda, Tarefas, Funil, Site e IA.
           </p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             <KpiCard
               loading={loading}
               label="Agendamentos"
               value={ops ? String(ops.agendamentos) : "—"}
-              sub="Módulo Agenda · compromissos no período"
-              delta={bi ? `${bi.funil.compareceram} compareceram` : ""}
+              sub="Compromissos no período"
+              delta={ops ? `${ops.agendamentosCompareceram} compareceram · ${ops.agendamentosNaoCompareceram} não compareceram` : ""}
               variant="cyan"
             />
             <KpiCard
               loading={loading}
               label="Tarefas"
               value={ops ? String(ops.tarefas) : "—"}
-              sub={ops ? `${ops.tarefasPendentes} pendentes no quadro` : "Módulo Tarefas"}
-              delta="Total cadastrado no CRM"
+              sub={ops ? `${ops.tarefasPendentes} pendentes no quadro` : ""}
+              delta="Total cadastradas"
               variant="violet"
             />
             <KpiCard
               loading={loading}
               label="Leads — Tráfego Pago"
               value={ops ? String(ops.leadsTrafego) : "—"}
-              sub="Meta Ads, Google e UTMs pagas"
-              delta={topCampanha ? `Top: ${topCampanha.campanha.slice(0, 22)}` : "Sem campanha rastreada"}
+              sub="Meta Ads, Google e UTM"
+              delta={ops ? (ops.leadsTrafego > 0 ? "" : "Sem campanha rastreada") : ""}
               variant="amber"
+            />
+            <KpiCard
+              loading={loading}
+              label="Cold Call"
+              value={ops ? String(ops.coldCallTotal) : "—"}
+              sub="Total de leads Cold Call"
+              delta="Importados para Cold Call"
+              variant="cyan"
             />
             <KpiCard
               loading={loading}
               label="Site"
               value={ops ? String(ops.leadsSite) : "—"}
-              sub="Leads do site, pixel e formulários"
-              delta="Chat IA, agendamento e institucional"
+              sub="Pixel / Formulários · Chat IA / Agendamento"
+              delta="Leads do site"
               variant="blue"
             />
             <KpiCard
               loading={loading}
               label="Funil de Vendas"
-              value={ops ? String(ops.leadsNoFunil) : "—"}
-              sub={ops ? `${ops.leadsFunilAtivos} ativos no funil agora` : "Módulo Funil de Vendas"}
-              delta={ops?.funilPrincipal ? `Principal: ${ops.funilPrincipal}` : "Sem funil atribuído"}
+              value={ops ? String(ops.leadsFunilAtivos) : "—"}
+              sub={ops ? `Etapa principal: ${ops.funilPrincipal || "—"}` : ""}
+              delta="Leads ativos"
               variant="green"
             />
             <KpiCard
               loading={loading}
+              label="Base de Dados"
+              value={ops ? String(ops.leadsTotal) : "—"}
+              sub="Contatos do módulo CRM"
+              delta="Total de leads cadastrados"
+              variant="blue"
+            />
+            <KpiCard
+              loading={loading}
               label="Atendido IA"
-              value={ops ? String(ops.atendimentosIA) : "—"}
-              sub={ops ? `${ops.leadsAtendidosIA} leads com resposta da IA` : "Automação e chat IA"}
-              delta="Interações registradas no período"
+              value={ops ? String(ops.leadsAtendidosIA) : "—"}
+              sub="Interações no período"
+              delta="Leads respondidos pela IA"
               variant="cyan"
             />
           </div>
         </section>
 
         <section>
-          <SectionHeader icon="📊" title="Resultado Comercial" tag={rangeLabel} tone="bg-emerald-500/10 text-emerald-300" />
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className="mb-3 flex items-center justify-between">
+            <SectionHeader icon="📊" title="Resultado Comercial" tag={rangeLabel} tone="bg-emerald-500/10 text-emerald-300" />
+            {ops && ops.funisDisponiveis?.length > 0 && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFunilId(null)}
+                  className={`rounded-lg px-3 py-1.5 text-[0.65rem] font-bold transition ${
+                    selectedFunilId === null
+                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                      : "border border-slate-700 bg-slate-800/50 text-slate-400 hover:border-emerald-500 hover:text-emerald-300"
+                  }`}
+                >
+                  Todos os Funis
+                </button>
+                {ops.funisDisponiveis.map((funil) => (
+                  <button
+                    key={funil.id}
+                    type="button"
+                    onClick={() => setSelectedFunilId(funil.id)}
+                    className={`rounded-lg px-3 py-1.5 text-[0.65rem] font-bold transition ${
+                      selectedFunilId === funil.id
+                        ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                        : "border border-slate-700 bg-slate-800/50 text-slate-400 hover:border-emerald-500 hover:text-emerald-300"
+                    }`}
+                  >
+                    {funil.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <p className="-mt-1 mb-3 text-[0.65rem] text-slate-600">Indicadores de performance e eficiência do funil.</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
             <KpiCard
               loading={loading}
               label="Valor em Pipeline"
@@ -476,6 +529,22 @@ export default function Relatorios() {
               sub={bi ? "Oportunidades em aberto" : ""}
               delta={bi ? `Forecast 30d: ${brl(bi.forecast.forecast30d)}` : ""}
               variant="green"
+            />
+            <KpiCard
+              loading={loading}
+              label="Negociações Ativas"
+              value={bi ? String(bi.abertos.count) : "—"}
+              sub={bi ? bi.abertos.stageDistribution : ""}
+              delta={bi ? "Distribuição por etapa do funil" : ""}
+              variant="blue"
+            />
+            <KpiCard
+              loading={loading}
+              label="Próximos a Fechar"
+              value={bi ? String(bi.proximosFechar.count) : "—"}
+              sub={bi ? "Data prevista de fechamento" : ""}
+              delta={bi ? bi.proximosFechar.description : ""}
+              variant="amber"
             />
             <KpiCard
               loading={loading}
@@ -489,13 +558,42 @@ export default function Relatorios() {
               loading={loading}
               label="Perdidos"
               value={bi ? String(bi.funil.perdidos) : "—"}
-              sub={bi ? `${formatBRL(bi.perdas.perdidos.valor)} · ${bi.perdas.perdidos.qty} com valor` : ""}
-              delta={bi ? `${bi.perdas.perdidos.qty} oportunidade${bi.perdas.perdidos.qty === 1 ? "" : "s"} perdida${bi.perdas.perdidos.qty === 1 ? "" : "s"}` : ""}
+              sub={bi ? `${formatBRL(bi.perdas.perdidos.valor)} · ${bi.perdas.perdidos.qty} oportunidades` : ""}
+              delta={ops?.lossReasons?.[0]?.name ? `Motivo: ${ops.lossReasons[0].name}` : bi ? "Motivos não disponíveis" : ""}
               variant="red"
             />
-            <KpiCard loading={loading} label="Taxa de Conversão" value={bi ? formatPct(bi.winRate) : "—"} sub={bi ? `${trabalhados} leads finalizados (ganho + perdido)` : ""} delta={winDelta} variant="blue" />
-            <KpiCard loading={loading} label="Ticket Médio" value={bi ? brl(bi.receita.ticketMedio) : "—"} sub={bi && bi.previous.ticketMedio > 0 ? `vs ${brl(bi.previous.ticketMedio)} período anterior` : "Por venda fechada"} delta={ticketDelta} variant="violet" />
-            <KpiCard loading={loading} label="Ciclo Médio" value={bi ? `${Math.round(bi.cicloMedioDias)} dias` : "—"} sub="Do lead ao fechamento (ganhos)" delta={cicloDelta} variant="amber" />
+            <KpiCard
+              loading={loading}
+              label="Resgatados"
+              value={bi ? String(bi.resgatados) : "—"}
+              sub="Voltaram para o funil"
+              delta={bi ? (bi.resgatados > 0 ? "Leads reativados detectados" : "Nenhuma reativação detectada") : ""}
+              variant="violet"
+            />
+            <KpiCard
+              loading={loading}
+              label="Taxa de Conversão"
+              value={bi ? formatPct(bi.winRate) : "—"}
+              sub={bi ? `${trabalhados} leads finalizados (ganho + perdido)` : ""}
+              delta={winDelta}
+              variant="blue"
+            />
+            <KpiCard
+              loading={loading}
+              label="Ticket Médio"
+              value={bi ? brl(bi.receita.ticketMedio) : "—"}
+              sub={bi && bi.previous.ticketMedio > 0 ? `vs ${brl(bi.previous.ticketMedio)} período anterior` : "Por venda fechada"}
+              delta={ticketDelta}
+              variant="violet"
+            />
+            <KpiCard
+              loading={loading}
+              label="Ciclo Médio de Vendas"
+              value={bi ? `${Math.round(bi.cicloMedioDias)} dias` : "—"}
+              sub="Do lead ao fechamento (ganhos)"
+              delta={cicloDelta}
+              variant="amber"
+            />
           </div>
         </section>
 

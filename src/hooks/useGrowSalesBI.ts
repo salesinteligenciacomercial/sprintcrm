@@ -55,6 +55,15 @@ export interface BISnapshot {
     realizadoAtual: number;
     pctMeta: number;
   };
+  abertos: {
+    count: number;
+    stageDistribution: string;
+  };
+  proximosFechar: {
+    count: number;
+    description: string;
+  };
+  resgatados: number;
   campanhas: {
     porCampanha: { campanha: string; leads: number; ganhos: number; receita: number; conv: number }[];
     porFonte: { fonte: string; leads: number; ganhos: number; receita: number }[];
@@ -125,10 +134,12 @@ async function fetchAllPaginated<T>(
   return all;
 }
 
-export function useGrowSalesBI(range: BIRange = "30d") {
+export function useGrowSalesBI(range: BIRange = "30d", funilId?: string | null) {
   return useQuery({
-    queryKey: ["grow-sales-bi", range],
+    queryKey: ["grow-sales-bi", range, funilId],
     staleTime: 60_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
     queryFn: async (): Promise<BISnapshot> => {
       const sinceDate = rangeToDate(range);
       const since = sinceDate.toISOString();
@@ -140,17 +151,20 @@ export function useGrowSalesBI(range: BIRange = "30d") {
       // Parallel fetch
       const [companyRes, leadsRaw, compromissosRaw, goalsRaw, profilesRaw, prevLeadsRaw] = await Promise.all([
         supabase.rpc("get_my_company_id"),
-        fetchAllPaginated<any>(() =>
-          supabase
+        fetchAllPaginated<any>(() => {
+          let query = supabase
             .from("leads")
             .select(
               "id,name,value,status,stage,owner_id,responsavel_id,source,utm_source,utm_campaign,utm_medium,lead_source_type,ad_id,won_at,lost_at,created_at,updated_at,last_engagement_at,probability,expected_close_date,etapa_id,funil_id"
             )
             .or(
               `created_at.gte.${since},won_at.gte.${since},lost_at.gte.${since},updated_at.gte.${since}`
-            )
-            .order("created_at", { ascending: false })
-        ),
+            );
+          if (funilId) {
+            query = query.eq("funil_id", funilId);
+          }
+          return query.order("created_at", { ascending: false });
+        }),
         fetchAllPaginated<any>(() =>
           supabase
             .from("compromissos")
@@ -166,14 +180,17 @@ export function useGrowSalesBI(range: BIRange = "30d") {
           .then((r: any) => r.data || []),
         supabase.from("profiles").select("id,full_name,email").then((r: any) => r.data || []),
         // Previous period (apenas ganhos/perdidos para comparativo)
-        fetchAllPaginated<any>(() =>
-          supabase
+        fetchAllPaginated<any>(() => {
+          let query = supabase
             .from("leads")
             .select("id,value,status,won_at,lost_at,created_at")
             .or(`won_at.gte.${prevStart},lost_at.gte.${prevStart},created_at.gte.${prevStart}`)
-            .lt("created_at", prevEnd)
-            .order("created_at", { ascending: false })
-        ).catch(() => []),
+            .lt("created_at", prevEnd);
+          if (funilId) {
+            query = query.eq("funil_id", funilId);
+          }
+          return query.order("created_at", { ascending: false });
+        }).catch(() => []),
       ]);
 
       const companyId = (companyRes as any)?.data;
@@ -332,6 +349,33 @@ export function useGrowSalesBI(range: BIRange = "30d") {
 
       // ============= FORECAST =============
       const abertos = leads.filter((l) => !l.won_at && !l.lost_at && l.status !== "perdido" && l.status !== "ganho");
+      const stageCount: Record<string, number> = {};
+      abertos.forEach((l) => {
+        const stageLabel = String(l.stage || l.etapa_id || "Sem etapa").trim() || "Sem etapa";
+        stageCount[stageLabel] = (stageCount[stageLabel] || 0) + 1;
+      });
+      const stageDistribution = Object.entries(stageCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([stage, qty]) => `${stage} ${qty}`)
+        .join(" · ");
+
+      const advancedStageTags = ["negoci", "proposta", "fech", "contrato", "assin", "close", "aprov", "oportunidade"];
+      const proximosFecharCount = abertos.filter((l) => {
+        const probability = safeNum(l.probability, 0);
+        const stage = String(l.stage || "").toLowerCase();
+        const advancedStage = advancedStageTags.some((tag) => stage.includes(tag));
+        return advancedStage || probability > 70;
+      }).length;
+
+      const resgatadosCount = leads.filter((l) => {
+        if (!l.lost_at || l.won_at || l.status === "perdido" || l.status === "ganho") return false;
+        if (!l.updated_at) return false;
+        const lostTime = new Date(l.lost_at).getTime();
+        const updatedTime = new Date(l.updated_at).getTime();
+        return updatedTime > lostTime;
+      }).length;
+
       const pipelineAberto = abertos.reduce((s, l) => s + safeNum(l.value), 0);
       const dentroDias = (l: any, days: number) => {
         if (!l.expected_close_date) return false;
@@ -606,6 +650,15 @@ export function useGrowSalesBI(range: BIRange = "30d") {
           realizadoAtual,
           pctMeta,
         },
+        abertos: {
+          count: abertos.length,
+          stageDistribution: stageDistribution || "Sem distribuição por etapa",
+        },
+        proximosFechar: {
+          count: proximosFecharCount,
+          description: "Etapa avançada ou probabilidade > 70%",
+        },
+        resgatados: resgatadosCount,
         campanhas: { porCampanha, porFonte },
         recuperavel30d,
         capacidade: {

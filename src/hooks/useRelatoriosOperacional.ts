@@ -16,13 +16,18 @@ export interface RelatoriosOperacional {
   tarefas: number;
   tarefasPendentes: number;
   agendamentos: number;
+  agendamentosCompareceram: number;
+  agendamentosNaoCompareceram: number;
   leadsTrafego: number;
   leadsSite: number;
   leadsNoFunil: number;
   leadsFunilAtivos: number;
   funilPrincipal: string | null;
+  coldCallTotal: number;
+  leadsTotal: number;
   atendimentosIA: number;
   leadsAtendidosIA: number;
+  funisDisponiveis: { id: string; nome: string }[];
   lossReasons: { name: string; value: number }[];
 }
 
@@ -30,6 +35,8 @@ export function useRelatoriosOperacional(range: BIRange) {
   return useQuery({
     queryKey: ["relatorios-operacional", range],
     staleTime: 60_000,
+    refetchInterval: 30_000,
+    refetchIntervalInBackground: true,
     queryFn: async (): Promise<RelatoriosOperacional> => {
       const since = rangeToDate(range).toISOString();
 
@@ -40,18 +47,20 @@ export function useRelatoriosOperacional(range: BIRange) {
         trafegoRes,
         siteRes,
         funilPeriodoRes,
+        coldcallRes,
         funilAtivosRes,
         funilLeadsRes,
         iaTrainingRes,
         iaConversasRes,
         perdidosRes,
-        funisRes,
+        funisData,
+        leadsTotalRes,
       ] = await Promise.all([
         supabase.from("tasks").select("*", { count: "exact", head: true }),
         supabase.from("tasks").select("id, status"),
         supabase
           .from("compromissos")
-          .select("*", { count: "exact", head: true })
+          .select("id,status", { count: "exact", head: false })
           .gte("data_hora_inicio", since),
         supabase
           .from("leads")
@@ -68,6 +77,11 @@ export function useRelatoriosOperacional(range: BIRange) {
           .select("*", { count: "exact", head: true })
           .not("funil_id", "is", null)
           .gte("created_at", since),
+        supabase
+          .from("leads")
+          .select("*", { count: "exact", head: true })
+          .not("imported_to_coldcall_at", "is", null)
+          .gte("imported_to_coldcall_at", since),
         supabase
           .from("leads")
           .select("*", { count: "exact", head: true })
@@ -94,13 +108,24 @@ export function useRelatoriosOperacional(range: BIRange) {
           .select("loss_reason")
           .eq("status", "perdido")
           .gte("created_at", since),
-        supabase.from("funis").select("id, nome"),
+        supabase.from("funis").select("id, nome").then((r: any) => r.data || []),
+        supabase.from("leads").select("*", { count: "exact", head: true }),
       ]);
 
       const tarefasPendentes =
         (tasksDataRes.data || []).filter(
           (t) => !DONE_TASK_STATUSES.includes((t.status || "").toLowerCase())
         ).length;
+
+      const compareceramStatuses = ["realizado", "concluido", "concluído", "atendido"];
+      const naoCompareceramStatuses = ["no_show", "no-show", "faltou", "nao_compareceu", "não compareceu"];
+      let agendamentosCompareceram = 0;
+      let agendamentosNaoCompareceram = 0;
+      (compromissosRes.data || []).forEach((c) => {
+        const status = (c.status || "").toLowerCase();
+        if (compareceramStatuses.includes(status)) agendamentosCompareceram += 1;
+        if (naoCompareceramStatuses.includes(status)) agendamentosNaoCompareceram += 1;
+      });
 
       const funilCountMap: Record<string, number> = {};
       (funilLeadsRes.data || []).forEach((l) => {
@@ -144,14 +169,19 @@ export function useRelatoriosOperacional(range: BIRange) {
       return {
         tarefas: tasksRes.count || 0,
         tarefasPendentes,
-        agendamentos: compromissosRes.count || 0,
+        agendamentos: compromissosRes.data?.length || 0,
+        agendamentosCompareceram,
+        agendamentosNaoCompareceram,
         leadsTrafego: trafegoRes.count || 0,
         leadsSite: siteRes.count || 0,
         leadsNoFunil: funilPeriodoRes.count || 0,
         leadsFunilAtivos: funilAtivosRes.count || 0,
         funilPrincipal,
+        coldCallTotal: coldcallRes.count || 0,
+        leadsTotal: leadsTotalRes.count || 0,
         atendimentosIA: iaTrainingRes.data?.length || 0,
         leadsAtendidosIA: iaLeadIds.size,
+        funisDisponiveis: (funisData || []).map((f: any) => ({ id: f.id, nome: f.nome })),
         lossReasons,
       };
     },
