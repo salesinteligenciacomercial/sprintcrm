@@ -109,38 +109,33 @@ function ConversationListItemComponent({
 
   return (
     <div
-      className={`group relative mx-2 mb-1 p-3 rounded-xl cursor-pointer transition-all duration-200 border ${
-        isSelected
-          ? "bg-primary/10 border-primary/30 shadow-sm"
-          : "bg-card hover:bg-muted/60 border-transparent hover:border-border"
-      } ${isPinned && !isSelected ? "bg-amber-50/40 dark:bg-amber-950/15" : ""}`}
+      className={`relative p-4 border-b border-border cursor-pointer transition-colors hover:bg-muted/50 ${
+        isSelected ? "bg-muted/70" : ""
+      } ${isPinned ? "bg-amber-50/50 dark:bg-amber-950/20" : ""}`}
       onClick={onClick}
       style={{ 
         position: 'relative', 
         overflow: 'visible',
-        isolation: 'isolate',
+        isolation: 'isolate', // Cria novo contexto de empilhamento
       }}
       data-conversation-item="true"
     >
-      {isSelected && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-r-full bg-gradient-to-b from-primary to-primary/70" />
-      )}
       <div className="flex gap-3 items-start">
         <div className="relative flex-shrink-0">
-          <Avatar className="h-11 w-11 rounded-xl ring-2 ring-background shadow-sm">
+          <Avatar className="h-12 w-12">
             {avatarUrl && avatarUrl.trim() !== '' ? (
-              <AvatarImage src={avatarUrl} alt={contactName} className="rounded-xl" />
+              <AvatarImage src={avatarUrl} alt={contactName} />
             ) : null}
-            <AvatarFallback className="rounded-xl bg-gradient-to-br from-primary/30 via-primary/20 to-primary/10 text-primary font-bold text-sm">
+            <AvatarFallback className="bg-primary/10 text-primary">
               {getInitials(contactName)}
             </AvatarFallback>
           </Avatar>
           {assignedUser && (
-            <Avatar className="h-5 w-5 absolute -bottom-1 -right-1 ring-2 ring-background border border-border rounded-md">
+            <Avatar className="h-5 w-5 absolute -bottom-1 -right-1 ring-2 ring-background border border-border">
               {assignedUser.avatar && assignedUser.avatar.trim() !== '' ? (
                 <AvatarImage src={assignedUser.avatar} alt={assignedUser.name} />
               ) : null}
-              <AvatarFallback className="bg-accent text-accent-foreground text-[10px] rounded-md">
+              <AvatarFallback className="bg-accent text-accent-foreground text-[10px]">
                 {getInitials(assignedUser.name)}
               </AvatarFallback>
             </Avatar>
@@ -174,11 +169,11 @@ function ConversationListItemComponent({
                 </TooltipProvider>
               )}
               
-              <span className="font-semibold text-[13.5px] text-foreground truncate tracking-tight">
+              <span className="font-medium text-sm text-foreground truncate">
                 {contactName}
               </span>
               {isGroup && (
-                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 flex-shrink-0">
+                <Badge variant="secondary" className="text-xs px-1.5 py-0 h-5 flex-shrink-0">
                   Grupo
                 </Badge>
               )}
@@ -192,13 +187,13 @@ function ConversationListItemComponent({
             
           </div>
           
-          <p className="text-[12.5px] text-muted-foreground truncate leading-snug">
+          <p className="text-sm text-muted-foreground truncate">
             {lastMessage || "Sem histórico de conversa"}
           </p>
           
           {/* Data, hora e notificação - abaixo do botão de 3 pontos */}
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="text-[10.5px] text-muted-foreground/80 whitespace-nowrap font-medium">
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
               {timestamp.toLocaleDateString("pt-BR", {
                 day: "2-digit",
                 month: "2-digit",
@@ -208,7 +203,7 @@ function ConversationListItemComponent({
               })}
             </span>
             {unread > 0 && (
-              <Badge className="bg-gradient-to-br from-primary to-primary/80 hover:from-primary hover:to-primary/80 text-primary-foreground text-[10px] h-5 min-w-5 rounded-full shadow-sm shadow-primary/30 font-bold px-1.5">
+              <Badge className="bg-[#25D366] hover:bg-[#25D366] text-white text-xs h-5 min-w-5 rounded-full">
                 {unread}
               </Badge>
             )}
