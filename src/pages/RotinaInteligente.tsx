@@ -8,6 +8,7 @@ type ProfileKey = "sdr" | "vendedor_close" | "atendente" | "secretaria" | "geren
 interface RotineTask {
   id: string;
   title: string;
+  description?: string;
   time: string;
   done: boolean;
   category: "prospeccao" | "followup" | "reuniao" | "admin" | "meta";
