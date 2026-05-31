@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Phone, Briefcase, MessageSquare, CalendarDays, Trophy, Users, Check, X, Brain } from "lucide-react";
+import { Phone, Briefcase, MessageSquare, CalendarDays, Trophy, Users, Check, X, Brain, Pencil } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
