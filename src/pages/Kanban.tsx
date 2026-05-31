@@ -927,8 +927,46 @@ export default function KanbanPage() {
     if (responsavelFiltro !== "all") {
       result = result.filter((l) => leadResponsaveis(l).includes(responsavelFiltro));
     }
+
+    // 🔍 Busca por nome / empresa / título
+    const q = searchTerm.trim().toLowerCase();
+    if (q) {
+      result = result.filter((l: any) => {
+        const hay = `${l.nome || ""} ${l.name || ""} ${l.company || ""} ${l.title || ""} ${l.email || ""} ${l.telefone || ""}`.toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    // 🎯 Filtros rápidos por pílula
+    const now = Date.now();
+    const ALTO_VALOR = 50000;
+    if (quickFilter === "quentes") {
+      result = result.filter((l: any) => (l.lead_score ?? 0) >= 70 || (l.temperatura === "quente"));
+    } else if (quickFilter === "atrasados") {
+      result = result.filter((l: any) => l.expected_close_date && new Date(l.expected_close_date).getTime() < now && !["ganho", "perdido"].includes((l.status || "").toLowerCase()));
+    } else if (quickFilter === "altovalor") {
+      result = result.filter((l: any) => (Number(l.value) || 0) >= ALTO_VALOR);
+    } else if (quickFilter === "ganhos") {
+      const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+      result = result.filter((l: any) => (l.status || "").toLowerCase() === "ganho" && l.won_at && new Date(l.won_at).getTime() >= m0.getTime());
+    } else if (quickFilter === "perdidos") {
+      result = result.filter((l: any) => (l.status || "").toLowerCase() === "perdido");
+    }
+
     return result;
-  }, [leadsDoFunil, viewMode, responsavelFiltro, currentUserId, leadResponsaveis]);
+  }, [leadsDoFunil, viewMode, responsavelFiltro, currentUserId, leadResponsaveis, searchTerm, quickFilter]);
+
+  // Contadores para badges (Ganhos do mês / Perdidos)
+  const pillCounts = useMemo(() => {
+    const m0 = new Date(); m0.setDate(1); m0.setHours(0, 0, 0, 0);
+    let ganhos = 0, perdidos = 0;
+    leadsDoFunil.forEach((l: any) => {
+      const s = (l.status || "").toLowerCase();
+      if (s === "ganho" && l.won_at && new Date(l.won_at).getTime() >= m0.getTime()) ganhos++;
+      else if (s === "perdido") perdidos++;
+    });
+    return { ganhos, perdidos };
+  }, [leadsDoFunil]);
 
 
   // 🎯 Pré-calcular totais e métricas avançadas de todas as etapas de uma vez (mais eficiente)
