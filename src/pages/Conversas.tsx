@@ -48,6 +48,7 @@ import { LembretesAntecipados, LembreteAntecipado } from "@/components/conversas
 import { ProductivityPanel } from "@/components/conversas/ProductivityPanel";
 import { PastedImagePreview } from "@/components/conversas/PastedImagePreview";
 import { formatPhoneNumber, safeFormatPhoneNumber, normalizePhoneForComparison, robustFormatPhoneNumber } from "@/utils/phoneFormatter";
+import "@/styles/conversas-redesign.css";
 import { cleanAllConversationsHistory } from "@/utils/cleanConversationsHistory";
 import { getMediaUrl, MediaExpiredError } from "@/utils/mediaLoader";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
@@ -8965,7 +8966,7 @@ function Conversas() {
       toast.error('Erro ao finalizar atendimento');
     }
   };
-  return <div className="flex w-full bg-background overflow-hidden" style={{ height: 'calc(100vh - 80px)', maxHeight: 'calc(100vh - 80px)' }}>
+  return <div className="conversas-redesign flex w-full bg-background overflow-hidden" style={{ height: 'calc(100vh - 80px)', maxHeight: 'calc(100vh - 80px)' }}>
       {/* Sidebar esquerda - tema cinza claro */}
       {/* No mobile: esconder quando uma conversa está selecionada */}
       <div className={`${isMobile ? (selectedConv ? 'hidden' : 'w-full') : 'w-[380px]'} flex-shrink-0 bg-muted/30 border-r border-border flex flex-col overflow-hidden`}>
