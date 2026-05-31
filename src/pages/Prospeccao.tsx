@@ -287,17 +287,7 @@ export default function Prospeccao() {
                   <HunterCockpit />
                 </div>
               ) : activeTab === "coldcall" ? (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                      <DialerCard />
-                      <ColdCallFunnelPanel />
-                    </div>
-                    <div className="space-y-6">
-                      <ScriptPanel />
-                    </div>
-                  </div>
-                </div>
+                <ColdCallRedesigned />
               ) : (activeTab as string) === "cadencia" ? (
                 <div className="space-y-6">
                   <RotinaInteligente />
