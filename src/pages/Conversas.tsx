@@ -9238,7 +9238,7 @@ function Conversas() {
           </div>
           
           {/* Filters */}
-          <div className="flex gap-0.5 flex-wrap items-center">
+          <div className={`grid ${isSuperAdmin ? 'grid-cols-5' : 'grid-cols-4'} gap-0.5 items-start`}>
             <Button variant={filter === "all" ? "default" : "ghost"} size="sm" onClick={() => setFilter("all")} className="relative flex flex-col items-center gap-0.5 h-auto py-1 px-2">
               <Badge variant="secondary" className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-xs">
                 {conversations.filter(c => !c.isGroup || !blockedGroups.has(c.phoneNumber || c.id)).length}
