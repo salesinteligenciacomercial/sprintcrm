@@ -43,6 +43,7 @@ import { KillFeed } from "@/components/prospeccao/rpg/KillFeed";
 import { ChannelProspectPanel } from "@/components/prospeccao/channels/ChannelProspectPanel";
 import { EmailProspectPanel } from "@/components/prospeccao/channels/EmailProspectPanel";
 import { ColdCallOutboundPanel } from "@/components/prospeccao/ColdCallOutboundPanel";
+import { ColdCallRedesigned } from "@/components/prospeccao/ColdCallRedesigned";
 import { ProspectingIntelligencePanel } from "@/components/prospeccao/ProspectingIntelligencePanel";
 import { GoalProgressHUD } from "@/components/prospeccao/comercial/GoalProgressHUD";
 import { CloserInbox } from "@/components/prospeccao/comercial/CloserInbox";
