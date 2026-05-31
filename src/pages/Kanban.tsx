@@ -243,6 +243,11 @@ export default function KanbanPage() {
     if (typeof window !== "undefined") localStorage.setItem(RESP_FILTER_KEY, responsavelFiltro);
   }, [responsavelFiltro]);
 
+  // 🎯 Filtros rápidos (busca + pílulas + display mode)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [quickFilter, setQuickFilter] = useState<import("@/components/funil/FunilQuickFilters").QuickFilter>("todos");
+  const [displayMode, setDisplayMode] = useState<import("@/components/funil/FunilQuickFilters").DisplayMode>("kanban");
+
   // Se vendedor (não gestor) acessar um modo restrito, força "meus"
   useEffect(() => {
     if (!isGestor && viewMode !== "meus") setViewMode("meus");
