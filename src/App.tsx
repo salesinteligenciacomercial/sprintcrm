@@ -31,6 +31,7 @@ import Prospeccao from "./pages/Prospeccao";
 import MetasVendas from "./pages/MetasVendas";
 import RotinaInteligentePage from "./pages/RotinaInteligente";
 import BIClinico from "./pages/BIClinico";
+import CallCenterPreview from "./pages/CallCenterPreview";
 
 import Maturidade from "./pages/Maturidade";
 import Mentoria from "./pages/Mentoria";
@@ -117,7 +118,7 @@ const App = () => (
               <Route path="configuracoes" element={<Configuracoes />} />
               <Route path="chat-equipe" element={<ChatInterno />} />
               <Route path="reunioes" element={<Navigate to="/chat-equipe" replace />} />
-              <Route path="discador" element={<Discador />} />
+              <Route path="discador" element={<CallCenterPreview />} />
               <Route path="processos" element={<ProcessosComerciais />} />
               <Route path="prospeccao" element={<Prospeccao />} />
               <Route path="metas-vendas" element={<MetasVendas />} />
