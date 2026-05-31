@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { Phone, Briefcase, MessageSquare, CalendarDays, Trophy, Users, Check, X, Brain } from "lucide-react";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+type ProfileKey = "sdr" | "vendedor_close" | "atendente" | "secretaria" | "gerente";
+
 interface RotineTask {
   id: string;
   title: string;
@@ -10,14 +14,68 @@ interface RotineTask {
   priority: "alta" | "media" | "baixa";
 }
 
-interface WeekDay {
+interface ProfileDef {
+  key: ProfileKey;
   label: string;
-  short: string;
-  date: number;
-  isToday: boolean;
-  tasks: number;
-  done: number;
+  Icon: any;
+  color: string; // tailwind text color
+  ring: string;  // tailwind ring color
 }
+
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+const PROFILES: ProfileDef[] = [
+  { key: "sdr",            label: "SDR",            Icon: Phone,         color: "text-rose-400",    ring: "ring-rose-500/60"    },
+  { key: "vendedor_close", label: "Vendedor Close", Icon: Briefcase,     color: "text-amber-400",   ring: "ring-amber-500/60"   },
+  { key: "atendente",      label: "Atendente",      Icon: MessageSquare, color: "text-orange-400",  ring: "ring-orange-500/60"  },
+  { key: "secretaria",     label: "Secretária",     Icon: CalendarDays,  color: "text-indigo-400",  ring: "ring-indigo-500/60"  },
+  { key: "gerente",        label: "Gerente",        Icon: Trophy,        color: "text-yellow-400",  ring: "ring-yellow-500/60"  },
+];
+
+// ─── Templates por perfil ────────────────────────────────────────────────────
+const DEFAULT_TEMPLATES: Record<ProfileKey, RotineTask[]> = {
+  sdr: [
+    { id: "s1", title: "Ligar para 10 leads novos",          time: "08:00", done: false, category: "prospeccao", priority: "alta"  },
+    { id: "s2", title: "Prospectar 20 contatos no LinkedIn", time: "09:30", done: false, category: "prospeccao", priority: "alta"  },
+    { id: "s3", title: "Qualificar leads do dia anterior",   time: "11:00", done: false, category: "followup",   priority: "alta"  },
+    { id: "s4", title: "Follow-up de cadência D+3",          time: "13:30", done: false, category: "followup",   priority: "media" },
+    { id: "s5", title: "Agendar reuniões para o Closer",     time: "14:30", done: false, category: "reuniao",    priority: "alta"  },
+    { id: "s6", title: "Atualizar pipeline no CRM",           time: "16:00", done: false, category: "admin",      priority: "media" },
+    { id: "s7", title: "Bater meta diária de discagens",      time: "17:00", done: false, category: "meta",       priority: "alta"  },
+    { id: "s8", title: "Relatório de atividades do dia",      time: "17:45", done: false, category: "admin",      priority: "baixa" },
+  ],
+  vendedor_close: [
+    { id: "v1", title: "Revisar reuniões agendadas do dia",   time: "08:30", done: false, category: "admin",     priority: "alta"  },
+    { id: "v2", title: "Reunião de descoberta com prospect",  time: "10:00", done: false, category: "reuniao",   priority: "alta"  },
+    { id: "v3", title: "Enviar proposta personalizada",       time: "11:30", done: false, category: "followup",  priority: "alta"  },
+    { id: "v4", title: "Follow-up de propostas em aberto",    time: "14:00", done: false, category: "followup",  priority: "alta"  },
+    { id: "v5", title: "Call de negociação/fechamento",       time: "15:30", done: false, category: "reuniao",   priority: "alta"  },
+    { id: "v6", title: "Atualizar status no funil",            time: "17:00", done: false, category: "admin",     priority: "media" },
+  ],
+  atendente: [
+    { id: "a1", title: "Triagem da fila de WhatsApp",         time: "08:00", done: false, category: "followup", priority: "alta"  },
+    { id: "a2", title: "Responder mensagens pendentes",       time: "09:30", done: false, category: "followup", priority: "alta"  },
+    { id: "a3", title: "Transferir leads qualificados",       time: "11:00", done: false, category: "followup", priority: "media" },
+    { id: "a4", title: "Atendimentos da tarde",                time: "14:00", done: false, category: "followup", priority: "alta"  },
+    { id: "a5", title: "Fechar protocolos abertos",            time: "16:30", done: false, category: "admin",    priority: "media" },
+    { id: "a6", title: "Resumo do dia para o gestor",          time: "17:30", done: false, category: "admin",    priority: "baixa" },
+  ],
+  secretaria: [
+    { id: "se1", title: "Confirmar compromissos do dia",      time: "08:00", done: false, category: "admin",   priority: "alta"  },
+    { id: "se2", title: "Agendar retornos solicitados",        time: "09:30", done: false, category: "reuniao", priority: "alta"  },
+    { id: "se3", title: "Ligar para lembrar pacientes/clientes", time: "11:00", done: false, category: "followup", priority: "media" },
+    { id: "se4", title: "Organizar agenda da semana",          time: "14:00", done: false, category: "admin",   priority: "media" },
+    { id: "se5", title: "Enviar lembretes automáticos",         time: "16:00", done: false, category: "followup", priority: "baixa" },
+    { id: "se6", title: "Relatório de agendamentos",           time: "17:30", done: false, category: "admin",   priority: "baixa" },
+  ],
+  gerente: [
+    { id: "g1", title: "Revisar KPIs do time",                 time: "08:30", done: false, category: "meta",   priority: "alta"  },
+    { id: "g2", title: "Daily com o time comercial",            time: "09:00", done: false, category: "reuniao", priority: "alta"  },
+    { id: "g3", title: "1:1 com vendedor",                      time: "11:00", done: false, category: "reuniao", priority: "media" },
+    { id: "g4", title: "Acompanhar pipeline & forecast",       time: "14:00", done: false, category: "meta",   priority: "alta"  },
+    { id: "g5", title: "Validar propostas acima do ticket médio", time: "15:30", done: false, category: "followup", priority: "media" },
+    { id: "g6", title: "Relatório executivo da operação",      time: "17:30", done: false, category: "admin",  priority: "baixa" },
+  ],
+};
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CATEGORY_CONFIG = {
@@ -34,245 +92,233 @@ const PRIORITY_CONFIG = {
   baixa: { label: "Baixa", badge: "bg-slate-500/20 text-slate-300 border-slate-500/30" },
 };
 
-const INITIAL_TASKS: RotineTask[] = [
-  { id: "1",  title: "Ligar para 10 leads novos",           time: "08:00", done: true,  category: "prospeccao", priority: "alta"  },
-  { id: "2",  title: "Revisar pipeline do Kanban",           time: "09:00", done: true,  category: "followup",   priority: "alta"  },
-  { id: "3",  title: "Reunião de alinhamento com equipe",    time: "10:00", done: false, category: "reuniao",    priority: "alta"  },
-  { id: "4",  title: "Enviar proposta para cliente ABC",     time: "11:00", done: false, category: "followup",   priority: "alta"  },
-  { id: "5",  title: "Atualizar tarefas no sistema",         time: "13:00", done: false, category: "admin",      priority: "media" },
-  { id: "6",  title: "Prospectar 5 empresas no LinkedIn",    time: "14:00", done: false, category: "prospeccao", priority: "media" },
-  { id: "7",  title: "Follow-up com leads de ontem",         time: "15:00", done: false, category: "followup",   priority: "media" },
-  { id: "8",  title: "Atualizar metas semanais",             time: "16:00", done: false, category: "meta",       priority: "baixa" },
-  { id: "9",  title: "Relatório de atividades do dia",       time: "17:30", done: false, category: "admin",      priority: "baixa" },
-];
+// ─── Storage helpers (frontend persistence) ──────────────────────────────────
+const STORAGE_TASKS_KEY = "rotina-inteligente:tasks-v2";
+const STORAGE_ASSIGN_KEY = "rotina-inteligente:user-profile-map-v1";
 
-const today = new Date();
-const WEEK_DAYS: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
-  const d = new Date(today);
-  d.setDate(today.getDate() - today.getDay() + i);
-  return {
-    label:   ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][i],
-    short:   ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"][i],
-    date:    d.getDate(),
-    isToday: d.toDateString() === today.toDateString(),
-    tasks:   [5, 9, 7, 6, 8, 4, 2][i],
-    done:    [5, 2, 7, 3, 0, 0, 0][i],
-  };
-});
+function loadTasks(): Record<ProfileKey, RotineTask[]> {
+  try {
+    const raw = localStorage.getItem(STORAGE_TASKS_KEY);
+    if (!raw) return structuredClone(DEFAULT_TEMPLATES);
+    const parsed = JSON.parse(raw);
+    // merge defaults for any missing profile
+    return { ...structuredClone(DEFAULT_TEMPLATES), ...parsed };
+  } catch {
+    return structuredClone(DEFAULT_TEMPLATES);
+  }
+}
 
-const MOTIVATIONAL = [
-  "💪 Foco total! Você está no caminho certo.",
-  "🔥 Cada ligação é uma oportunidade. Não pare!",
-  "🚀 Consistência bate talento. Siga sua rotina.",
-  "⚡ O vendedor que executa a rotina vence sempre.",
-  "🎯 Metas grandes exigem dias bem planejados.",
-];
+function loadAssignments(): Record<string, ProfileKey> {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_ASSIGN_KEY) || "{}");
+  } catch { return {}; }
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function StatCard({ label, value, sub, gradient, icon }: {
-  label: string; value: string | number; sub: string;
-  gradient: string; icon: string;
+function ProfileCard({ profile, count, active, onClick }: {
+  profile: ProfileDef; count: number; active: boolean; onClick: () => void;
 }) {
+  const Icon = profile.Icon;
   return (
-    <div className={`relative overflow-hidden rounded-2xl p-5 ${gradient} border border-white/10`}
-      style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.25)" }}>
-      <div className="absolute -top-4 -right-4 text-6xl opacity-10 select-none">{icon}</div>
-      <p className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-1">{label}</p>
-      <p className="text-3xl font-black text-white leading-none">{value}</p>
-      <p className="text-sm text-white/70 mt-1">{sub}</p>
-    </div>
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-3 px-4 py-3 rounded-xl border bg-slate-900/60 hover:bg-slate-800/80 transition-all min-w-[180px] text-left
+        ${active ? `ring-2 ${profile.ring} border-transparent` : "border-slate-700/60"}`}
+    >
+      <div className={`w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center ${profile.color}`}>
+        <Icon className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-bold text-white truncate">{profile.label}</div>
+        <div className="text-[11px] text-slate-400">{count} atividade{count === 1 ? "" : "s"}</div>
+      </div>
+    </button>
   );
 }
 
 function TaskItem({ task, onToggle, onDelete }: {
-  task: RotineTask;
-  onToggle: (id: string) => void;
-  onDelete: (id: string) => void;
+  task: RotineTask; onToggle: (id: string) => void; onDelete: (id: string) => void;
 }) {
   const cat = CATEGORY_CONFIG[task.category];
   const pri = PRIORITY_CONFIG[task.priority];
   return (
     <div
       className={`group flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 cursor-pointer
-        ${task.done
-          ? "bg-slate-800/30 border-slate-700/30 opacity-60"
-          : `${cat.bg} ${cat.border} border hover:brightness-110`
-        }`}
+        ${task.done ? "bg-slate-800/30 border-slate-700/30 opacity-60" : `${cat.bg} ${cat.border} hover:brightness-110`}`}
       onClick={() => onToggle(task.id)}
     >
       <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all
         ${task.done ? "bg-emerald-500 border-emerald-500" : `border-current ${cat.text}`}`}>
-        {task.done && (
-          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
-        )}
+        {task.done && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
       </div>
       <span className="text-xs font-mono text-slate-400 w-12 flex-shrink-0">{task.time}</span>
       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cat.dot}`} />
-      <span className={`flex-1 text-sm font-medium ${task.done ? "line-through text-slate-500" : "text-slate-100"}`}>
-        {task.title}
-      </span>
-      <span className={`hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cat.bg} ${cat.text} ${cat.border}`}>
-        {cat.label}
-      </span>
-      <span className={`hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full border ${pri.badge}`}>
-        {pri.label}
-      </span>
+      <span className={`flex-1 text-sm font-medium ${task.done ? "line-through text-slate-500" : "text-slate-100"}`}>{task.title}</span>
+      <span className={`hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full border ${cat.bg} ${cat.text} ${cat.border}`}>{cat.label}</span>
+      <span className={`hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full border ${pri.badge}`}>{pri.label}</span>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
         className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-rose-400 text-xs p-1"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
-function WeekBar({ days, selectedDay, onSelect }: {
-  days: WeekDay[]; selectedDay: number; onSelect: (i: number) => void;
-}) {
-  return (
-    <div className="flex gap-1 sm:gap-2 overflow-x-auto pb-1">
-      {days.map((d, i) => {
-        const pct = d.tasks > 0 ? (d.done / d.tasks) * 100 : 0;
-        const isSelected = selectedDay === i;
-        return (
-          <button
-            key={i}
-            onClick={() => onSelect(i)}
-            className={`relative flex flex-col items-center gap-1 px-2 sm:px-4 py-3 rounded-xl border transition-all flex-shrink-0
-              ${d.isToday
-                ? "bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/30"
-                : isSelected
-                  ? "bg-slate-700 border-slate-500 text-white"
-                  : "bg-slate-800/50 border-slate-700/50 text-slate-400 hover:bg-slate-700/50"
-              }`}
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider">{d.short}</span>
-            <span className={`text-lg font-black ${d.isToday ? "text-white" : "text-slate-200"}`}>{d.date}</span>
-            <div className="w-8 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${d.isToday ? "bg-white" : "bg-indigo-400"}`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-[9px] text-current opacity-70">{d.done}/{d.tasks}</span>
-          </button>
-        );
-      })}
+      >✕</button>
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function RotinaInteligente() {
-  const [tasks, setTasks] = useState<RotineTask[]>(INITIAL_TASKS);
-  const [filter, setFilter] = useState<string>("todas");
-  const [selectedDay, setSelectedDay] = useState<number>(today.getDay());
+  const { members, loading: loadingMembers } = useTeamMembers();
+
+  const [tasksByProfile, setTasksByProfile] = useState<Record<ProfileKey, RotineTask[]>>(loadTasks);
+  const [assignments, setAssignments] = useState<Record<string, ProfileKey>>(loadAssignments);
+  const [selectedProfile, setSelectedProfile] = useState<ProfileKey>("sdr");
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [newTask, setNewTask] = useState({ title: "", time: "09:00", category: "prospeccao" as RotineTask["category"], priority: "media" as RotineTask["priority"] });
-  const [quote] = useState(() => MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)]);
 
-  const doneTasks  = tasks.filter(t => t.done);
-  const totalTasks = tasks.length;
-  const progress   = totalTasks > 0 ? Math.round((doneTasks.length / totalTasks) * 100) : 0;
+  // Persist
+  useEffect(() => { localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(tasksByProfile)); }, [tasksByProfile]);
+  useEffect(() => { localStorage.setItem(STORAGE_ASSIGN_KEY, JSON.stringify(assignments)); }, [assignments]);
 
-  const filtered = filter === "todas"
-    ? tasks
-    : filter === "pendentes"
-      ? tasks.filter(t => !t.done)
-      : filter === "concluidas"
-        ? tasks.filter(t => t.done)
-        : tasks.filter(t => t.category === filter);
+  const tasks = tasksByProfile[selectedProfile] || [];
+  const doneTasks = tasks.filter(t => t.done);
+  const progress = tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
 
-  const toggleTask = (id: string) =>
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const usersInProfile = useMemo(
+    () => members.filter(m => assignments[m.id] === selectedProfile),
+    [members, assignments, selectedProfile]
+  );
 
-  const deleteTask = (id: string) =>
-    setTasks(prev => prev.filter(t => t.id !== id));
+  const updateTasks = (mut: (prev: RotineTask[]) => RotineTask[]) =>
+    setTasksByProfile(prev => ({ ...prev, [selectedProfile]: mut(prev[selectedProfile] || []) }));
 
+  const toggleTask = (id: string) => updateTasks(p => p.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  const deleteTask = (id: string) => updateTasks(p => p.filter(t => t.id !== id));
   const addTask = () => {
     if (!newTask.title.trim()) return;
-    setTasks(prev => [...prev, {
-      id: Date.now().toString(),
-      ...newTask,
-      done: false,
-    }]);
+    updateTasks(p => [...p, { id: Date.now().toString(), ...newTask, done: false }]);
     setNewTask({ title: "", time: "09:00", category: "prospeccao", priority: "media" });
     setShowAddForm(false);
   };
 
-  const dateStr = today.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const assignUser = (userId: string, profile: ProfileKey | "") => {
+    setAssignments(prev => {
+      const next = { ...prev };
+      if (!profile) delete next[userId]; else next[userId] = profile;
+      return next;
+    });
+  };
+
+  const dateStr = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+  const current = PROFILES.find(p => p.key === selectedProfile)!;
 
   return (
     <div className="min-h-screen bg-[#0d1117] text-slate-100 p-4 sm:p-6 lg:p-8 font-sans">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500/20 to-violet-500/20 flex items-center justify-center">
+            <Brain className="w-6 h-6 text-pink-400" />
+          </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Rotina <span className="text-indigo-400">Inteligente</span>
+              Rotina <span className="text-emerald-400">Inteligente</span>
             </h1>
-            <p className="text-sm text-slate-400 capitalize mt-0.5">{dateStr}</p>
+            <p className="text-sm text-slate-400 mt-0.5">Defina e gerencie a rotina de cada perfil da sua equipe</p>
+            <p className="text-xs text-slate-500 capitalize mt-0.5">{dateStr}</p>
           </div>
-          <button
-            onClick={() => setShowAddForm(v => !v)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-600/30 active:scale-95"
-          >
-            <span className="text-lg leading-none">+</span> Nova Atividade
-          </button>
         </div>
-        <div className="mt-3 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-4 py-2">
-          {quote}
+        <button
+          onClick={() => setShowAssignDialog(true)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-sm font-semibold rounded-xl transition-all"
+        >
+          <Users className="w-4 h-4" /> Atribuir Usuários ({Object.keys(assignments).length})
+        </button>
+      </div>
+
+      {/* Profile Selector */}
+      <div className="mb-6">
+        <div className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-2">Selecione o perfil</div>
+        <div className="flex flex-wrap gap-2">
+          {PROFILES.map(p => (
+            <ProfileCard
+              key={p.key}
+              profile={p}
+              count={tasksByProfile[p.key]?.length || 0}
+              active={selectedProfile === p.key}
+              onClick={() => setSelectedProfile(p.key)}
+            />
+          ))}
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <StatCard label="Progresso" value={`${progress}%`} sub={`${doneTasks.length} de ${totalTasks} tarefas`} gradient="bg-gradient-to-br from-indigo-600/80 to-indigo-900/80" icon="📊" />
-        <StatCard label="Concluídas" value={doneTasks.length} sub="atividades hoje" gradient="bg-gradient-to-br from-emerald-600/80 to-emerald-900/80" icon="✅" />
-        <StatCard label="Pendentes" value={totalTasks - doneTasks.length} sub="ainda a fazer" gradient="bg-gradient-to-br from-amber-600/80 to-amber-900/80" icon="⏳" />
-        <StatCard label="Sequência" value="4 dias" sub="sem quebrar rotina" gradient="bg-gradient-to-br from-rose-600/80 to-rose-900/80" icon="🔥" />
+      {/* Active profile info + users */}
+      <div className="mb-6 bg-slate-900/40 border border-slate-700/50 rounded-2xl p-4">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <current.Icon className={`w-5 h-5 ${current.color}`} />
+            <div>
+              <div className="text-sm font-bold text-white">Rotina de {current.label}</div>
+              <div className="text-xs text-slate-400">
+                {usersInProfile.length === 0
+                  ? "Nenhum usuário atribuído a este perfil ainda."
+                  : `${usersInProfile.length} usuário${usersInProfile.length === 1 ? "" : "s"} usam esta rotina`}
+              </div>
+            </div>
+          </div>
+          <div className="flex -space-x-2">
+            {usersInProfile.slice(0, 8).map(u => (
+              <div
+                key={u.id}
+                title={u.full_name || u.email}
+                className="w-8 h-8 rounded-full bg-slate-700 border-2 border-slate-900 flex items-center justify-center text-xs font-bold text-white overflow-hidden"
+              >
+                {u.avatar_url ? (
+                  <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  (u.full_name || u.email || "?").charAt(0).toUpperCase()
+                )}
+              </div>
+            ))}
+            {usersInProfile.length > 8 && (
+              <div className="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                +{usersInProfile.length - 8}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress */}
       <div className="mb-6 bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-slate-300">Progresso do Dia</span>
-          <span className="text-sm font-black text-indigo-400">{progress}%</span>
+          <span className="text-sm font-semibold text-slate-300">Progresso de {current.label}</span>
+          <span className="text-sm font-black text-emerald-400">{progress}% · {doneTasks.length}/{tasks.length}</span>
         </div>
         <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-700"
-            style={{
-              width: `${progress}%`,
-              background: progress < 40
-                ? "linear-gradient(90deg,#ef4444,#f97316)"
-                : progress < 70
-                  ? "linear-gradient(90deg,#f59e0b,#eab308)"
-                  : "linear-gradient(90deg,#10b981,#06b6d4)"
-            }}
+            style={{ width: `${progress}%`, background: "linear-gradient(90deg,#10b981,#06b6d4)" }}
           />
-        </div>
-        <div className="flex justify-between mt-1.5 text-[10px] text-slate-500">
-          <span>Início</span><span>50%</span><span>Meta</span>
         </div>
       </div>
 
-      {/* Week */}
-      <div className="mb-6 bg-slate-800/30 rounded-2xl p-4 border border-slate-700/50">
-        <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-3">Semana</h2>
-        <WeekBar days={WEEK_DAYS} selectedDay={selectedDay} onSelect={setSelectedDay} />
+      {/* Actions */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => setShowAddForm(v => !v)}
+          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20"
+        >
+          <span className="text-lg leading-none">+</span> Nova Atividade em {current.label}
+        </button>
       </div>
 
       {/* Add Form */}
       {showAddForm && (
-        <div className="mb-6 bg-slate-800/60 rounded-2xl p-4 border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
-          <h3 className="text-sm font-bold text-indigo-300 mb-3 uppercase tracking-widest">+ Nova Atividade</h3>
+        <div className="mb-6 bg-slate-800/60 rounded-2xl p-4 border border-emerald-500/30">
+          <h3 className="text-sm font-bold text-emerald-300 mb-3 uppercase tracking-widest">+ Nova Atividade — {current.label}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <input
-              className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               placeholder="Título da atividade..."
               value={newTask.title}
               onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
@@ -280,21 +326,19 @@ export default function RotinaInteligente() {
             />
             <input
               type="time"
-              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
               value={newTask.time}
               onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
             />
             <select
-              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
               value={newTask.category}
               onChange={e => setNewTask(p => ({ ...p, category: e.target.value as RotineTask["category"] }))}
             >
-              {Object.entries(CATEGORY_CONFIG).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
+              {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
             <select
-              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
               value={newTask.priority}
               onChange={e => setNewTask(p => ({ ...p, priority: e.target.value as RotineTask["priority"] }))}
             >
@@ -304,72 +348,74 @@ export default function RotinaInteligente() {
             </select>
           </div>
           <div className="flex gap-2 mt-3">
-            <button onClick={addTask} className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2.5 rounded-xl transition-all">Adicionar</button>
-            <button onClick={() => setShowAddForm(false)} className="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2.5 rounded-xl transition-all">Cancelar</button>
+            <button onClick={addTask} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl">Adicionar</button>
+            <button onClick={() => setShowAddForm(false)} className="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2.5 rounded-xl">Cancelar</button>
           </div>
         </div>
       )}
 
       {/* Task List */}
       <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
-        <div className="p-4 border-b border-slate-700/50">
-          <div className="flex flex-wrap gap-2">
-            {[
-              { key: "todas",     label: "Todas",      count: tasks.length },
-              { key: "pendentes", label: "Pendentes",  count: tasks.filter(t => !t.done).length },
-              { key: "concluidas",label: "Concluídas", count: doneTasks.length },
-              ...Object.entries(CATEGORY_CONFIG).map(([k, v]) => ({
-                key: k, label: v.label, count: tasks.filter(t => t.category === k).length
-              }))
-            ].map(f => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all
-                  ${filter === f.key
-                    ? "bg-indigo-600 border-indigo-400 text-white"
-                    : "bg-slate-800 border-slate-600 text-slate-400 hover:text-white hover:border-slate-500"
-                  }`}
-              >
-                {f.label}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${filter === f.key ? "bg-white/20" : "bg-slate-700"}`}>
-                  {f.count}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="p-4 flex flex-col gap-2">
-          {filtered.length === 0 ? (
+          {tasks.length === 0 ? (
             <div className="text-center py-10 text-slate-500">
-              <div className="text-4xl mb-2">🎉</div>
-              <p className="text-sm font-medium">Nenhuma atividade aqui!</p>
+              <div className="text-4xl mb-2">📋</div>
+              <p className="text-sm font-medium">Nenhuma atividade definida para {current.label}.</p>
+              <p className="text-xs text-slate-600 mt-1">Clique em "Nova Atividade" para começar.</p>
             </div>
           ) : (
-            filtered
-              .sort((a, b) => a.time.localeCompare(b.time))
-              .map(task => (
-                <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} />
-              ))
+            tasks.slice().sort((a, b) => a.time.localeCompare(b.time)).map(task => (
+              <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} />
+            ))
           )}
         </div>
       </div>
 
-      {/* Legend */}
-      <div className="mt-4 flex flex-wrap gap-2 justify-center">
-        {Object.entries(CATEGORY_CONFIG).map(([k, v]) => {
-          const count = tasks.filter(t => t.category === k && t.done).length;
-          const total = tasks.filter(t => t.category === k).length;
-          return (
-            <div key={k} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${v.bg} ${v.border} text-xs`}>
-              <span className={`w-2 h-2 rounded-full ${v.dot}`} />
-              <span className={`font-medium ${v.text}`}>{v.label}</span>
-              <span className="text-slate-500">{count}/{total}</span>
+      {/* Assign Dialog */}
+      {showAssignDialog && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAssignDialog(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="p-5 border-b border-slate-700 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-white flex items-center gap-2"><Users className="w-5 h-5" /> Atribuir Função a cada Usuário</h3>
+                <p className="text-xs text-slate-400 mt-1">Defina qual rotina cada pessoa do time deve seguir.</p>
+              </div>
+              <button onClick={() => setShowAssignDialog(false)} className="text-slate-400 hover:text-white p-1"><X className="w-5 h-5" /></button>
             </div>
-          );
-        })}
-      </div>
+            <div className="overflow-y-auto p-4 space-y-2">
+              {loadingMembers && <p className="text-sm text-slate-400 text-center py-8">Carregando equipe...</p>}
+              {!loadingMembers && members.length === 0 && (
+                <p className="text-sm text-slate-400 text-center py-8">Nenhum usuário encontrado na empresa.</p>
+              )}
+              {members.map(m => {
+                const assigned = assignments[m.id];
+                return (
+                  <div key={m.id} className="flex items-center gap-3 p-3 border border-slate-700/60 rounded-xl bg-slate-800/40">
+                    <div className="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-white overflow-hidden flex-shrink-0">
+                      {m.avatar_url ? <img src={m.avatar_url} alt="" className="w-full h-full object-cover" /> : (m.full_name || m.email || "?").charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold text-white truncate">{m.full_name || "Sem nome"}</div>
+                      <div className="text-xs text-slate-400 truncate">{m.email}</div>
+                    </div>
+                    <select
+                      value={assigned || ""}
+                      onChange={(e) => assignUser(m.id, e.target.value as ProfileKey | "")}
+                      className="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 min-w-[160px]"
+                    >
+                      <option value="">— Sem rotina —</option>
+                      {PROFILES.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="p-4 border-t border-slate-700 flex justify-end">
+              <button onClick={() => setShowAssignDialog(false)} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl">Concluído</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
