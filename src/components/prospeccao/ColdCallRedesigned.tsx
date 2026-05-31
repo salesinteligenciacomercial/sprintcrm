@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Phone, PhoneCall, Download, Funnel, ListChecks, Bot, ListOrdered, FileText, PhoneIncoming, ArrowUpRight,
+  PhoneCall, Download, Filter as Funnel, ListChecks, Bot, ListOrdered, FileText, PhoneIncoming, ArrowUpRight,
 } from "lucide-react";
 
 /**
