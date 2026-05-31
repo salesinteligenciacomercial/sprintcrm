@@ -1503,6 +1503,7 @@ export default function KanbanPage() {
           ) : null}
         </DragOverlay>
       </DndContext>
+      )}
 
       <CriarTarefaAoMoverDialog
         open={tarefaDialogData.open}
