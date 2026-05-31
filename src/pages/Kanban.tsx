@@ -1261,6 +1261,23 @@ export default function KanbanPage() {
         funilNome={funilSelecionado?.nome}
       />
 
+      {/* 🎯 Toolbar de filtros rápidos (busca, pílulas, kanban/lista, navegação) */}
+      <FunilQuickFilters
+        funis={funis}
+        selectedFunil={selectedFunil}
+        onSelectFunil={setSelectedFunil}
+        search={searchTerm}
+        onSearchChange={setSearchTerm}
+        quickFilter={quickFilter}
+        onQuickFilterChange={setQuickFilter}
+        counts={pillCounts}
+        displayMode={displayMode}
+        onDisplayModeChange={setDisplayMode}
+        showScrollControls={etapasFiltradas.length > 3 && displayMode === "kanban"}
+        onScrollLeft={() => scrollHorizontal("left")}
+        onScrollRight={() => scrollHorizontal("right")}
+      />
+
       {/* Barra de filtros por responsável - controle de pipeline */}
       <FunilFiltrosResponsaveis
         viewMode={viewMode}
@@ -1273,58 +1290,23 @@ export default function KanbanPage() {
         responsavelCounts={responsavelCounts}
       />
 
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex-1 max-w-xs">
-          <Label>Funil</Label>
-          <select
-            value={selectedFunil}
-            onChange={(e) => setSelectedFunil(e.target.value)}
-            className="w-full p-2 border rounded-md mt-2"
-          >
-            {funis.map((funil) => (
-              <option key={funil.id} value={funil.id}>{funil.nome}</option>
-            ))}
-          </select>
+      {funilSelecionado && canCreateFunil && (
+        <div className="mb-4 flex gap-2 flex-wrap">
+          <AdicionarEtapaDialog
+            funilId={funilSelecionado.id}
+            onEtapaAdded={async () => { await refreshEtapas(); }}
+          />
+          <EditarFunilDialog
+            funilId={funilSelecionado.id}
+            funilNome={funilSelecionado.nome}
+            onFunilUpdated={async () => { await refreshFunis(); await refreshEtapas(); }}
+          />
+          <FollowInteligentePanel
+            funilId={funilSelecionado.id}
+            etapas={etapasFiltradas.map((e: any) => ({ id: e.id, nome: e.nome, cor: e.cor, posicao: e.posicao, funil_id: e.funil_id }))}
+          />
         </div>
-        {funilSelecionado && canCreateFunil && (
-          <div className="mt-6 flex gap-2">
-            <AdicionarEtapaDialog
-              funilId={funilSelecionado.id}
-              onEtapaAdded={async () => { await refreshEtapas(); }}
-            />
-            <EditarFunilDialog
-              funilId={funilSelecionado.id}
-              funilNome={funilSelecionado.nome}
-              onFunilUpdated={async () => { await refreshFunis(); await refreshEtapas(); }}
-            />
-            <FollowInteligentePanel
-              funilId={funilSelecionado.id}
-              etapas={etapasFiltradas.map((e: any) => ({ id: e.id, nome: e.nome, cor: e.cor, posicao: e.posicao, funil_id: e.funil_id }))}
-            />
-          </div>
-        )}
-        {/* 🎯 Botões de navegação horizontal */}
-        {etapasFiltradas.length > 3 && (
-          <div className="mt-6 flex gap-2 ml-auto">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scrollHorizontal('left')}
-              title="Rolar para esquerda"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => scrollHorizontal('right')}
-              title="Rolar para direita"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </div>
+      )}
 
       <DndContext
         sensors={sensors}
