@@ -186,14 +186,14 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
         });
       }
 
-      // Body (obrigatório)
-      const bodyVariables = newTemplate.bodyText.match(/\{\{(\d+)\}\}/g) || [];
+      // Body (obrigatório) — Meta exige valores reais de exemplo para cada variável
+      const bodyVarMatches = newTemplate.bodyText.match(/\{\{(\d+)\}\}/g) || [];
+      const uniqueVars = Array.from(new Set(bodyVarMatches));
+      const examples = uniqueVars.map((_, i) => newTemplate.bodyExamples[i] || `Exemplo ${i + 1}`);
       components.push({
         type: 'BODY',
         text: newTemplate.bodyText,
-        example: bodyVariables.length > 0 ? { 
-          body_text: [bodyVariables.map((_, i) => `Exemplo ${i + 1}`)]
-        } : undefined
+        example: uniqueVars.length > 0 ? { body_text: [examples] } : undefined
       });
 
       // Footer
