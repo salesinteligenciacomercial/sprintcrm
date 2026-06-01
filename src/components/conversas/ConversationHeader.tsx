@@ -84,9 +84,12 @@ import { toast } from "sonner";
     showBackButton = false,
      protocolNumber = null,
      protocolStatus = 'aberto',
-     contactPhone,
-     companyId,
-  }: ConversationHeaderProps) {
+      contactPhone,
+      companyId,
+      currentApi,
+      availableApis = { meta: false, evolution: false },
+      onChangeApi,
+   }: ConversationHeaderProps) {
    const isMobile = useIsMobile();
    const [finalizeOpen, setFinalizeOpen] = useState(false);
    const [finalizeMessage, setFinalizeMessage] = useState("");
