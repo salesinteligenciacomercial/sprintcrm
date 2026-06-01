@@ -6020,7 +6020,7 @@ function Conversas() {
               ...mensagemParaEnviar,
               quotedMessageId: currentReplyingTo || undefined,
               tipo_mensagem: type,
-              force_provider: conversationSnapshot.origemApi,
+              force_provider: apiOverrides[conversationSnapshot.id] || conversationSnapshot.origemApi,
             });
             data = result.data;
             error = result.error;
