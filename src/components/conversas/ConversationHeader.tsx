@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader as UIDialogHeader, DialogTitle, Dia
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { MarkProspectionButton } from "./MarkProspectionButton";
+import { ApiProviderSelector, type ApiProvider } from "./ApiProviderSelector";
 import { toast } from "sonner";
 
  type SyncStatus = 'synced' | 'syncing' | 'error' | 'idle';
@@ -45,11 +46,14 @@ import { toast } from "sonner";
    restoreProgress?: { step: number; label: string } | null;
     onBack?: () => void;
     showBackButton?: boolean;
-     protocolNumber?: string | null;
-     protocolStatus?: string;
-     contactPhone?: string;
-     companyId?: string | null;
- }
+      protocolNumber?: string | null;
+      protocolStatus?: string;
+      contactPhone?: string;
+      companyId?: string | null;
+      currentApi?: ApiProvider;
+      availableApis?: { meta: boolean; evolution: boolean };
+      onChangeApi?: (api: ApiProvider) => void;
+  }
 
   export function ConversationHeader({
    contactName,
@@ -80,9 +84,12 @@ import { toast } from "sonner";
     showBackButton = false,
      protocolNumber = null,
      protocolStatus = 'aberto',
-     contactPhone,
-     companyId,
-  }: ConversationHeaderProps) {
+      contactPhone,
+      companyId,
+      currentApi,
+      availableApis = { meta: false, evolution: false },
+      onChangeApi,
+   }: ConversationHeaderProps) {
    const isMobile = useIsMobile();
    const [finalizeOpen, setFinalizeOpen] = useState(false);
    const [finalizeMessage, setFinalizeMessage] = useState("");
@@ -243,8 +250,17 @@ import { toast } from "sonner";
                    compact
                  />
                )}
-                {/* Botão Marcar Prospecção */}
-                <MarkProspectionButton
+               {/* Seletor de API (Oficial / Não Oficial) */}
+               {onChangeApi && (
+                 <ApiProviderSelector
+                   current={currentApi}
+                   available={availableApis}
+                   onChange={onChangeApi}
+                   channel={channel}
+                 />
+               )}
+                 {/* Botão Marcar Prospecção */}
+                 <MarkProspectionButton
                   leadId={leadVinculado?.id}
                   contactPhone={contactPhone}
                   channel={channel}

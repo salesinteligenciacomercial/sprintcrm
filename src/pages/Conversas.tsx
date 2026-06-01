@@ -469,6 +469,21 @@ function Conversas() {
     }
   });
   const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
+  // Seleção da API (Meta Oficial vs Evolution Não Oficial) por conversa
+  const [availableApis, setAvailableApis] = useState<{ meta: boolean; evolution: boolean }>({ meta: false, evolution: false });
+  const [apiOverrides, setApiOverrides] = useState<Record<string, "meta" | "evolution">>(() => {
+    try {
+      const raw = localStorage.getItem("continuum_api_overrides");
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+  const setApiOverride = (convId: string, api: "meta" | "evolution") => {
+    setApiOverrides(prev => {
+      const next = { ...prev, [convId]: api };
+      try { localStorage.setItem("continuum_api_overrides", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   const [filter, setFilter] = useState<"all" | "waiting" | "answered" | "resolved" | "group" | "responsible" | "transferred" | "instagram" | "messenger">("all");
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>(defaultFilters);
   const [searchTerm, setSearchTerm] = useState("");
@@ -2361,6 +2376,28 @@ function Conversas() {
       }
     }
   }, [funis, etapas, leadVinculado?.funil_id, leadVinculado?.etapa_id, selectedConv?.id]);
+
+  // Detectar quais APIs WhatsApp estão conectadas (Meta Oficial e/ou Evolution Não Oficial)
+  useEffect(() => {
+    if (!userCompanyId) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('whatsapp_connections')
+          .select('api_provider, meta_phone_number_id, evolution_api_url, status')
+          .eq('company_id', userCompanyId);
+        let meta = false;
+        let evolution = false;
+        (data || []).forEach((c: any) => {
+          if (c.meta_phone_number_id) meta = true;
+          if (c.evolution_api_url || c.api_provider === 'evolution') evolution = true;
+        });
+        setAvailableApis({ meta, evolution });
+      } catch (e) {
+        console.warn('Falha ao detectar APIs disponíveis:', e);
+      }
+    })();
+  }, [userCompanyId]);
 
   // ⚡ CORREÇÃO: Carregar usuários da empresa SEMPRE (não apenas quando painel está aberto)
   useEffect(() => {
@@ -5351,6 +5388,7 @@ function Conversas() {
           mimeType: file.type,
           caption: caption || '',
           company_id: userRole?.company_id,
+          force_provider: (selectedConv && apiOverrides[selectedConv.id]) || selectedConv?.origemApi,
           ...quotedPayload
         });
         data = result.data;
@@ -5377,7 +5415,7 @@ function Conversas() {
         telefone_formatado: numeroNormalizado,
         mensagem: caption || '[Mídia]',
         origem: isInstagramChannel ? 'Instagram' : 'WhatsApp',
-        origem_api: isInstagramChannel ? 'meta' : (selectedConv.origemApi || undefined),
+        origem_api: isInstagramChannel ? 'meta' : ((selectedConv && apiOverrides[selectedConv.id]) || selectedConv.origemApi || undefined),
         status: 'Enviada',
         tipo_mensagem: type,
         nome_contato: selectedConv.contactName?.replace(/^ig_/, '') || selectedConv.contactName,
@@ -5593,6 +5631,7 @@ function Conversas() {
           mimeType: finalAudioBlob.type || audioMimeType,
           caption: '',
           company_id: userRole?.company_id,
+          force_provider: (selectedConv && apiOverrides[selectedConv.id]) || selectedConv?.origemApi,
           ...quotedPayload
         });
         return { data: result.data, error: result.error };
@@ -5608,7 +5647,7 @@ function Conversas() {
         telefone_formatado: numeroNormalizado,
         mensagem: '[Áudio]',
         origem: isInstagramChannel ? 'Instagram' : 'WhatsApp',
-        origem_api: isInstagramChannel ? 'meta' : (selectedConv.origemApi || undefined),
+        origem_api: isInstagramChannel ? 'meta' : ((selectedConv && apiOverrides[selectedConv.id]) || selectedConv.origemApi || undefined),
         status: 'Enviada',
         tipo_mensagem: 'audio',
         nome_contato: selectedConv.contactName?.replace(/^ig_/, '') || selectedConv.contactName,
@@ -5912,7 +5951,7 @@ function Conversas() {
                 telefone_formatado: numeroNormalizado,
                 mensagem: messageContent,
                 origem: conversationSnapshot.channel === 'instagram' ? 'Instagram' : conversationSnapshot.channel === 'facebook' ? 'Messenger' : 'WhatsApp',
-                origem_api: conversationSnapshot.channel === 'instagram' || conversationSnapshot.channel === 'facebook' ? 'meta' : (conversationSnapshot.origemApi || undefined),
+                origem_api: conversationSnapshot.channel === 'instagram' || conversationSnapshot.channel === 'facebook' ? 'meta' : (apiOverrides[conversationSnapshot.id] || conversationSnapshot.origemApi || undefined),
                 status: 'Enviada',
                 tipo_mensagem: type,
                 nome_contato: conversationSnapshot.contactName?.replace(/^ig_/, '') || conversationSnapshot.contactName,
@@ -5981,7 +6020,7 @@ function Conversas() {
               ...mensagemParaEnviar,
               quotedMessageId: currentReplyingTo || undefined,
               tipo_mensagem: type,
-              force_provider: conversationSnapshot.origemApi,
+              force_provider: apiOverrides[conversationSnapshot.id] || conversationSnapshot.origemApi,
             });
             data = result.data;
             error = result.error;
@@ -6033,7 +6072,7 @@ function Conversas() {
                   telefone_formatado: numeroNormalizado,
                   mensagem: messageContent,
                   origem: conversationSnapshot.channel === 'instagram' ? 'Instagram' : 'WhatsApp',
-                  origem_api: conversationSnapshot.channel === 'instagram' ? 'meta' : (conversationSnapshot.origemApi || undefined),
+                  origem_api: conversationSnapshot.channel === 'instagram' ? 'meta' : (apiOverrides[conversationSnapshot.id] || conversationSnapshot.origemApi || undefined),
                   status: 'Enviada',
                   tipo_mensagem: type,
                   nome_contato: conversationSnapshot.contactName?.replace(/^ig_/, '') || conversationSnapshot.contactName,
@@ -9474,7 +9513,7 @@ function Conversas() {
         {selectedConv ? <>
             {/* Header - FIXO NO TOPO */}
             <div className="flex-shrink-0 bg-background border-b z-10">
-              <ConversationHeader contactName={selectedConv.contactName} channel={selectedConv.channel} avatarUrl={selectedConv.avatarUrl} produto={selectedConv.produto} valor={selectedConv.valor || (leadVinculado?.value && leadVinculado.value > 0 ? `R$ ${Number(leadVinculado.value).toLocaleString('pt-BR')}` : undefined)} responsavel={selectedConv.responsavel || leadExtraInfo.responsavelNome} tags={selectedConv.tags || leadVinculado?.tags} funnelStage={selectedConv.funnelStage || (leadExtraInfo.etapaNome ? (leadExtraInfo.funilNome ? `${leadExtraInfo.funilNome} → ${leadExtraInfo.etapaNome}` : leadExtraInfo.etapaNome) : undefined)} showInfoPanel={showInfoPanel} onToggleInfoPanel={() => setShowInfoPanel(!showInfoPanel)} syncStatus={syncStatus} leadVinculado={leadVinculado} mostrarBotaoCriarLead={mostrarBotaoCriarLead} onCriarLead={criarLeadManualmente} onFinalizeAtendimento={finalizarAtendimento} onFinalizeAtendimentoSilent={finalizarAtendimentoSilent} onTransferAtendimento={() => setTransferDialogOpen(true)} onChangeAIMode={(mode) => setConversationAIMode(selectedConv.id, mode)} currentAIMode={(aiMode[selectedConv.id] || aiMode[(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')] || 'off') as any} onlineStatus={onlineStatus[selectedConv.id] || 'unknown'} isContactInactive={isContactInactive} onRestoreConversation={handleRestoreConversation} restoringConversation={restoringConversation} restoreProgress={restoreProgress} showBackButton={isMobile} onBack={() => setSelectedConv(null)} protocolNumber={activeProtocol?.protocol_number} protocolStatus={activeProtocol?.status} contactPhone={(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')} companyId={userCompanyId} />
+              <ConversationHeader contactName={selectedConv.contactName} channel={selectedConv.channel} avatarUrl={selectedConv.avatarUrl} produto={selectedConv.produto} valor={selectedConv.valor || (leadVinculado?.value && leadVinculado.value > 0 ? `R$ ${Number(leadVinculado.value).toLocaleString('pt-BR')}` : undefined)} responsavel={selectedConv.responsavel || leadExtraInfo.responsavelNome} tags={selectedConv.tags || leadVinculado?.tags} funnelStage={selectedConv.funnelStage || (leadExtraInfo.etapaNome ? (leadExtraInfo.funilNome ? `${leadExtraInfo.funilNome} → ${leadExtraInfo.etapaNome}` : leadExtraInfo.etapaNome) : undefined)} showInfoPanel={showInfoPanel} onToggleInfoPanel={() => setShowInfoPanel(!showInfoPanel)} syncStatus={syncStatus} leadVinculado={leadVinculado} mostrarBotaoCriarLead={mostrarBotaoCriarLead} onCriarLead={criarLeadManualmente} onFinalizeAtendimento={finalizarAtendimento} onFinalizeAtendimentoSilent={finalizarAtendimentoSilent} onTransferAtendimento={() => setTransferDialogOpen(true)} onChangeAIMode={(mode) => setConversationAIMode(selectedConv.id, mode)} currentAIMode={(aiMode[selectedConv.id] || aiMode[(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')] || 'off') as any} onlineStatus={onlineStatus[selectedConv.id] || 'unknown'} isContactInactive={isContactInactive} onRestoreConversation={handleRestoreConversation} restoringConversation={restoringConversation} restoreProgress={restoreProgress} showBackButton={isMobile} onBack={() => setSelectedConv(null)} protocolNumber={activeProtocol?.protocol_number} protocolStatus={activeProtocol?.status} contactPhone={(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')} companyId={userCompanyId} currentApi={(apiOverrides[selectedConv.id] || selectedConv.origemApi) as any} availableApis={availableApis} onChangeApi={(api) => setApiOverride(selectedConv.id, api)} />
             </div>
             
             {/* Dialog de Transferir Atendimento */}
