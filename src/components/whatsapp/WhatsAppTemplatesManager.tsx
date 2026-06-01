@@ -444,7 +444,7 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
                     <Input
                       placeholder="meu_template"
                       value={newTemplate.name}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, name: sanitizeName(e.target.value) }))}
                     />
                     <p className="text-xs text-muted-foreground">Apenas letras minúsculas, números e underscore</p>
                   </div>
