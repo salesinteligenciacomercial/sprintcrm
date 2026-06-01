@@ -84,5 +84,3 @@ export function ApiProviderSelector({ current, available, onChange, channel = "w
   );
 }
 
-// import Check from lucide for the active indicator
-import { Check } from "lucide-react";
