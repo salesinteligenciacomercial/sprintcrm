@@ -5647,7 +5647,7 @@ function Conversas() {
         telefone_formatado: numeroNormalizado,
         mensagem: '[Áudio]',
         origem: isInstagramChannel ? 'Instagram' : 'WhatsApp',
-        origem_api: isInstagramChannel ? 'meta' : (selectedConv.origemApi || undefined),
+        origem_api: isInstagramChannel ? 'meta' : ((selectedConv && apiOverrides[selectedConv.id]) || selectedConv.origemApi || undefined),
         status: 'Enviada',
         tipo_mensagem: 'audio',
         nome_contato: selectedConv.contactName?.replace(/^ig_/, '') || selectedConv.contactName,
