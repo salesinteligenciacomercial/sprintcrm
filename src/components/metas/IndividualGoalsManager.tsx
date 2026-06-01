@@ -11,7 +11,8 @@ type Metric =
   | "meetings_scheduled"
   | "leads_prospected";
 
-type Period = "daily" | "monthly";
+type Period = "daily" | "weekly" | "monthly";
+type GoalKey = `${Period}:${Metric}`;
 
 interface GoalRow {
   id: string;
@@ -22,46 +23,52 @@ interface GoalRow {
   active: boolean | null;
 }
 
-const METRICS: { key: Metric; label: string; period: Period; isCurrency?: boolean; icon: string }[] = [
-  { key: "gross_value", label: "Faturamento mensal (R$)", period: "monthly", isCurrency: true, icon: "💰" },
-  { key: "sales_closed", label: "Vendas fechadas no mês", period: "monthly", icon: "🏆" },
-  { key: "calls", label: "Ligações por dia", period: "daily", icon: "📞" },
-  { key: "meetings_scheduled", label: "Reuniões agendadas por dia", period: "daily", icon: "📅" },
-  { key: "leads_prospected", label: "Leads prospectados por dia", period: "daily", icon: "🎯" },
+const PERIODS: { key: Period; label: string; helper: string }[] = [
+  { key: "daily", label: "Diária", helper: "Meta para hoje" },
+  { key: "weekly", label: "Semanal", helper: "Meta da semana" },
+  { key: "monthly", label: "Mensal", helper: "Meta do mês" },
 ];
+
+const METRICS: { key: Metric; label: string; isCurrency?: boolean; icon: string }[] = [
+  { key: "gross_value", label: "Faturamento (R$)", isCurrency: true, icon: "💰" },
+  { key: "sales_closed", label: "Vendas fechadas", icon: "🏆" },
+  { key: "calls", label: "Ligações", icon: "📞" },
+  { key: "meetings_scheduled", label: "Reuniões agendadas", icon: "📅" },
+  { key: "leads_prospected", label: "Leads prospectados", icon: "🎯" },
+];
+
+const goalKey = (period: Period, metric: Metric): GoalKey => `${period}:${metric}`;
+
+const emptyValues = (): Record<GoalKey, string> => {
+  const initial = {} as Record<GoalKey, string>;
+  PERIODS.forEach((period) => {
+    METRICS.forEach((metric) => {
+      initial[goalKey(period.key, metric.key)] = "";
+    });
+  });
+  return initial;
+};
 
 export default function IndividualGoalsManager() {
   const { members, loading: loadingMembers } = useTeamMembers();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string>("");
-  const [values, setValues] = useState<Record<Metric, string>>({
-    gross_value: "",
-    sales_closed: "",
-    calls: "",
-    meetings_scheduled: "",
-    leads_prospected: "",
-  });
+  const [values, setValues] = useState<Record<GoalKey, string>>(emptyValues);
   const [existing, setExisting] = useState<GoalRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("user_roles")
-        .select("company_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (data?.company_id) setCompanyId(data.company_id);
+      const { data } = await supabase.rpc("get_my_company_id");
+      if (data) setCompanyId(data as string);
     })();
   }, []);
 
   useEffect(() => {
     if (!selectedUser) {
       setExisting([]);
-      setValues({ gross_value: "", sales_closed: "", calls: "", meetings_scheduled: "", leads_prospected: "" });
+      setValues(emptyValues());
       return;
     }
     loadGoals(selectedUser);
@@ -73,6 +80,7 @@ export default function IndividualGoalsManager() {
       .from("commercial_goals")
       .select("id, user_id, metric, period, target_value, active")
       .eq("user_id", uid)
+      .eq("scope", "user")
       .eq("active", true);
     setLoading(false);
     if (error) {
@@ -81,9 +89,11 @@ export default function IndividualGoalsManager() {
     }
     const rows = (data || []) as GoalRow[];
     setExisting(rows);
-    const next: Record<Metric, string> = { gross_value: "", sales_closed: "", calls: "", meetings_scheduled: "", leads_prospected: "" };
+    const next = emptyValues();
     rows.forEach((r) => {
-      if (r.metric in next) next[r.metric as Metric] = String(r.target_value ?? "");
+      if (PERIODS.some((p) => p.key === r.period) && METRICS.some((m) => m.key === r.metric)) {
+        next[goalKey(r.period, r.metric)] = String(r.target_value ?? "");
+      }
     });
     setValues(next);
   };
@@ -97,41 +107,54 @@ export default function IndividualGoalsManager() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const created_by = user?.id ?? null;
+      const rowsToInsert = PERIODS.flatMap((period) =>
+        METRICS.map((metric) => {
+          const raw = values[goalKey(period.key, metric.key)]?.trim();
+          const target_value = raw ? Number(raw) : 0;
+          return { period, metric, raw, target_value };
+        })
+      ).filter(({ raw, target_value }) => raw && target_value > 0);
 
-      for (const m of METRICS) {
-        const raw = values[m.key]?.trim();
-        const existingRow = existing.find((e) => e.metric === m.key && e.period === m.period);
+      const hasInvalidValue = PERIODS.some((period) =>
+        METRICS.some((metric) => {
+          const raw = values[goalKey(period.key, metric.key)]?.trim();
+          return !!raw && (Number.isNaN(Number(raw)) || Number(raw) < 0);
+        })
+      );
 
-        if (!raw || Number(raw) <= 0) {
-          // delete if exists
-          if (existingRow) {
-            await supabase.from("commercial_goals").delete().eq("id", existingRow.id);
-          }
-          continue;
-        }
-        const target_value = Number(raw);
-        if (existingRow) {
-          await supabase
-            .from("commercial_goals")
-            .update({ target_value, active: true })
-            .eq("id", existingRow.id);
-        } else {
-          await supabase.from("commercial_goals").insert({
+      if (hasInvalidValue) {
+        toast.error("Informe apenas valores válidos nas metas");
+        return;
+      }
+
+      const { error: deleteError } = await supabase
+        .from("commercial_goals")
+        .delete()
+        .eq("company_id", companyId)
+        .eq("user_id", selectedUser)
+        .eq("scope", "user");
+      if (deleteError) throw deleteError;
+
+      if (rowsToInsert.length > 0) {
+        const { error: insertError } = await supabase.from("commercial_goals").insert(
+          rowsToInsert.map(({ period, metric, target_value }) => ({
             company_id: companyId,
             user_id: selectedUser,
             scope: "user",
-            metric: m.key,
-            period: m.period,
+            metric: metric.key,
+            period: period.key,
             target_value,
             active: true,
             created_by,
-          });
-        }
+          }))
+        );
+        if (insertError) throw insertError;
       }
-      toast.success("Metas salvas");
+
+      toast.success("Metas individuais salvas");
       await loadGoals(selectedUser);
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao salvar");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar");
     } finally {
       setSaving(false);
     }
@@ -143,7 +166,9 @@ export default function IndividualGoalsManager() {
     const { error } = await supabase
       .from("commercial_goals")
       .delete()
-      .eq("user_id", selectedUser);
+      .eq("company_id", companyId)
+      .eq("user_id", selectedUser)
+      .eq("scope", "user");
     if (error) toast.error("Erro ao remover");
     else {
       toast.success("Metas removidas");
@@ -162,7 +187,7 @@ export default function IndividualGoalsManager() {
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900">Metas Individuais por Colaborador</h2>
-            <p className="text-sm text-slate-500">Defina faturamento mensal e metas diárias de atividades. O colaborador verá na sua Rotina.</p>
+            <p className="text-sm text-slate-500">Defina metas diárias, semanais e mensais. O colaborador verá tudo na Rotina com progresso.</p>
           </div>
         </div>
       </div>
@@ -200,27 +225,43 @@ export default function IndividualGoalsManager() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {METRICS.map((m) => (
-                <div key={m.key} className="border border-slate-200 rounded-xl p-4 bg-white">
-                  <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
-                    {m.icon} {m.label}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {m.isCurrency && <span className="text-slate-500 text-sm">R$</span>}
-                    <input
-                      type="number"
-                      min="0"
-                      step={m.isCurrency ? "100" : "1"}
-                      value={values[m.key]}
-                      onChange={(e) => setValues((v) => ({ ...v, [m.key]: e.target.value }))}
-                      placeholder="0"
-                      className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
+            <div className="space-y-5">
+              {PERIODS.map((period) => (
+                <div key={period.key} className="border border-slate-200 rounded-2xl p-4 bg-slate-50/60">
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900 uppercase tracking-wide">Meta {period.label}</h3>
+                      <p className="text-xs text-slate-500">{period.helper}</p>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">
+                      {period.label}
+                    </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    {m.period === "monthly" ? "Meta mensal" : "Meta diária"}
-                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {METRICS.map((m) => {
+                      const key = goalKey(period.key, m.key);
+                      return (
+                        <div key={key} className="border border-slate-200 rounded-xl p-4 bg-white">
+                          <label className="block text-xs font-bold uppercase tracking-wide text-slate-500 mb-1">
+                            {m.icon} {m.label}
+                          </label>
+                          <div className="flex items-center gap-2">
+                            {m.isCurrency && <span className="text-slate-500 text-sm">R$</span>}
+                            <input
+                              type="number"
+                              min="0"
+                              step={m.isCurrency ? "100" : "1"}
+                              value={values[key]}
+                              onChange={(e) => setValues((v) => ({ ...v, [key]: e.target.value }))}
+                              placeholder="0"
+                              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            />
+                          </div>
+                          <p className="text-[11px] text-slate-400 mt-1.5">Meta {period.label.toLowerCase()}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
