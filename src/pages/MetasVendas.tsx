@@ -104,7 +104,7 @@ const ACTIVITIES = [
 ];
 
 type DiagKey = "fat" | "meses" | "sdrs" | "closers" | "ticket" | "lead2reu" | "showup" | "winrate";
-type CheckinKey = "leads" | "ligacoes" | "msgs" | "followups" | "reuAg" | "reuReal" | "vendas" | "fat";
+type CheckinKey = "leads" | "respostas" | "oportunidades" | "reuAg" | "reuNoShow" | "reuReal" | "negociacoes" | "vendasPerdidas" | "vendas" | "fupRecuperadas" | "fupOportunidade" | "followups" | "ticket" | "fat";
 
 function Maquina() {
   const [step, setStep] = useState(1);
@@ -112,7 +112,7 @@ function Maquina() {
   const [acts, setActs] = useState<number[]>([0, 3, 7]);
   const [diag, setDiag] = useState<Record<DiagKey, number>>({ fat: 3000, meses: 6, sdrs: 2, closers: 1, ticket: 3999, lead2reu: 30, showup: 30, winrate: 38 });
   const [meta, setMeta] = useState({ metaFat: 60000, prazo: 1, manterEstrutura: true });
-  const [checkin, setCheckin] = useState<Record<CheckinKey, number> & { obs: string }>({ leads: 0, ligacoes: 0, msgs: 0, followups: 0, reuAg: 0, reuReal: 0, vendas: 0, fat: 0, obs: "" });
+  const [checkin, setCheckin] = useState<Record<CheckinKey, number> & { obs: string; script: string }>({ leads: 0, respostas: 0, oportunidades: 0, reuAg: 0, reuNoShow: 0, reuReal: 0, negociacoes: 0, vendasPerdidas: 0, vendas: 0, fupRecuperadas: 0, fupOportunidade: 0, followups: 0, ticket: 0, fat: 0, obs: "", script: "" });
 
   useEffect(() => {
     if (!diagDb) return;
@@ -188,14 +188,20 @@ function Maquina() {
   ];
 
   const checkinFields: Array<[string, CheckinKey]> = [
-    ["Leads prospectados", "leads"],
-    ["Ligações feitas", "ligacoes"],
-    ["Mensagens enviadas", "msgs"],
-    ["Follow-ups", "followups"],
+    ["Leads prospectados (Ligações/Mensagens)", "leads"],
+    ["Respostas", "respostas"],
+    ["Oportunidades criadas", "oportunidades"],
     ["Reuniões agendadas", "reuAg"],
+    ["Reuniões sem comparecimento", "reuNoShow"],
     ["Reuniões realizadas", "reuReal"],
+    ["Negociações", "negociacoes"],
+    ["Vendas perdidas", "vendasPerdidas"],
     ["Vendas fechadas", "vendas"],
-    ["Faturamento (R$)", "fat"],
+    ["Follow-ups (vendas recuperadas)", "fupRecuperadas"],
+    ["Follow-ups (oportunidade)", "fupOportunidade"],
+    ["Follow-ups", "followups"],
+    ["Ticket médio (R$)", "ticket"],
+    ["Faturamento bruto (R$)", "fat"],
   ];
 
   const planFields: Array<{ lbl: string; val?: number; opts?: string[] }> = [
@@ -420,6 +426,11 @@ function Maquina() {
                     style={{ width: "100%", border: "none", background: "transparent", fontSize: 22, fontWeight: 800, color: C.text, fontFamily: "inherit", outline: "none" }} />
                 </div>
               ))}
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Script usado</label>
+              <input style={inputStyle} placeholder="Nome ou versão do script utilizado nas abordagens" value={checkin.script} onChange={(e) => setCheckin({ ...checkin, script: e.target.value })} />
             </div>
 
             <div style={{ marginBottom: 14 }}>
