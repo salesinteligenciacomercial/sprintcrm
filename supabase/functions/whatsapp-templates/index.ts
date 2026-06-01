@@ -280,7 +280,7 @@ serve(async (req) => {
           language: body.language || 'pt_BR',
           category: body.category,
           status: 'PENDING',
-          components: body.components,
+          components,
           synced_at: new Date().toISOString()
         })
         .select()
