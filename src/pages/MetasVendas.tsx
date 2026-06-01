@@ -112,7 +112,7 @@ function Maquina() {
   const [acts, setActs] = useState<number[]>([0, 3, 7]);
   const [diag, setDiag] = useState<Record<DiagKey, number>>({ fat: 3000, meses: 6, sdrs: 2, closers: 1, ticket: 3999, lead2reu: 30, showup: 30, winrate: 38 });
   const [meta, setMeta] = useState({ metaFat: 60000, prazo: 1, manterEstrutura: true });
-  const [checkin, setCheckin] = useState<Record<CheckinKey, number> & { obs: string }>({ leads: 0, ligacoes: 0, msgs: 0, followups: 0, reuAg: 0, reuReal: 0, vendas: 0, fat: 0, obs: "" });
+  const [checkin, setCheckin] = useState<Record<CheckinKey, number> & { obs: string; script: string }>({ leads: 0, respostas: 0, oportunidades: 0, reuAg: 0, reuNoShow: 0, reuReal: 0, negociacoes: 0, vendasPerdidas: 0, vendas: 0, fupRecuperadas: 0, fupOportunidade: 0, followups: 0, ticket: 0, fat: 0, obs: "", script: "" });
 
   useEffect(() => {
     if (!diagDb) return;
