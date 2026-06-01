@@ -38,6 +38,7 @@ const METRICS: { key: Metric; label: string; isCurrency?: boolean; icon: string 
 ];
 
 const goalKey = (period: Period, metric: Metric): GoalKey => `${period}:${metric}`;
+const SELECTED_USER_STORAGE_KEY = "metas_individuais_selected_user";
 
 const emptyValues = (): Record<GoalKey, string> => {
   const initial = {} as Record<GoalKey, string>;
@@ -71,8 +72,17 @@ export default function IndividualGoalsManager() {
       setValues(emptyValues());
       return;
     }
+    localStorage.setItem(SELECTED_USER_STORAGE_KEY, selectedUser);
     loadGoals(selectedUser);
   }, [selectedUser]);
+
+  useEffect(() => {
+    if (selectedUser || loadingMembers || members.length === 0) return;
+    const savedUser = localStorage.getItem(SELECTED_USER_STORAGE_KEY);
+    if (savedUser && members.some((member) => member.id === savedUser)) {
+      setSelectedUser(savedUser);
+    }
+  }, [loadingMembers, members, selectedUser]);
 
   const loadGoals = async (uid: string) => {
     setLoading(true);
