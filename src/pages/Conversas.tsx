@@ -5388,6 +5388,7 @@ function Conversas() {
           mimeType: file.type,
           caption: caption || '',
           company_id: userRole?.company_id,
+          force_provider: (selectedConv && apiOverrides[selectedConv.id]) || selectedConv?.origemApi,
           ...quotedPayload
         });
         data = result.data;
