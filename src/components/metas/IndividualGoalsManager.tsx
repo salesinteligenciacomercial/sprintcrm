@@ -144,6 +144,7 @@ export default function IndividualGoalsManager() {
             metric: metric.key,
             period: period.key,
             target_value,
+            start_date: new Date().toISOString().slice(0, 10),
             active: true,
             created_by,
           }))
@@ -161,7 +162,7 @@ export default function IndividualGoalsManager() {
   };
 
   const handleClearAll = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !companyId) return;
     if (!confirm("Remover todas as metas individuais deste colaborador?")) return;
     const { error } = await supabase
       .from("commercial_goals")
