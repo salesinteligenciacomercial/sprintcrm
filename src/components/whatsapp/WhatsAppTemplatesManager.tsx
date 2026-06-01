@@ -178,12 +178,26 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
       const components: TemplateComponent[] = [];
 
       // Header
-      if (newTemplate.headerType !== 'none' && newTemplate.headerText) {
+      if (newTemplate.headerType === 'text' && newTemplate.headerText) {
+        components.push({
+          type: 'HEADER',
+          format: 'TEXT',
+          text: newTemplate.headerText,
+          example: { header_text: [newTemplate.headerText] }
+        });
+      } else if (['image', 'video', 'document'].includes(newTemplate.headerType)) {
+        if (!newTemplate.headerMediaUrl) {
+          toast({
+            variant: 'destructive',
+            title: 'URL de mídia obrigatória',
+            description: 'Informe a URL pública do arquivo para o cabeçalho.'
+          });
+          setCreating(false);
+          return;
+        }
         components.push({
           type: 'HEADER',
           format: newTemplate.headerType.toUpperCase() as any,
-          text: newTemplate.headerType === 'text' ? newTemplate.headerText : undefined,
-          example: newTemplate.headerType === 'text' ? { header_text: [newTemplate.headerText] } : undefined
         });
       }
 
