@@ -497,18 +497,19 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
                     <SelectContent>
                       <SelectItem value="none">Nenhum</SelectItem>
                       <SelectItem value="text">Texto</SelectItem>
-                      <SelectItem value="image">Imagem</SelectItem>
-                      <SelectItem value="video">Vídeo</SelectItem>
-                      <SelectItem value="document">Documento</SelectItem>
                     </SelectContent>
                   </Select>
                   {newTemplate.headerType === 'text' && (
                     <Input
-                      placeholder="Texto do cabeçalho"
+                      placeholder="Texto do cabeçalho (até 60 caracteres)"
+                      maxLength={60}
                       value={newTemplate.headerText}
                       onChange={(e) => setNewTemplate(prev => ({ ...prev, headerText: e.target.value }))}
                     />
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Cabeçalhos com mídia (imagem/vídeo/documento) exigem upload prévio na Meta — em breve.
+                  </p>
                 </div>
 
                 {/* Body */}
@@ -523,6 +524,24 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
                   <p className="text-xs text-muted-foreground">
                     Use {"{{1}}"}, {"{{2}}"}, etc. para variáveis dinâmicas
                   </p>
+
+                  {newTemplate.bodyExamples.length > 0 && (
+                    <div className="space-y-2 mt-2 p-3 rounded-md bg-muted/40 border">
+                      <p className="text-xs font-medium">Valores de exemplo (obrigatório pela Meta)</p>
+                      {newTemplate.bodyExamples.map((val, i) => (
+                        <Input
+                          key={i}
+                          placeholder={`Exemplo para {{${i + 1}}}`}
+                          value={val}
+                          onChange={(e) => {
+                            const next = [...newTemplate.bodyExamples];
+                            next[i] = e.target.value;
+                            setNewTemplate(prev => ({ ...prev, bodyExamples: next }));
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Footer */}
