@@ -429,6 +429,11 @@ function Maquina() {
             </div>
 
             <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Script usado</label>
+              <input style={inputStyle} placeholder="Nome ou versão do script utilizado nas abordagens" value={checkin.script} onChange={(e) => setCheckin({ ...checkin, script: e.target.value })} />
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Observações do dia</label>
               <textarea style={{ ...inputStyle, minHeight: 72, resize: "vertical" }} placeholder="Vitórias, perdas, aprendizados, bloqueios..." value={checkin.obs} onChange={(e) => setCheckin({ ...checkin, obs: e.target.value })} />
             </div>
