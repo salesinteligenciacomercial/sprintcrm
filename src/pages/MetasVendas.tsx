@@ -162,8 +162,9 @@ function Maquina() {
       };
       await upsert.mutateAsync({ ...payload, gargalos_auto: detectGargalos(payload) });
       toast.success("Meta salva com sucesso");
-    } catch (e: any) {
-      toast.error("Erro ao salvar meta", { description: e?.message || "Tente novamente." });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Tente novamente.";
+      toast.error("Erro ao salvar meta", { description: message });
     }
   };
 
