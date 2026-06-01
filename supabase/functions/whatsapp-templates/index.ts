@@ -175,11 +175,74 @@ serve(async (req) => {
       }
 
       const templateName = body.name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const components: any[] = Array.isArray(body.components) ? [...body.components] : [];
+
+      // Se houver cabeçalho de mídia, faz upload via Resumable Upload API e injeta header_handle
+      if (body.header_media_url && body.header_format) {
+        try {
+          console.log('Fazendo upload da mídia do cabeçalho:', body.header_media_url);
+
+          // 1) Descobrir o app_id do token via debug_token
+          const debugRes = await fetch(`${META_API_BASE_URL}/${META_API_VERSION}/debug_token?input_token=${meta_access_token}&access_token=${meta_access_token}`);
+          const debugData = await debugRes.json();
+          const appId = debugData?.data?.app_id;
+          if (!appId) throw new Error('Não foi possível obter o app_id do Access Token. Use um token de App válido.');
+
+          // 2) Baixar o arquivo
+          const fileRes = await fetch(body.header_media_url);
+          if (!fileRes.ok) throw new Error(`Falha ao baixar arquivo: HTTP ${fileRes.status}`);
+          const fileBuf = new Uint8Array(await fileRes.arrayBuffer());
+          const contentType = fileRes.headers.get('content-type') || (
+            body.header_format === 'IMAGE' ? 'image/jpeg' :
+            body.header_format === 'VIDEO' ? 'video/mp4' : 'application/pdf'
+          );
+
+          // 3) Iniciar sessão de upload
+          const startUrl = `${META_API_BASE_URL}/${META_API_VERSION}/${appId}/uploads?file_length=${fileBuf.byteLength}&file_type=${encodeURIComponent(contentType)}&access_token=${meta_access_token}`;
+          const startRes = await fetch(startUrl, { method: 'POST' });
+          const startData = await startRes.json();
+          if (!startRes.ok || !startData.id) throw new Error(`Erro ao iniciar upload: ${startData?.error?.message || JSON.stringify(startData)}`);
+
+          // 4) Enviar bytes
+          const sessionId = startData.id; // "upload:<id>"
+          const uploadRes = await fetch(`${META_API_BASE_URL}/${META_API_VERSION}/${sessionId}`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `OAuth ${meta_access_token}`,
+              'file_offset': '0',
+              'Content-Type': contentType,
+            },
+            body: fileBuf,
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok || !uploadData.h) throw new Error(`Erro no upload: ${uploadData?.error?.message || JSON.stringify(uploadData)}`);
+
+          const handle = uploadData.h;
+          console.log('Handle obtido:', handle);
+
+          // 5) Injetar handle no componente HEADER
+          const headerIdx = components.findIndex((c) => c.type === 'HEADER');
+          const headerComp = {
+            type: 'HEADER',
+            format: body.header_format,
+            example: { header_handle: [handle] },
+          };
+          if (headerIdx >= 0) components[headerIdx] = headerComp;
+          else components.unshift(headerComp);
+        } catch (mediaErr: any) {
+          console.error('Erro no upload de mídia:', mediaErr);
+          return new Response(
+            JSON.stringify({ error: `Falha ao enviar mídia do cabeçalho à Meta: ${mediaErr.message}` }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
       const metaPayload = {
         name: templateName,
         language: body.language || 'pt_BR',
         category: body.category,
-        components: body.components
+        components,
       };
 
       console.log('Criando template na Meta:', JSON.stringify(metaPayload, null, 2));
@@ -217,7 +280,7 @@ serve(async (req) => {
           language: body.language || 'pt_BR',
           category: body.category,
           status: 'PENDING',
-          components: body.components,
+          components,
           synced_at: new Date().toISOString()
         })
         .select()

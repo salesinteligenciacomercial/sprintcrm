@@ -18,7 +18,17 @@ import {
   AlertCircle,
   Eye,
   Loader2,
-  Copy
+  Copy,
+  Image as ImageIcon,
+  Video,
+  File as FileIcon,
+  Type as TypeIcon,
+  Ban,
+  Send,
+  Sparkles,
+  Reply,
+  Link as LinkIcon,
+  Phone
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -69,10 +79,11 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
   // Form state
   const [newTemplate, setNewTemplate] = useState({
     name: '',
-    category: 'UTILITY' as 'UTILITY' | 'MARKETING' | 'AUTHENTICATION',
+    category: 'MARKETING' as 'UTILITY' | 'MARKETING' | 'AUTHENTICATION',
     language: 'pt_BR',
-    headerType: 'none' as 'none' | 'text',
+    headerType: 'none' as 'none' | 'text' | 'image' | 'video' | 'document',
     headerText: '',
+    headerMediaUrl: '',
     bodyText: '',
     bodyExamples: [] as string[],
     footerText: '',
@@ -177,12 +188,26 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
       const components: TemplateComponent[] = [];
 
       // Header
-      if (newTemplate.headerType !== 'none' && newTemplate.headerText) {
+      if (newTemplate.headerType === 'text' && newTemplate.headerText) {
+        components.push({
+          type: 'HEADER',
+          format: 'TEXT',
+          text: newTemplate.headerText,
+          example: { header_text: [newTemplate.headerText] }
+        });
+      } else if (['image', 'video', 'document'].includes(newTemplate.headerType)) {
+        if (!newTemplate.headerMediaUrl) {
+          toast({
+            variant: 'destructive',
+            title: 'URL de mídia obrigatória',
+            description: 'Informe a URL pública do arquivo para o cabeçalho.'
+          });
+          setCreating(false);
+          return;
+        }
         components.push({
           type: 'HEADER',
           format: newTemplate.headerType.toUpperCase() as any,
-          text: newTemplate.headerType === 'text' ? newTemplate.headerText : undefined,
-          example: newTemplate.headerType === 'text' ? { header_text: [newTemplate.headerText] } : undefined
         });
       }
 
@@ -225,7 +250,9 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
           name: newTemplate.name,
           category: newTemplate.category,
           language: newTemplate.language,
-          components
+          components,
+          header_media_url: ['image','video','document'].includes(newTemplate.headerType) ? newTemplate.headerMediaUrl : undefined,
+          header_format: ['image','video','document'].includes(newTemplate.headerType) ? newTemplate.headerType.toUpperCase() : undefined,
         }
       });
 
@@ -295,10 +322,11 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
   const resetForm = () => {
     setNewTemplate({
       name: '',
-      category: 'UTILITY',
+      category: 'MARKETING',
       language: 'pt_BR',
       headerType: 'none',
       headerText: '',
+      headerMediaUrl: '',
       bodyText: '',
       bodyExamples: [],
       footerText: '',
@@ -431,208 +459,289 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
                 Criar Template
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-5xl max-h-[92vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Criar Novo Template</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  Novo Template — Enviar para Meta
+                </DialogTitle>
               </DialogHeader>
-              
-              {/* Pré-visualização ao vivo */}
-              {(newTemplate.bodyText || newTemplate.headerText) && (
-                <div className="rounded-lg border bg-[#e5ddd5] dark:bg-muted/30 p-4">
-                  <p className="text-xs text-muted-foreground mb-2">Pré-visualização WhatsApp</p>
-                  <div className="max-w-sm ml-auto bg-[#dcf8c6] dark:bg-primary/10 rounded-lg p-3 text-sm shadow space-y-1">
-                    {newTemplate.headerType === 'text' && newTemplate.headerText && (
-                      <p className="font-semibold">{newTemplate.headerText}</p>
+
+              {/* Banner informativo */}
+              <div className="rounded-md border border-primary/30 bg-primary/5 p-3 flex gap-2 text-sm">
+                <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <p>
+                  <strong>Criação direta via API!</strong> O template será enviado automaticamente para aprovação da Meta.
+                  Após aprovado (geralmente em minutos a horas), ficará disponível para uso nos disparos em massa.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+                {/* Coluna esquerda: formulário */}
+                <div className="space-y-4">
+                  {/* Nome e Categoria */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Nome do template *</Label>
+                      <Input
+                        placeholder="ex: boas_vindas"
+                        value={newTemplate.name}
+                        onChange={(e) => setNewTemplate(prev => ({ ...prev, name: sanitizeName(e.target.value) }))}
+                      />
+                      <p className="text-xs text-muted-foreground">Apenas minúsculas e underscores</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Categoria *</Label>
+                      <Select
+                        value={newTemplate.category}
+                        onValueChange={(v) => setNewTemplate(prev => ({ ...prev, category: v as any }))}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MARKETING">Marketing (R$ 0,065)</SelectItem>
+                          <SelectItem value="UTILITY">Utility (R$ 0,035)</SelectItem>
+                          <SelectItem value="AUTHENTICATION">Authentication (R$ 0,045)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Idioma */}
+                  <div className="space-y-2">
+                    <Label>Idioma</Label>
+                    <Select
+                      value={newTemplate.language}
+                      onValueChange={(v) => setNewTemplate(prev => ({ ...prev, language: v }))}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pt_BR">Português (Brasil)</SelectItem>
+                        <SelectItem value="en_US">English (US)</SelectItem>
+                        <SelectItem value="es">Español</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Tipo de Cabeçalho — botões */}
+                  <div className="space-y-2">
+                    <Label>Tipo de Cabeçalho</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        { v: 'none', label: 'Nenhum', icon: Ban },
+                        { v: 'text', label: 'Texto', icon: TypeIcon },
+                        { v: 'image', label: 'Imagem', icon: ImageIcon },
+                        { v: 'video', label: 'Vídeo', icon: Video },
+                        { v: 'document', label: 'Documento', icon: FileIcon },
+                      ] as const).map(({ v, label, icon: Icon }) => (
+                        <Button
+                          key={v}
+                          type="button"
+                          size="sm"
+                          variant={newTemplate.headerType === v ? 'default' : 'outline'}
+                          onClick={() => setNewTemplate(prev => ({ ...prev, headerType: v }))}
+                          className="gap-1.5"
+                        >
+                          {v === 'none' ? <span className="text-muted-foreground">—</span> : <Icon className="h-4 w-4" />}
+                          {label}
+                        </Button>
+                      ))}
+                    </div>
+
+                    {newTemplate.headerType === 'text' && (
+                      <div className="space-y-1 pt-1">
+                        <Label className="text-xs">Texto do Cabeçalho</Label>
+                        <Input
+                          placeholder="Ex: 🎁 Oferta Especial!"
+                          maxLength={60}
+                          value={newTemplate.headerText}
+                          onChange={(e) => setNewTemplate(prev => ({ ...prev, headerText: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground">{newTemplate.headerText.length}/60 caracteres</p>
+                      </div>
                     )}
-                    <p className="whitespace-pre-wrap">
-                      {newTemplate.bodyText || <span className="text-muted-foreground italic">Corpo da mensagem...</span>}
+
+                    {['image', 'video', 'document'].includes(newTemplate.headerType) && (
+                      <div className="space-y-1 pt-1">
+                        <Label className="text-xs flex items-center gap-1">
+                          {newTemplate.headerType === 'image' && <ImageIcon className="h-3.5 w-3.5" />}
+                          {newTemplate.headerType === 'video' && <Video className="h-3.5 w-3.5" />}
+                          {newTemplate.headerType === 'document' && <FileIcon className="h-3.5 w-3.5" />}
+                          URL {newTemplate.headerType === 'image' ? 'da Imagem' : newTemplate.headerType === 'video' ? 'do Vídeo' : 'do Documento'} do Cabeçalho
+                        </Label>
+                        <Input
+                          placeholder={`https://... (link público do ${newTemplate.headerType === 'image' ? 'arquivo JPG/PNG' : newTemplate.headerType === 'video' ? 'vídeo MP4' : 'PDF'})`}
+                          value={newTemplate.headerMediaUrl}
+                          onChange={(e) => setNewTemplate(prev => ({ ...prev, headerMediaUrl: e.target.value }))}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Cole uma URL pública. O arquivo será enviado à Meta como exemplo para aprovação.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Body */}
+                  <div className="space-y-2">
+                    <Label>Corpo da mensagem *</Label>
+                    <Textarea
+                      placeholder="Olá {{1}}! 👋&#10;Temos uma oferta especial para você.&#10;Clique abaixo para saber mais!"
+                      value={newTemplate.bodyText}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, bodyText: e.target.value }))}
+                      rows={5}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Use <code>{"{{1}}"}</code>, <code>{"{{2}}"}</code> para variáveis. {newTemplate.bodyText.length} caracteres.
                     </p>
-                    {newTemplate.footerText && (
-                      <p className="text-xs text-muted-foreground pt-1">{newTemplate.footerText}</p>
-                    )}
-                    {newTemplate.buttons.length > 0 && (
-                      <div className="pt-2 border-t mt-2 space-y-1">
-                        {newTemplate.buttons.map((b, i) => (
-                          <div key={i} className="text-center text-primary text-sm py-1 border-t first:border-t-0">
-                            {b.text || `Botão ${i + 1}`}
-                          </div>
+
+                    {newTemplate.bodyExamples.length > 0 && (
+                      <div className="space-y-2 mt-2 p-3 rounded-md bg-muted/40 border">
+                        <p className="text-xs font-medium">Valores de exemplo (obrigatório pela Meta)</p>
+                        {newTemplate.bodyExamples.map((val, i) => (
+                          <Input
+                            key={i}
+                            placeholder={`Exemplo para {{${i + 1}}}`}
+                            value={val}
+                            onChange={(e) => {
+                              const next = [...newTemplate.bodyExamples];
+                              next[i] = e.target.value;
+                              setNewTemplate(prev => ({ ...prev, bodyExamples: next }));
+                            }}
+                          />
                         ))}
                       </div>
                     )}
                   </div>
-                </div>
-              )}
 
-              <div className="space-y-4">
-                {/* Nome e Categoria */}
-                <div className="grid grid-cols-2 gap-4">
+                  {/* Footer */}
                   <div className="space-y-2">
-                    <Label>Nome do Template *</Label>
+                    <Label>Rodapé (opcional)</Label>
                     <Input
-                      placeholder="meu_template"
-                      value={newTemplate.name}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, name: sanitizeName(e.target.value) }))}
-                    />
-                    <p className="text-xs text-muted-foreground">Apenas letras minúsculas, números e underscore</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Categoria *</Label>
-                    <Select
-                      value={newTemplate.category}
-                      onValueChange={(v) => setNewTemplate(prev => ({ ...prev, category: v as any }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="UTILITY">Utility (R$ 0,035)</SelectItem>
-                        <SelectItem value="MARKETING">Marketing (R$ 0,065)</SelectItem>
-                        <SelectItem value="AUTHENTICATION">Authentication (R$ 0,045)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {/* Idioma */}
-                <div className="space-y-2">
-                  <Label>Idioma</Label>
-                  <Select
-                    value={newTemplate.language}
-                    onValueChange={(v) => setNewTemplate(prev => ({ ...prev, language: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pt_BR">Português (Brasil)</SelectItem>
-                      <SelectItem value="en_US">English (US)</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Header */}
-                <div className="space-y-2">
-                  <Label>Cabeçalho (Header)</Label>
-                  <Select
-                    value={newTemplate.headerType}
-                    onValueChange={(v) => setNewTemplate(prev => ({ ...prev, headerType: v as any }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      <SelectItem value="text">Texto</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {newTemplate.headerType === 'text' && (
-                    <Input
-                      placeholder="Texto do cabeçalho (até 60 caracteres)"
+                      placeholder="Ex: Para cancelar, responda SAIR"
                       maxLength={60}
-                      value={newTemplate.headerText}
-                      onChange={(e) => setNewTemplate(prev => ({ ...prev, headerText: e.target.value }))}
+                      value={newTemplate.footerText}
+                      onChange={(e) => setNewTemplate(prev => ({ ...prev, footerText: e.target.value }))}
                     />
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Cabeçalhos com mídia (imagem/vídeo/documento) exigem upload prévio na Meta — em breve.
-                  </p>
-                </div>
-
-                {/* Body */}
-                <div className="space-y-2">
-                  <Label>Corpo da Mensagem *</Label>
-                  <Textarea
-                    placeholder="Olá {{1}}, sua consulta está agendada para {{2}}."
-                    value={newTemplate.bodyText}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, bodyText: e.target.value }))}
-                    rows={4}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Use {"{{1}}"}, {"{{2}}"}, etc. para variáveis dinâmicas
-                  </p>
-
-                  {newTemplate.bodyExamples.length > 0 && (
-                    <div className="space-y-2 mt-2 p-3 rounded-md bg-muted/40 border">
-                      <p className="text-xs font-medium">Valores de exemplo (obrigatório pela Meta)</p>
-                      {newTemplate.bodyExamples.map((val, i) => (
-                        <Input
-                          key={i}
-                          placeholder={`Exemplo para {{${i + 1}}}`}
-                          value={val}
-                          onChange={(e) => {
-                            const next = [...newTemplate.bodyExamples];
-                            next[i] = e.target.value;
-                            setNewTemplate(prev => ({ ...prev, bodyExamples: next }));
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="space-y-2">
-                  <Label>Rodapé (Footer)</Label>
-                  <Input
-                    placeholder="Texto do rodapé (opcional)"
-                    value={newTemplate.footerText}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, footerText: e.target.value }))}
-                  />
-                </div>
-
-                {/* Buttons */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Botões (máx. 3)</Label>
-                    {newTemplate.buttons.length < 3 && (
-                      <Button type="button" variant="outline" size="sm" onClick={addButton}>
-                        <Plus className="h-4 w-4 mr-1" /> Adicionar Botão
-                      </Button>
-                    )}
                   </div>
-                  {newTemplate.buttons.map((btn, index) => (
-                    <div key={index} className="flex gap-2 items-start border rounded-lg p-3">
-                      <Select
-                        value={btn.type}
-                        onValueChange={(v) => updateButton(index, 'type', v)}
-                      >
-                        <SelectTrigger className="w-[150px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="QUICK_REPLY">Resposta Rápida</SelectItem>
-                          <SelectItem value="URL">Link URL</SelectItem>
-                          <SelectItem value="PHONE_NUMBER">Telefone</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input
-                        placeholder="Texto do botão"
-                        value={btn.text}
-                        onChange={(e) => updateButton(index, 'text', e.target.value)}
-                        className="flex-1"
-                      />
-                      {btn.type === 'URL' && (
-                        <Input
-                          placeholder="https://..."
-                          value={btn.url || ''}
-                          onChange={(e) => updateButton(index, 'url', e.target.value)}
-                          className="flex-1"
-                        />
-                      )}
-                      {btn.type === 'PHONE_NUMBER' && (
-                        <Input
-                          placeholder="+5511999999999"
-                          value={btn.phone || ''}
-                          onChange={(e) => updateButton(index, 'phone', e.target.value)}
-                          className="flex-1"
-                        />
-                      )}
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeButton(index)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
+
+                  {/* Botões com chips de adição */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <Label>Botões (opcional, máx. 3)</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button" size="sm" variant="outline"
+                          disabled={newTemplate.buttons.length >= 3}
+                          onClick={() => setNewTemplate(prev => ({ ...prev, buttons: [...prev.buttons, { type: 'QUICK_REPLY', text: '' }] }))}
+                          className="gap-1 bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/30"
+                        >
+                          <Reply className="h-3.5 w-3.5" /> + Resposta Rápida
+                        </Button>
+                        <Button
+                          type="button" size="sm" variant="outline"
+                          disabled={newTemplate.buttons.length >= 3}
+                          onClick={() => setNewTemplate(prev => ({ ...prev, buttons: [...prev.buttons, { type: 'URL', text: '', url: '' }] }))}
+                          className="gap-1 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                        >
+                          <LinkIcon className="h-3.5 w-3.5" /> Link
+                        </Button>
+                        <Button
+                          type="button" size="sm" variant="outline"
+                          disabled={newTemplate.buttons.length >= 3}
+                          onClick={() => setNewTemplate(prev => ({ ...prev, buttons: [...prev.buttons, { type: 'PHONE_NUMBER', text: '', phone: '' }] }))}
+                          className="gap-1 bg-green-500/10 hover:bg-green-500/20 border-green-500/30"
+                        >
+                          <Phone className="h-3.5 w-3.5" /> Telefone
+                        </Button>
+                      </div>
                     </div>
-                  ))}
+                    {newTemplate.buttons.length === 0 && (
+                      <p className="text-xs text-center text-muted-foreground py-3 border border-dashed rounded-md">
+                        Nenhum botão adicionado. Clique em + para adicionar.
+                      </p>
+                    )}
+                    {newTemplate.buttons.map((btn, index) => (
+                      <div key={index} className="flex gap-2 items-center border rounded-lg p-2">
+                        <span className="text-xs px-2 py-1 rounded bg-muted shrink-0">
+                          {btn.type === 'QUICK_REPLY' ? 'Resposta' : btn.type === 'URL' ? 'Link' : 'Telefone'}
+                        </span>
+                        <Input
+                          placeholder="Texto do botão"
+                          value={btn.text}
+                          onChange={(e) => updateButton(index, 'text', e.target.value)}
+                          className="flex-1"
+                        />
+                        {btn.type === 'URL' && (
+                          <Input
+                            placeholder="https://..."
+                            value={btn.url || ''}
+                            onChange={(e) => updateButton(index, 'url', e.target.value)}
+                            className="flex-1"
+                          />
+                        )}
+                        {btn.type === 'PHONE_NUMBER' && (
+                          <Input
+                            placeholder="+5511999999999"
+                            value={btn.phone || ''}
+                            onChange={(e) => updateButton(index, 'phone', e.target.value)}
+                            className="flex-1"
+                          />
+                        )}
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeButton(index)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Coluna direita: Pré-visualização */}
+                <div className="lg:sticky lg:top-0 h-fit">
+                  <p className="text-xs font-medium mb-2 flex items-center gap-1">
+                    <Eye className="h-3.5 w-3.5 text-primary" /> Pré-visualização WhatsApp
+                  </p>
+                  <div className="rounded-lg bg-[#e5ddd5] dark:bg-muted/30 p-4 min-h-[420px]">
+                    <div className="ml-auto max-w-[260px] bg-white dark:bg-card rounded-lg p-2 shadow-sm">
+                      {newTemplate.headerType === 'text' && newTemplate.headerText && (
+                        <p className="font-semibold text-sm mb-1 px-1">{newTemplate.headerText}</p>
+                      )}
+                      {newTemplate.headerType === 'image' && (
+                        <div className="aspect-video bg-blue-50 dark:bg-blue-950/30 rounded mb-2 flex items-center justify-center text-blue-500 text-xs gap-1">
+                          {newTemplate.headerMediaUrl ? (
+                            <img src={newTemplate.headerMediaUrl} alt="" className="w-full h-full object-cover rounded" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                          ) : (
+                            <><ImageIcon className="h-4 w-4" /> Imagem (cole a URL)</>
+                          )}
+                        </div>
+                      )}
+                      {newTemplate.headerType === 'video' && (
+                        <div className="aspect-video bg-purple-50 dark:bg-purple-950/30 rounded mb-2 flex items-center justify-center text-purple-500 text-xs gap-1">
+                          <Video className="h-4 w-4" /> {newTemplate.headerMediaUrl ? 'Vídeo' : 'Vídeo (cole a URL)'}
+                        </div>
+                      )}
+                      {newTemplate.headerType === 'document' && (
+                        <div className="bg-gray-100 dark:bg-muted rounded mb-2 p-3 flex items-center gap-2 text-xs">
+                          <FileIcon className="h-5 w-5 text-red-500" />
+                          <span className="truncate">{newTemplate.headerMediaUrl ? 'documento.pdf' : 'Documento (cole a URL)'}</span>
+                        </div>
+                      )}
+                      <p className="text-sm whitespace-pre-wrap px-1 text-gray-800 dark:text-foreground">
+                        {newTemplate.bodyText || <span className="text-muted-foreground italic">Corpo da mensagem aparecerá aqui...</span>}
+                      </p>
+                      {newTemplate.footerText && (
+                        <p className="text-[11px] text-muted-foreground pt-1 px-1">{newTemplate.footerText}</p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground text-right pt-1">agora ✓✓</p>
+                      {newTemplate.buttons.length > 0 && (
+                        <div className="pt-2 mt-2 border-t space-y-0.5">
+                          {newTemplate.buttons.map((b, i) => (
+                            <div key={i} className="text-center text-primary text-xs py-1.5">
+                              {b.text || `Botão ${i + 1}`}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -640,9 +749,9 @@ export function WhatsAppTemplatesManager({ companyId }: TemplatesManagerProps) {
                 <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleCreateTemplate} disabled={creating}>
-                  {creating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Criar Template
+                <Button onClick={handleCreateTemplate} disabled={creating} className="gap-2">
+                  {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  Criar e Enviar para Aprovação
                 </Button>
               </DialogFooter>
             </DialogContent>
