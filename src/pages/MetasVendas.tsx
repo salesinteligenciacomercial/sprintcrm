@@ -344,9 +344,14 @@ function Maquina() {
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <button onClick={() => setStep(1)} style={{ background: "none", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "11px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer", color: C.textSub, fontFamily: "inherit" }}>← Voltar</button>
-              <button onClick={() => setStep(3)} style={{ background: "linear-gradient(135deg,#667EEA,#764BA2)", color: "#fff", border: "none", borderRadius: 12, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" }}>Próxima fase: Plano de Ação →</button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleSaveMeta} disabled={upsert.isPending} style={{ background: C.green, color: "#fff", border: "none", borderRadius: 12, padding: "11px 24px", fontWeight: 800, fontSize: 14, cursor: upsert.isPending ? "not-allowed" : "pointer", opacity: upsert.isPending ? .7 : 1, fontFamily: "inherit" }}>
+                  {upsert.isPending ? "Salvando..." : "💾 Salvar meta"}
+                </button>
+                <button onClick={async () => { await handleSaveMeta(); setStep(3); }} disabled={upsert.isPending} style={{ background: "linear-gradient(135deg,#667EEA,#764BA2)", color: "#fff", border: "none", borderRadius: 12, padding: "11px 24px", fontWeight: 700, fontSize: 14, cursor: upsert.isPending ? "not-allowed" : "pointer", opacity: upsert.isPending ? .7 : 1, fontFamily: "inherit" }}>Salvar e ir para Plano de Ação →</button>
+              </div>
             </div>
           </div>
         )}
