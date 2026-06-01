@@ -5951,7 +5951,7 @@ function Conversas() {
                 telefone_formatado: numeroNormalizado,
                 mensagem: messageContent,
                 origem: conversationSnapshot.channel === 'instagram' ? 'Instagram' : conversationSnapshot.channel === 'facebook' ? 'Messenger' : 'WhatsApp',
-                origem_api: conversationSnapshot.channel === 'instagram' || conversationSnapshot.channel === 'facebook' ? 'meta' : (conversationSnapshot.origemApi || undefined),
+                origem_api: conversationSnapshot.channel === 'instagram' || conversationSnapshot.channel === 'facebook' ? 'meta' : (apiOverrides[conversationSnapshot.id] || conversationSnapshot.origemApi || undefined),
                 status: 'Enviada',
                 tipo_mensagem: type,
                 nome_contato: conversationSnapshot.contactName?.replace(/^ig_/, '') || conversationSnapshot.contactName,
