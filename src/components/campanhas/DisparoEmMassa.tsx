@@ -666,7 +666,65 @@ export function DisparoEmMassa() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Data de entrada - De */}
+              <div className="space-y-2">
+                <Label>Entrou no CRM de</Label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+
+              {/* Data de entrada - Até */}
+              <div className="space-y-2">
+                <Label>Até</Label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+
+              {/* Presença de tags */}
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <Select value={tagPresence} onValueChange={setTagPresence}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Com e sem tags</SelectItem>
+                    <SelectItem value="with">Somente com tags</SelectItem>
+                    <SelectItem value="without">Somente sem tags</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Atalhos de período */}
+            {(dateFrom || dateTo) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  Filtrando leads que entraram no CRM
+                  {dateFrom ? ` de ${new Date(dateFrom + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                  {dateTo ? ` até ${new Date(dateTo + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2"
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                >
+                  Limpar datas
+                </Button>
+              </div>
+            )}
 
             {/* Estatísticas */}
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
