@@ -67,6 +67,9 @@ export function DisparoEmMassa() {
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedSegmentacao, setSelectedSegmentacao] = useState<string>("all");
   const [disparoFilter, setDisparoFilter] = useState<string>("all"); // all | never | older_30 | older_7
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [tagPresence, setTagPresence] = useState<string>("all"); // all | with | without
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableSegmentacoes, setAvailableSegmentacoes] = useState<string[]>([]);
