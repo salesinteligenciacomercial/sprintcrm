@@ -1228,6 +1228,9 @@ export function DisparoEmMassa() {
                 setSelectedStatus("all");
                 setSelectedTag("all");
                 setSelectedSegmentacao("all");
+                setDateFrom("");
+                setDateTo("");
+                setTagPresence("all");
                 setSelectedTemplate(null);
                 setTemplateVariables({});
               }}
