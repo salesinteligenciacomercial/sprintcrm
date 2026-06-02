@@ -371,9 +371,14 @@ export default function RotinaInteligente() {
 
       {/* Progress */}
       <div className="mb-6 bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <span className="text-sm font-semibold text-slate-300">Progresso de {current.label}</span>
-          <span className="text-sm font-black text-emerald-400">{progress}% · {doneTasks.length}/{tasks.length}</span>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-emerald-400 font-bold">✓ {doneTasks.length} concluídas</span>
+            <span className="text-amber-400 font-bold">⏱ {pendingTasks.length} pendentes</span>
+            <span className="text-rose-400 font-bold">⚠ {overdueTasks.length} atrasadas</span>
+            <span className="text-sm font-black text-cyan-300">{progress}%</span>
+          </div>
         </div>
         <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
           <div
