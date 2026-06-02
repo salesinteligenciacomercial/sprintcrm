@@ -371,8 +371,8 @@ export default function RotinaInteligente() {
         </div>
       </div>
 
-      {/* Progress */}
-      <div className="mb-6 bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
+      {/* Progress summary */}
+      <div className="mb-4 bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50">
         <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <span className="text-sm font-semibold text-slate-300">Progresso de {current.label}</span>
           <div className="flex items-center gap-3 text-xs">
@@ -390,8 +390,38 @@ export default function RotinaInteligente() {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="mb-4 flex justify-end">
+      {/* Filters + Action */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {([
+            { key: "todas",       label: "Todas",       count: tasks.length,         cls: "bg-slate-700 text-white" },
+            { key: "pendentes",   label: "Pendentes",   count: pendingTasks.length,  cls: "bg-amber-500 text-white" },
+            { key: "atrasadas",   label: "Atrasadas",   count: overdueTasks.length,  cls: "bg-rose-500 text-white" },
+            { key: "concluidas",  label: "Concluídas",  count: doneTasks.length,     cls: "bg-emerald-500 text-white" },
+          ] as const).map(f => {
+            const active = statusFilter === f.key;
+            return (
+              <button
+                key={f.key}
+                onClick={() => setStatusFilter(f.key)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${
+                  active ? `${f.cls} border-transparent shadow-lg` : "bg-slate-900/60 text-slate-300 border-slate-700 hover:bg-slate-800"
+                }`}
+              >
+                {f.label}
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? "bg-white/25" : "bg-slate-700"}`}>{f.count}</span>
+              </button>
+            );
+          })}
+          <select
+            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value as any)}
+          >
+            <option value="todas">Todas categorias</option>
+            {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </div>
         <button
           onClick={() => { if (showAddForm) { resetForm(); } else { setEditingId(null); setShowAddForm(true); } }}
           className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20"
@@ -448,27 +478,61 @@ export default function RotinaInteligente() {
             <button onClick={saveTask} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl">
               {editingId ? "Salvar Alterações" : "Adicionar"}
             </button>
+            {editingId && (
+              <button
+                onClick={() => { deleteTask(editingId); resetForm(); }}
+                className="px-4 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-sm font-bold py-2.5 rounded-xl border border-rose-500/40"
+              >Excluir</button>
+            )}
             <button onClick={resetForm} className="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2.5 rounded-xl">Cancelar</button>
           </div>
         </div>
       )}
 
-      {/* Task List */}
-      <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
-        <div className="p-4 flex flex-col gap-2">
-          {tasks.length === 0 ? (
-            <div className="text-center py-10 text-slate-500">
+      {/* Task Columns */}
+      {(() => {
+        const byCategory = (t: RotineTask) => categoryFilter === "todas" || t.category === categoryFilter;
+        const cols = [
+          { key: "atrasadas",  title: "Atrasadas",  emoji: "⚠",  ring: "border-rose-500/40 from-rose-950/40",     badge: "bg-rose-500/20 text-rose-300",       list: overdueTasks.filter(byCategory) },
+          { key: "pendentes",  title: "Pendentes",  emoji: "⏱",  ring: "border-amber-500/40 from-amber-950/40",   badge: "bg-amber-500/20 text-amber-300",     list: pendingTasks.filter(byCategory) },
+          { key: "concluidas", title: "Concluídas", emoji: "✓",  ring: "border-emerald-500/40 from-emerald-950/40", badge: "bg-emerald-500/20 text-emerald-300", list: doneTasks.filter(byCategory) },
+        ];
+        const visibleCols = statusFilter === "todas" ? cols : cols.filter(c => c.key === statusFilter);
+        const hasAny = visibleCols.some(c => c.list.length > 0);
+        if (!hasAny) {
+          return (
+            <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 text-center py-12 text-slate-500">
               <div className="text-4xl mb-2">📋</div>
-              <p className="text-sm font-medium">Nenhuma atividade definida para {current.label}.</p>
-              <p className="text-xs text-slate-600 mt-1">Clique em "Nova Atividade" para começar.</p>
+              <p className="text-sm font-medium">Nenhuma atividade nesta visualização.</p>
+              <p className="text-xs text-slate-600 mt-1">Ajuste o filtro ou clique em "Nova Atividade".</p>
             </div>
-          ) : (
-            tasks.slice().sort((a, b) => a.time.localeCompare(b.time)).map(task => (
-              <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} onEdit={startEdit} />
-            ))
-          )}
-        </div>
-      </div>
+          );
+        }
+        return (
+          <div className={`grid gap-4 ${visibleCols.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"}`}>
+            {visibleCols.map(col => (
+              <div key={col.key} className={`bg-gradient-to-b ${col.ring} to-slate-900/40 rounded-2xl border overflow-hidden flex flex-col`}>
+                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-700/40">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">{col.emoji}</span>
+                    <span className="text-sm font-bold text-white">{col.title}</span>
+                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>{col.list.length}</span>
+                </div>
+                <div className="p-3 flex flex-col gap-2 min-h-[120px]">
+                  {col.list.length === 0 ? (
+                    <div className="text-center text-xs text-slate-600 py-6">Nenhuma atividade</div>
+                  ) : (
+                    col.list.slice().sort((a, b) => a.time.localeCompare(b.time)).map(task => (
+                      <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} onEdit={startEdit} />
+                    ))
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
 
       {/* Assign Dialog */}
