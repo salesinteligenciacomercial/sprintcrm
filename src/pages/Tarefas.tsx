@@ -1648,11 +1648,28 @@ export default function Tarefas() {
     const totalTimeSpent = 0; // Simplificado - campo tempo_gasto não existe
     const avgTimePerTask = 0; // Simplificado
 
+    // Vencem hoje (entre hoje 00:00 e amanhã 00:00) e não concluídas
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dueTodayTasks = tasksInBoard.filter(t => {
+      if (!t.due_date) return false;
+      const d = new Date(t.due_date);
+      return d >= today && d < tomorrow && !completedTasks.some(ct => ct.id === t.id);
+    });
+    // Em progresso = não concluídas e não vencidas
+    const inProgressTasks = tasksInBoard.filter(t =>
+      !completedTasks.some(ct => ct.id === t.id) &&
+      !overdueTasks.some(ot => ot.id === t.id)
+    );
+
     return {
       totalTasks: tasksInBoard.length,
       completedTasks: completedTasks.length,
       overdueTasks: overdueTasks.length,
       todayCompleted: todayCompleted.length,
+      dueToday: dueTodayTasks.length,
+      inProgress: inProgressTasks.length,
+      overdueList: overdueTasks,
       totalTimeSpent,
       avgTimePerTask,
       completionRate: tasksInBoard.length > 0 ? completedTasks.length / tasksInBoard.length * 100 : 0
