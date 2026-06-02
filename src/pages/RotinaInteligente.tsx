@@ -170,14 +170,14 @@ function TaskItem({ task, onToggle, onDelete, onEdit }: {
       <span className={`hidden sm:inline text-[10px] font-semibold px-2 py-0.5 rounded-full border ${pri.badge} mt-1`}>{pri.label}</span>
       <button
         onClick={(e) => { e.stopPropagation(); onEdit(task); }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-emerald-400 p-1 mt-0.5"
-        title="Editar"
+        className="text-slate-400 hover:text-emerald-400 p-1.5 mt-0.5 rounded-lg hover:bg-slate-700/50 transition-all"
+        title="Editar atividade"
       ><Pencil className="w-3.5 h-3.5" /></button>
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(task.id); }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-rose-400 text-xs p-1 mt-0.5"
-        title="Excluir"
-      >✕</button>
+        className="text-slate-500 hover:text-rose-400 p-1.5 mt-0.5 rounded-lg hover:bg-slate-700/50 transition-all"
+        title="Excluir atividade"
+      ><X className="w-3.5 h-3.5" /></button>
     </div>
   );
 }
