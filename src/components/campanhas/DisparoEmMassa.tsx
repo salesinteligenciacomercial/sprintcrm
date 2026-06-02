@@ -52,6 +52,7 @@ interface Lead {
   last_disparo_at: string | null;
   last_disparo_campaign: string | null;
   disparo_count: number | null;
+  created_at: string | null;
 }
 
 export function DisparoEmMassa() {
