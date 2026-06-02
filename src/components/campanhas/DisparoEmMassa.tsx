@@ -293,6 +293,29 @@ export function DisparoEmMassa() {
       });
     }
 
+    // Filtro por data de entrada no CRM (created_at)
+    if (dateFrom) {
+      const fromTs = new Date(dateFrom + "T00:00:00").getTime();
+      filtered = filtered.filter((lead) => {
+        if (!lead.created_at) return false;
+        return new Date(lead.created_at).getTime() >= fromTs;
+      });
+    }
+    if (dateTo) {
+      const toTs = new Date(dateTo + "T23:59:59").getTime();
+      filtered = filtered.filter((lead) => {
+        if (!lead.created_at) return false;
+        return new Date(lead.created_at).getTime() <= toTs;
+      });
+    }
+
+    // Filtro por presença de tags
+    if (tagPresence === "with") {
+      filtered = filtered.filter((lead) => Array.isArray(lead.tags) && lead.tags.length > 0);
+    } else if (tagPresence === "without") {
+      filtered = filtered.filter((lead) => !lead.tags || lead.tags.length === 0);
+    }
+
     setFilteredLeads(filtered);
   };
 
