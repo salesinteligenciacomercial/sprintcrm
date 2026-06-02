@@ -99,6 +99,9 @@ export function DisparoEmMassa() {
   useEffect(() => {
     filterLeads();
   }, [leads, searchTerm, selectedStatus, selectedTag, selectedSegmentacao, disparoFilter, dateFrom, dateTo, tagPresence]);
+
+  // Check for active campaigns on mount
+  useEffect(() => {
     if (!companyId) return;
     const checkActive = async () => {
       const { data } = await supabase
