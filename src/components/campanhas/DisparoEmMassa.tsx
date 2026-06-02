@@ -31,7 +31,8 @@ import {
   Clock,
   Pause,
   LayoutTemplate,
-  StopCircle
+  StopCircle,
+  Calendar
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ interface Lead {
   last_disparo_at: string | null;
   last_disparo_campaign: string | null;
   disparo_count: number | null;
+  created_at: string | null;
 }
 
 export function DisparoEmMassa() {
@@ -66,6 +68,9 @@ export function DisparoEmMassa() {
   const [selectedTag, setSelectedTag] = useState<string>("all");
   const [selectedSegmentacao, setSelectedSegmentacao] = useState<string>("all");
   const [disparoFilter, setDisparoFilter] = useState<string>("all"); // all | never | older_30 | older_7
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
+  const [tagPresence, setTagPresence] = useState<string>("all"); // all | with | without
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableSegmentacoes, setAvailableSegmentacoes] = useState<string[]>([]);
@@ -94,7 +99,7 @@ export function DisparoEmMassa() {
   // Filtrar leads quando filtros mudarem
   useEffect(() => {
     filterLeads();
-  }, [leads, searchTerm, selectedStatus, selectedTag, selectedSegmentacao, disparoFilter]);
+  }, [leads, searchTerm, selectedStatus, selectedTag, selectedSegmentacao, disparoFilter, dateFrom, dateTo, tagPresence]);
 
   // Check for active campaigns on mount
   useEffect(() => {
@@ -197,7 +202,7 @@ export function DisparoEmMassa() {
 
         const { data: batch, error } = await supabase
           .from("leads")
-          .select("id, name, telefone, phone, email, status, tags, segmentacao, last_disparo_at, last_disparo_campaign, disparo_count")
+          .select("id, name, telefone, phone, email, status, tags, segmentacao, last_disparo_at, last_disparo_campaign, disparo_count, created_at")
           .eq("company_id", companyId)
           .or("telefone.not.is.null,phone.not.is.null")
           .range(from, to);
@@ -287,6 +292,29 @@ export function DisparoEmMassa() {
         if (disparoFilter === "older_30") return !last || (now - last) > 30 * 86400000;
         return true;
       });
+    }
+
+    // Filtro por data de entrada no CRM (created_at)
+    if (dateFrom) {
+      const fromTs = new Date(dateFrom + "T00:00:00").getTime();
+      filtered = filtered.filter((lead) => {
+        if (!lead.created_at) return false;
+        return new Date(lead.created_at).getTime() >= fromTs;
+      });
+    }
+    if (dateTo) {
+      const toTs = new Date(dateTo + "T23:59:59").getTime();
+      filtered = filtered.filter((lead) => {
+        if (!lead.created_at) return false;
+        return new Date(lead.created_at).getTime() <= toTs;
+      });
+    }
+
+    // Filtro por presença de tags
+    if (tagPresence === "with") {
+      filtered = filtered.filter((lead) => Array.isArray(lead.tags) && lead.tags.length > 0);
+    } else if (tagPresence === "without") {
+      filtered = filtered.filter((lead) => !lead.tags || lead.tags.length === 0);
     }
 
     setFilteredLeads(filtered);
@@ -639,7 +667,65 @@ export function DisparoEmMassa() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Data de entrada - De */}
+              <div className="space-y-2">
+                <Label>Entrou no CRM de</Label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                />
+              </div>
+
+              {/* Data de entrada - Até */}
+              <div className="space-y-2">
+                <Label>Até</Label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                />
+              </div>
+
+              {/* Presença de tags */}
+              <div className="space-y-2">
+                <Label>Tags</Label>
+                <Select value={tagPresence} onValueChange={setTagPresence}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Com e sem tags</SelectItem>
+                    <SelectItem value="with">Somente com tags</SelectItem>
+                    <SelectItem value="without">Somente sem tags</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {/* Atalhos de período */}
+            {(dateFrom || dateTo) && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  Filtrando leads que entraram no CRM
+                  {dateFrom ? ` de ${new Date(dateFrom + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                  {dateTo ? ` até ${new Date(dateTo + "T00:00:00").toLocaleDateString("pt-BR")}` : ""}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2"
+                  onClick={() => {
+                    setDateFrom("");
+                    setDateTo("");
+                  }}
+                >
+                  Limpar datas
+                </Button>
+              </div>
+            )}
 
             {/* Estatísticas */}
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -1142,6 +1228,9 @@ export function DisparoEmMassa() {
                 setSelectedStatus("all");
                 setSelectedTag("all");
                 setSelectedSegmentacao("all");
+                setDateFrom("");
+                setDateTo("");
+                setTagPresence("all");
                 setSelectedTemplate(null);
                 setTemplateVariables({});
               }}
