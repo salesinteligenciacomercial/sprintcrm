@@ -287,6 +287,32 @@ export default function RotinaInteligente() {
         </button>
       </div>
 
+      {/* Dashboard Summary */}
+      <div className="mb-6 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
+        {[
+          { label: "Metas do Dia",      value: `${goalCounts.daily.done}/${goalCounts.daily.total}`,     Icon: Target,         color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+          { label: "Metas da Semana",   value: `${goalCounts.weekly.done}/${goalCounts.weekly.total}`,   Icon: Target,         color: "text-sky-400",     bg: "bg-sky-500/10",     border: "border-sky-500/30" },
+          { label: "Metas do Mês",      value: `${goalCounts.monthly.done}/${goalCounts.monthly.total}`, Icon: Target,         color: "text-violet-400",  bg: "bg-violet-500/10",  border: "border-violet-500/30" },
+          { label: "Concluídas",        value: String(doneTasks.length),                                  Icon: CheckCircle2,   color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/30" },
+          { label: "Pendentes",         value: String(pendingTasks.length),                               Icon: Clock,          color: "text-amber-400",   bg: "bg-amber-500/10",   border: "border-amber-500/30" },
+          { label: "Atrasadas",         value: String(overdueTasks.length),                               Icon: AlertTriangle,  color: "text-rose-400",    bg: "bg-rose-500/10",    border: "border-rose-500/30" },
+          { label: "Taxa Cumprimento",  value: `${progress}%`,                                            Icon: Percent,        color: "text-cyan-400",    bg: "bg-cyan-500/10",    border: "border-cyan-500/30" },
+        ].map((c) => {
+          const I = c.Icon;
+          return (
+            <div key={c.label} className={`rounded-2xl border ${c.border} ${c.bg} p-3 flex items-center gap-3`}>
+              <div className={`w-10 h-10 rounded-xl bg-slate-900/60 flex items-center justify-center ${c.color} flex-shrink-0`}>
+                <I className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold truncate">{c.label}</div>
+                <div className="text-lg font-black text-white truncate">{c.value}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* My Goals */}
       <MyGoalsPanel />
 
