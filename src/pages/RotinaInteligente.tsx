@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { Phone, Briefcase, MessageSquare, CalendarDays, Trophy, Users, Check, X, Brain, Pencil } from "lucide-react";
+import { Phone, Briefcase, MessageSquare, CalendarDays, Trophy, Users, Check, X, Brain, Pencil, Target, CheckCircle2, Clock, AlertTriangle, Percent } from "lucide-react";
 import { useTeamMembers } from "@/hooks/useTeamMembers";
 import MyGoalsPanel from "@/components/rotina/MyGoalsPanel";
+import { useMyGoals } from "@/hooks/useMyGoals";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type ProfileKey = "sdr" | "vendedor_close" | "atendente" | "secretaria" | "gerente";
