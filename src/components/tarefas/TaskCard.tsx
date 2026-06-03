@@ -1039,35 +1039,47 @@ export const TaskCard = React.memo(function TaskCard({ task, onDelete, onUpdate,
     };
   }, [deadlineInfo, checklistProgress.isComplete]);
 
+  const priorityHex: Record<string, string> = {
+    urgente: '#f05252',
+    alta: '#f5a623',
+    media: '#4d8ef5',
+    baixa: '#7f8ea8',
+  };
+  const stripColor = priorityHex[task.priority] || '#7f8ea8';
+
   return (
     <Card
       ref={setNodeRef}
       style={{
         ...style,
-        backgroundColor: urgencyStyle.backgroundColor,
-        borderLeftWidth: urgencyStyle.borderColor ? '4px' : undefined,
-        borderLeftColor: urgencyStyle.borderColor,
+        backgroundColor: '#161c2a',
+        borderLeftWidth: urgencyStyle.urgencyLevel === 'overdue' ? '3px' : undefined,
+        borderLeftColor: urgencyStyle.urgencyLevel === 'overdue' ? '#f05252' : undefined,
       }}
       data-task-id={task.id}
       {...attributes}
       {...listeners}
-      className={`group relative mb-3 border-0 shadow-card hover:shadow-lg transition-all duration-300 overflow-hidden cursor-grab active:cursor-grabbing ${
-        checklistProgress.isComplete 
-          ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-950/30 border-green-300 dark:border-green-700' 
-          : urgencyStyle.urgencyLevel === 'overdue'
-            ? 'ring-2 ring-red-500/50' 
-            : urgencyStyle.urgencyLevel === 'today'
-              ? 'ring-1 ring-red-400/50'
-              : urgencyStyle.urgencyLevel === 'tomorrow'
-                ? 'ring-1 ring-orange-400/50'
-                : ''
+      className={`group relative mb-3 border border-white/5 text-[#e4eaf5] shadow-lg hover:shadow-xl hover:border-white/10 transition-all duration-200 overflow-hidden cursor-grab active:cursor-grabbing ${
+        checklistProgress.isComplete ? 'opacity-60 [&_h3]:line-through [&_h4]:line-through' : ''
       } ${!isOwnTask ? 'opacity-40 saturate-50' : ''}`}
     >
-      {/* ✅ NOVO: Indicador visual de tarefa concluída */}
-      {checklistProgress.isComplete && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-green-400 to-green-600" />
+      {/* Faixa colorida de prioridade no topo */}
+      <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: stripColor }} />
+
+      {/* Barra de progresso do checklist visível */}
+      {(localChecklist?.length || 0) > 0 && (
+        <div className="absolute top-[3px] left-0 right-0 h-[2px] bg-white/5">
+          <div
+            className="h-full transition-all"
+            style={{
+              width: `${checklistProgress.percentage}%`,
+              background: checklistProgress.isComplete ? '#2dce7a' : stripColor,
+            }}
+          />
+        </div>
       )}
-      <div className="absolute inset-0 bg-gradient-card opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-gradient-card opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
       
       <CardHeader className="relative pb-3">
         <div className="flex items-start justify-between gap-2">
