@@ -47,6 +47,7 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { WebphoneProvider } from "./components/discador/WebphoneProvider";
 import NotFound from "./pages/NotFound";
 import AutomacaoDiagnostico from "./pages/AutomacaoDiagnostico";
+import EvolutionMonitor from "./pages/EvolutionMonitor";
 import ConfirmarCompromisso from "./pages/ConfirmarCompromisso";
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from "./components/ui/button";
