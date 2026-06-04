@@ -1279,7 +1279,60 @@ function switchTab(id, el) {
   const panel = document.getElementById('tab-' + id);
   if (panel) panel.classList.add('active');
   if (el) el.classList.add('active');
+
+  // Bridge: certas abas abrem módulos React reais (mantendo visual fixo)
+  const overlayTabs = {
+    fluxos: { type: 'overlay', module: 'fluxos' },
+    base: { type: 'overlay', module: 'base' },
+    diagnostico: { type: 'navigate', path: '/automacoes/diagnostico' },
+  };
+  if (overlayTabs[id]) post(overlayTabs[id]);
 }
+
+function post(msg) {
+  try { window.parent.postMessage({ __growos: true, ...msg }, '*'); } catch (e) {}
+}
+
+// Delegação global por texto de botão
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('button, .cp-cta, .sp-btn-prim, .sp-btn-sec, .sp-cta-sm');
+  if (!btn) return;
+  const label = (btn.innerText || '').trim().toLowerCase();
+  const map = [
+    { match: ['novo fluxo', 'abrir no builder', 'simular fluxo', 'templates'], action: { type: 'overlay', module: 'fluxos' } },
+    { match: ['diagnosticar', 'diagnóstico ura', 'diagnostico ura'], action: { type: 'navigate', path: '/automacoes/diagnostico' } },
+    { match: ['base de conhecimento'], action: { type: 'overlay', module: 'base' } },
+    { match: ['logs'], action: { type: 'toast', message: 'Logs de execução em breve' } },
+    { match: ['configurar', 'configurar transferências', 'config global'], action: { type: 'toast', message: 'Painel de configuração em breve' } },
+    { match: ['novo agente', 'ativar agente'], action: { type: 'toast', message: 'Criação de agente em breve' } },
+    { match: ['ver métricas', 'ver metricas'], action: { type: 'navigate', path: '/analytics' } },
+    { match: ['nova campanha', 'confirmar e agendar disparo'], action: { type: 'toast', message: 'Campanhas em breve' } },
+    { match: ['conectar n8n', 'conectar', 'novo webhook'], action: { type: 'toast', message: 'Integrações em breve' } },
+    { match: ['ver site ao vivo', 'ver ao vivo', 'abrir'], action: { type: 'toast', message: 'Pré-visualização em breve' } },
+    { match: ['gerar com ia', 'salvar', 'preview'], action: { type: 'toast', message: 'Ação em breve' } },
+    { match: ['enviar arquivo', 'adicionar produto', 'adicionar faq', 'adicionar exemplo', 'adicionar primeiro exemplo'], action: { type: 'overlay', module: 'base' } },
+    { match: ['copiar link'], action: { type: 'copy-link' } },
+  ];
+  for (const m of map) {
+    if (m.match.some(t => label === t || label.endsWith(t) || label.includes(t))) {
+      e.preventDefault();
+      if (m.action.type === 'copy-link') {
+        try { navigator.clipboard.writeText(window.location.origin); } catch {}
+        post({ type: 'toast', message: 'Link copiado!' });
+      } else {
+        post(m.action);
+      }
+      return;
+    }
+  }
+});
+
+// Toggle visual já funciona via classList; ecoa mudança
+document.addEventListener('click', function (e) {
+  const t = e.target.closest('.toggle');
+  if (!t) return;
+  post({ type: 'toast', message: t.classList.contains('on') ? 'Ativado' : 'Desativado' });
+});
 </script>
 </body>
 </html>
