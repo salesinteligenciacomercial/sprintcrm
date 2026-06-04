@@ -41,20 +41,27 @@ async function fetchLatestWaWebVersion(): Promise<string | null> {
 }
 
 // ---------- EasyPanel API ----------
-async function easyPanelCall(path: string, body: unknown) {
-  const url = `${EASYPANEL_URL}/api/trpc/${path}`;
-  const r = await fetch(url, {
-    method: "POST",
+async function easyPanelCall(path: string, body: unknown, kind: "query" | "mutation" = "mutation") {
+  let url = `${EASYPANEL_URL}/api/trpc/${path}`;
+  const init: RequestInit = {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${EASYPANEL_TOKEN}`,
     },
-    body: JSON.stringify({ json: body }),
-  });
+  };
+  if (kind === "query") {
+    init.method = "GET";
+    url += `?input=${encodeURIComponent(JSON.stringify({ json: body }))}`;
+  } else {
+    init.method = "POST";
+    init.body = JSON.stringify({ json: body });
+  }
+  const r = await fetch(url, init);
   const text = await r.text();
   let data: any = null;
   try { data = JSON.parse(text); } catch { data = text; }
   if (!r.ok) throw new Error(`EasyPanel ${path} ${r.status}: ${text}`);
+  if (data?.error) throw new Error(`EasyPanel ${path}: ${JSON.stringify(data.error)}`);
   return data;
 }
 
