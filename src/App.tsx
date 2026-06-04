@@ -47,6 +47,7 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { WebphoneProvider } from "./components/discador/WebphoneProvider";
 import NotFound from "./pages/NotFound";
 import AutomacaoDiagnostico from "./pages/AutomacaoDiagnostico";
+import EvolutionMonitor from "./pages/EvolutionMonitor";
 import ConfirmarCompromisso from "./pages/ConfirmarCompromisso";
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { Button } from "./components/ui/button";
@@ -135,6 +136,7 @@ const App = () => (
               <Route path="master-billing" element={<Financeiro />} />
               <Route path="treinamento" element={<Treinamento />} />
               <Route path="automacoes/diagnostico" element={<AutomacaoDiagnostico />} />
+              <Route path="admin/evolution-monitor" element={<EvolutionMonitor />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
