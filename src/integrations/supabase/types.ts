@@ -3561,6 +3561,72 @@ export type Database = {
           },
         ]
       }
+      evolution_version_history: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          new_version: string | null
+          old_version: string | null
+          status_after: string | null
+          status_before: string | null
+          success: boolean
+          trigger: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          new_version?: string | null
+          old_version?: string | null
+          status_after?: string | null
+          status_before?: string | null
+          success?: boolean
+          trigger?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          new_version?: string | null
+          old_version?: string | null
+          status_after?: string | null
+          status_before?: string | null
+          success?: boolean
+          trigger?: string
+        }
+        Relationships: []
+      }
+      evolution_version_state: {
+        Row: {
+          current_version: string | null
+          id: string
+          last_check_at: string | null
+          last_restart_at: string | null
+          last_status: string | null
+          latest_available_version: string | null
+          updated_at: string
+        }
+        Insert: {
+          current_version?: string | null
+          id?: string
+          last_check_at?: string | null
+          last_restart_at?: string | null
+          last_status?: string | null
+          latest_available_version?: string | null
+          updated_at?: string
+        }
+        Update: {
+          current_version?: string | null
+          id?: string
+          last_check_at?: string | null
+          last_restart_at?: string | null
+          last_status?: string | null
+          latest_available_version?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       filas_atendimento: {
         Row: {
           ativa: boolean | null
