@@ -50,13 +50,15 @@ const editTaskSchema = z.object({
   title: z.string().trim().min(2, 'Título muito curto').max(200, 'Título muito longo').optional(),
   description: z.string().max(2000, 'Descrição muito longa').nullable().optional(),
   priority: z.enum(['baixa', 'media', 'alta', 'urgente']).optional(),
+  status: z.enum(['pendente', 'em_andamento', 'concluido', 'cancelado']).optional(),
+  column_id: z.string().uuid('ID de coluna inválido').nullable().optional(),
   due_date: z.string().datetime().nullable().optional(),
   assignee_id: z.string().uuid('ID de responsável inválido').nullable().optional(),
   responsaveis: z.array(z.string().uuid('ID de responsável inválido')).optional(),
   lead_id: z.string().uuid('ID de lead inválido').nullable().optional(),
   tags: z.array(z.string()).optional(),
   checklist: z.array(z.object({ id: z.string().optional(), text: z.string(), done: z.boolean() })).optional(),
-  comments: z.array(z.object({ id: z.string().optional(), text: z.string(), author_id: z.string().uuid().nullable().optional(), created_at: z.string().optional() })).optional(),
+  comments: z.array(z.object({ id: z.string().optional(), text: z.string(), author_id: z.string().uuid().nullable().optional(), author_name: z.string().optional(), attachments: z.array(z.object({ name: z.string(), url: z.string().url() })).optional(), created_at: z.string().optional() })).optional(),
   attachments: z.array(z.object({ name: z.string(), url: z.string().url() })).optional()
 });
 
