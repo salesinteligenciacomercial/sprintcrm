@@ -1353,33 +1353,32 @@ function switchPanelTab(el,tabId){
   });
 }
 
-// ─── CHECKLIST ────────────────────────────────────────────────────────────
+// ─── CHECKLIST / COMMENTS (substituídos pelo bloco Supabase abaixo) ──────
 function toggleCheck(el){
   const isDone=el.classList.toggle('done');
   const txt=el.nextElementSibling;
   if(txt){txt.classList.toggle('done',isDone)}
   if(isDone)el.innerHTML='<i class="ti ti-check" style="font-size:10px;color:#fff"></i>';
   else el.innerHTML='';
+  if (typeof window.persistChecklistFromDOM === 'function') window.persistChecklistFromDOM();
 }
 function addCheckItem(){
   const inp=document.getElementById('clInput');
   if(!inp||!inp.value.trim())return;
   const list=document.getElementById('checklistItems');
+  // Limpa placeholder "Nenhum item no checklist"
+  if (list && list.querySelector('div[style*="text-align:center"]')) list.innerHTML='';
   const div=document.createElement('div');
   div.className='cl-item';
-  div.innerHTML=`<div class="cl-check" onclick="toggleCheck(this)"></div><span class="cl-text">${inp.value}</span>`;
+  div.innerHTML=`<div class="cl-check" onclick="toggleCheck(this)"></div><span class="cl-text">${inp.value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`;
   list.appendChild(div);
   inp.value='';
+  if (typeof window.persistChecklistFromDOM === 'function') window.persistChecklistFromDOM();
 }
-
-// ─── COMMENTS ────────────────────────────────────────────────────────────
 function addComment(){
+  if (typeof window.persistNewComment === 'function') { window.persistNewComment(); return; }
   const inp=document.getElementById('commentInput');
   if(!inp||!inp.value.trim())return;
-  const item=document.createElement('div');
-  item.className='comment-item';
-  item.innerHTML=`<div class="comment-av">RC</div><div class="comment-content"><div><span class="comment-author">Rafael Costa</span><span class="comment-time">agora</span></div><div class="comment-text">${inp.value}</div></div>`;
-  inp.parentElement.insertAdjacentElement('beforebegin',item);
   inp.value='';
 }
 
