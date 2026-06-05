@@ -31,6 +31,13 @@ const Tarefas = () => {
 
     const onMsg = (ev: MessageEvent) => {
       if (ev.data?.type === "tarefas-ready") sendSession();
+      if (ev.data?.type === "tarefas-open-whatsapp") {
+        const { phone, leadId } = ev.data;
+        const params = new URLSearchParams();
+        if (phone) params.set("phone", String(phone));
+        if (leadId) params.set("lead", String(leadId));
+        window.location.href = `/conversas?${params.toString()}`;
+      }
     };
     window.addEventListener("message", onMsg);
 
