@@ -1947,6 +1947,107 @@ window.openPanel = (id) => {
   if (t) openTaskPanel(t);
 };
 
+// ── Persistência de checklist/comentários/ações do painel ─────────────────
+window.persistChecklistFromDOM = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  const items = Array.from(document.querySelectorAll('#checklistItems .cl-item')).map(el => ({
+    text: el.querySelector('.cl-text')?.textContent || '',
+    done: el.querySelector('.cl-check')?.classList.contains('done') || false,
+  })).filter(it => it.text);
+  t.checklist = items;
+  try {
+    await callApi('editar_tarefa', { task_id: t.id, checklist: items });
+  } catch (e) { console.error('[checklist save]', e); }
+};
+
+window._pendingCommentAttachment = null;
+window.onCommentFilePicked = async function (input) {
+  const file = input.files?.[0]; if (!file || !sb) return;
+  const preview = document.getElementById('commentAttachPreview');
+  if (preview) preview.innerHTML = `<i class="ti ti-loader"></i> Enviando ${file.name}...`;
+  try {
+    const path = `tarefas/${window._currentTask?.id || 'tmp'}/${Date.now()}-${file.name.replace(/[^\w.\-]/g,'_')}`;
+    const { error } = await sb.storage.from('lead-attachments').upload(path, file, { upsert: false });
+    if (error) throw error;
+    const { data: pub } = sb.storage.from('lead-attachments').getPublicUrl(path);
+    window._pendingCommentAttachment = { name: file.name, url: pub.publicUrl };
+    if (preview) preview.innerHTML = `<i class="ti ti-paperclip"></i> Anexado: <strong>${file.name}</strong> <span style="color:var(--red);cursor:pointer" onclick="window._pendingCommentAttachment=null;this.parentElement.innerHTML=''">remover</span>`;
+  } catch (e) {
+    console.error('[upload]', e);
+    if (preview) preview.innerHTML = `<span style="color:var(--red)">Erro ao enviar: ${e.message || e}</span>`;
+  }
+  input.value = '';
+};
+
+window.persistNewComment = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  const inp = document.getElementById('commentInput');
+  const text = (inp?.value || '').trim();
+  const att = window._pendingCommentAttachment;
+  if (!text && !att) return;
+  const c = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    text,
+    author_id: session?.user?.id || null,
+    author_name: window._currentUserName || 'Usuário',
+    attachments: att ? [att] : [],
+    created_at: new Date().toISOString(),
+  };
+  t.comments = Array.isArray(t.comments) ? [...t.comments, c] : [c];
+  if (inp) inp.value = '';
+  window._pendingCommentAttachment = null;
+  // re-render comments tab
+  openTaskPanel(t);
+  // switch back to comments tab
+  const tabs = document.querySelectorAll('.panel-tab');
+  if (tabs[2]) { tabs.forEach((x,i)=>x.classList.toggle('active', i===2));
+    ['pDetails','pChecklist','pComments','pActivity'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.style.display=i===2?'block':'none'; });
+  }
+  try { await callApi('editar_tarefa', { task_id: t.id, comments: t.comments }); }
+  catch (e) { console.error('[comment save]', e); }
+};
+
+window.concluirCurrentTask = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  if (!confirm('Marcar esta tarefa como concluída?')) return;
+  try {
+    await callApi('editar_tarefa', { task_id: t.id, status: 'concluido' });
+    t.status = 'concluido';
+    document.getElementById('sidePanel')?.classList.remove('open');
+    await loadAll();
+  } catch (e) { alert('Erro ao concluir: ' + (e.message || e)); }
+};
+
+window.duplicateCurrentTask = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  try {
+    await callApi('criar_tarefa', {
+      title: '[Cópia] ' + (t.title || ''),
+      description: t.description || '',
+      priority: t.priority || 'media',
+      board_id: t.board_id, column_id: t.column_id,
+      assignee_id: t.assignee_id || null, lead_id: t.lead_id || null,
+      due_date: t.due_date || null, tags: t.tags || [],
+      checklist: t.checklist || [],
+    });
+    await loadAll();
+  } catch (e) { alert('Erro ao duplicar: ' + (e.message || e)); }
+};
+
+window.openWhatsAppForCurrentTask = function () {
+  const t = window._currentTask; if (!t) return;
+  const lead = leads.find(l => l.id === t.lead_id) || t.lead;
+  const raw = lead?.phone || lead?.telefone || '';
+  const phone = String(raw).replace(/\D/g, '');
+  if (!phone) { alert('Lead sem telefone cadastrado.'); return; }
+  // Abre Conversas do CRM com o telefone (parent decide rota)
+  try {
+    window.parent.postMessage({ type: 'tarefas-open-whatsapp', phone, leadId: t.lead_id, leadName: lead?.name }, '*');
+  } catch {}
+  // Fallback: WhatsApp Web
+  window.open(`https://wa.me/${phone.startsWith('55') ? phone : '55' + phone}`, '_blank', 'noopener');
+};
+
 // ── Override das ações estáticas do mockup ─────────────────────────────────
 function populateModalSelects() {
   const colSel = $('newTaskColumn'); if (colSel) {
