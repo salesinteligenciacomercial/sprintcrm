@@ -1143,7 +1143,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       </div><!-- /panel-body -->
       <div class="panel-footer">
         <button class="btn btn-ghost" style="flex:1;justify-content:center" onclick="closePanel()"><i class="ti ti-x"></i>Fechar</button>
-        <button class="btn btn-primary" style="flex:1;justify-content:center"><i class="ti ti-circle-check"></i>Concluir</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="concluirCurrentTask()"><i class="ti ti-circle-check"></i>Concluir</button>
       </div>
     </div><!-- /side-panel -->
 
@@ -1353,33 +1353,32 @@ function switchPanelTab(el,tabId){
   });
 }
 
-// ─── CHECKLIST ────────────────────────────────────────────────────────────
+// ─── CHECKLIST / COMMENTS (substituídos pelo bloco Supabase abaixo) ──────
 function toggleCheck(el){
   const isDone=el.classList.toggle('done');
   const txt=el.nextElementSibling;
   if(txt){txt.classList.toggle('done',isDone)}
   if(isDone)el.innerHTML='<i class="ti ti-check" style="font-size:10px;color:#fff"></i>';
   else el.innerHTML='';
+  if (typeof window.persistChecklistFromDOM === 'function') window.persistChecklistFromDOM();
 }
 function addCheckItem(){
   const inp=document.getElementById('clInput');
   if(!inp||!inp.value.trim())return;
   const list=document.getElementById('checklistItems');
+  // Limpa placeholder "Nenhum item no checklist"
+  if (list && list.querySelector('div[style*="text-align:center"]')) list.innerHTML='';
   const div=document.createElement('div');
   div.className='cl-item';
-  div.innerHTML=`<div class="cl-check" onclick="toggleCheck(this)"></div><span class="cl-text">${inp.value}</span>`;
+  div.innerHTML=`<div class="cl-check" onclick="toggleCheck(this)"></div><span class="cl-text">${inp.value.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</span>`;
   list.appendChild(div);
   inp.value='';
+  if (typeof window.persistChecklistFromDOM === 'function') window.persistChecklistFromDOM();
 }
-
-// ─── COMMENTS ────────────────────────────────────────────────────────────
 function addComment(){
+  if (typeof window.persistNewComment === 'function') { window.persistNewComment(); return; }
   const inp=document.getElementById('commentInput');
   if(!inp||!inp.value.trim())return;
-  const item=document.createElement('div');
-  item.className='comment-item';
-  item.innerHTML=`<div class="comment-av">RC</div><div class="comment-content"><div><span class="comment-author">Rafael Costa</span><span class="comment-time">agora</span></div><div class="comment-text">${inp.value}</div></div>`;
-  inp.parentElement.insertAdjacentElement('beforebegin',item);
   inp.value='';
 }
 
@@ -1605,6 +1604,10 @@ window.addEventListener('message', async (ev) => {
     session = (await sb.auth.getSession()).data.session;
     const { data: ur } = await sb.from('user_roles').select('company_id').eq('user_id', session.user.id).maybeSingle();
     companyId = ur?.company_id;
+    try {
+      const { data: prof } = await sb.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
+      window._currentUserName = prof?.full_name || session.user.email || 'Usuário';
+    } catch { window._currentUserName = session.user.email || 'Usuário'; }
     await loadAll();
     subscribeRealtime();
   } catch (e) {
@@ -1628,7 +1631,7 @@ async function loadAll() {
   tasks = t.data || [];
   users = u.data || [];
   try {
-    const { data: ld } = await sb.from('leads').select('id, name').order('name').limit(200);
+    const { data: ld } = await sb.from('leads').select('id, name, phone, telefone').order('name').limit(200);
     leads = ld || [];
   } catch { leads = []; }
 
@@ -1864,9 +1867,9 @@ function openTaskPanel(t) {
       <div class="panel-section">
         <div class="panel-label">Ações rápidas</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-brand-whatsapp" style="color:var(--green)"></i>Conversa WhatsApp</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-bell"></i>Enviar lembrete</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-copy"></i>Duplicar</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="openWhatsAppForCurrentTask()"><i class="ti ti-brand-whatsapp" style="color:var(--green)"></i>Conversa WhatsApp</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="concluirCurrentTask()"><i class="ti ti-circle-check" style="color:var(--green)"></i>Concluir tarefa</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="duplicateCurrentTask()"><i class="ti ti-copy"></i>Duplicar</button>
         </div>
       </div>
     `;
@@ -1901,19 +1904,29 @@ function openTaskPanel(t) {
   if (cm) {
     const comments = Array.isArray(t.comments) ? t.comments : [];
     const list = comments.length
-      ? comments.map(c => `
+      ? comments.map(c => {
+          const att = Array.isArray(c.attachments) ? c.attachments : [];
+          const attHtml = att.map(a => `<a href="${escapeHtml(a.url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--blue);margin-top:4px;text-decoration:underline"><i class="ti ti-paperclip" style="font-size:12px"></i>${escapeHtml(a.name || 'anexo')}</a>`).join('<br>');
+          const when = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : 'agora';
+          return `
           <div class="comment-item">
             <div class="comment-av">${initials(c.author_name || 'U')}</div>
             <div class="comment-content">
-              <div><span class="comment-author">${escapeHtml(c.author_name || 'Usuário')}</span><span class="comment-time">${c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : ''}</span></div>
+              <div><span class="comment-author">${escapeHtml(c.author_name || 'Usuário')}</span><span class="comment-time">${when}</span></div>
               <div class="comment-text">${escapeHtml(c.text || '')}</div>
+              ${attHtml}
             </div>
-          </div>`).join('')
+          </div>`;
+        }).join('')
       : '<div style="font-size:12px;color:var(--text3);text-align:center;padding:20px">Nenhum comentário ainda</div>';
     cm.innerHTML = `
-      <div class="panel-section">${list}
-        <div style="display:flex;gap:6px;margin-top:12px">
+      <div class="panel-section" id="commentsList">${list}</div>
+      <div class="panel-section">
+        <div id="commentAttachPreview" style="font-size:11px;color:var(--text3);margin-bottom:6px"></div>
+        <div style="display:flex;gap:6px;align-items:center">
           <input type="text" class="field-input" id="commentInput" placeholder="Escreva um comentário..." style="font-size:12px;padding:6px 10px;flex:1" onkeydown="if(event.key==='Enter')addComment()">
+          <input type="file" id="commentFile" style="display:none" onchange="onCommentFilePicked(this)">
+          <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" title="Anexar arquivo" onclick="document.getElementById('commentFile').click()"><i class="ti ti-paperclip"></i></button>
           <button class="btn btn-primary" style="padding:6px 12px;font-size:12px" onclick="addComment()">Enviar</button>
         </div>
       </div>
@@ -1932,6 +1945,107 @@ function openTaskPanel(t) {
 window.openPanel = (id) => {
   const t = tasks.find(x => x.id === id);
   if (t) openTaskPanel(t);
+};
+
+// ── Persistência de checklist/comentários/ações do painel ─────────────────
+window.persistChecklistFromDOM = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  const items = Array.from(document.querySelectorAll('#checklistItems .cl-item')).map(el => ({
+    text: el.querySelector('.cl-text')?.textContent || '',
+    done: el.querySelector('.cl-check')?.classList.contains('done') || false,
+  })).filter(it => it.text);
+  t.checklist = items;
+  try {
+    await callApi('editar_tarefa', { task_id: t.id, checklist: items });
+  } catch (e) { console.error('[checklist save]', e); }
+};
+
+window._pendingCommentAttachment = null;
+window.onCommentFilePicked = async function (input) {
+  const file = input.files?.[0]; if (!file || !sb) return;
+  const preview = document.getElementById('commentAttachPreview');
+  if (preview) preview.innerHTML = `<i class="ti ti-loader"></i> Enviando ${file.name}...`;
+  try {
+    const path = `tarefas/${window._currentTask?.id || 'tmp'}/${Date.now()}-${file.name.replace(/[^\w.\-]/g,'_')}`;
+    const { error } = await sb.storage.from('lead-attachments').upload(path, file, { upsert: false });
+    if (error) throw error;
+    const { data: pub } = sb.storage.from('lead-attachments').getPublicUrl(path);
+    window._pendingCommentAttachment = { name: file.name, url: pub.publicUrl };
+    if (preview) preview.innerHTML = `<i class="ti ti-paperclip"></i> Anexado: <strong>${file.name}</strong> <span style="color:var(--red);cursor:pointer" onclick="window._pendingCommentAttachment=null;this.parentElement.innerHTML=''">remover</span>`;
+  } catch (e) {
+    console.error('[upload]', e);
+    if (preview) preview.innerHTML = `<span style="color:var(--red)">Erro ao enviar: ${e.message || e}</span>`;
+  }
+  input.value = '';
+};
+
+window.persistNewComment = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  const inp = document.getElementById('commentInput');
+  const text = (inp?.value || '').trim();
+  const att = window._pendingCommentAttachment;
+  if (!text && !att) return;
+  const c = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    text,
+    author_id: session?.user?.id || null,
+    author_name: window._currentUserName || 'Usuário',
+    attachments: att ? [att] : [],
+    created_at: new Date().toISOString(),
+  };
+  t.comments = Array.isArray(t.comments) ? [...t.comments, c] : [c];
+  if (inp) inp.value = '';
+  window._pendingCommentAttachment = null;
+  // re-render comments tab
+  openTaskPanel(t);
+  // switch back to comments tab
+  const tabs = document.querySelectorAll('.panel-tab');
+  if (tabs[2]) { tabs.forEach((x,i)=>x.classList.toggle('active', i===2));
+    ['pDetails','pChecklist','pComments','pActivity'].forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.style.display=i===2?'block':'none'; });
+  }
+  try { await callApi('editar_tarefa', { task_id: t.id, comments: t.comments }); }
+  catch (e) { console.error('[comment save]', e); }
+};
+
+window.concluirCurrentTask = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  if (!confirm('Marcar esta tarefa como concluída?')) return;
+  try {
+    await callApi('editar_tarefa', { task_id: t.id, status: 'concluido' });
+    t.status = 'concluido';
+    document.getElementById('sidePanel')?.classList.remove('open');
+    await loadAll();
+  } catch (e) { alert('Erro ao concluir: ' + (e.message || e)); }
+};
+
+window.duplicateCurrentTask = async function () {
+  const t = window._currentTask; if (!t || !sb) return;
+  try {
+    await callApi('criar_tarefa', {
+      title: '[Cópia] ' + (t.title || ''),
+      description: t.description || '',
+      priority: t.priority || 'media',
+      board_id: t.board_id, column_id: t.column_id,
+      assignee_id: t.assignee_id || null, lead_id: t.lead_id || null,
+      due_date: t.due_date || null, tags: t.tags || [],
+      checklist: t.checklist || [],
+    });
+    await loadAll();
+  } catch (e) { alert('Erro ao duplicar: ' + (e.message || e)); }
+};
+
+window.openWhatsAppForCurrentTask = function () {
+  const t = window._currentTask; if (!t) return;
+  const lead = leads.find(l => l.id === t.lead_id) || t.lead;
+  const raw = lead?.phone || lead?.telefone || '';
+  const phone = String(raw).replace(/\D/g, '');
+  if (!phone) { alert('Lead sem telefone cadastrado.'); return; }
+  // Abre Conversas do CRM com o telefone (parent decide rota)
+  try {
+    window.parent.postMessage({ type: 'tarefas-open-whatsapp', phone, leadId: t.lead_id, leadName: lead?.name }, '*');
+  } catch {}
+  // Fallback: WhatsApp Web
+  window.open(`https://wa.me/${phone.startsWith('55') ? phone : '55' + phone}`, '_blank', 'noopener');
 };
 
 // ── Override das ações estáticas do mockup ─────────────────────────────────
