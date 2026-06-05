@@ -523,6 +523,26 @@
     }
 
     document.getElementById('searchInput').addEventListener('input', e => applyFilters(e.target.value));
+
+    // Recebe contagens reais do CRM via postMessage do parent (Leads.tsx)
+    function fmtBR(n) { try { return new Intl.NumberFormat('pt-BR').format(n || 0); } catch { return String(n || 0); } }
+    function fmtMoneyShort(v) {
+      v = Number(v) || 0;
+      if (v >= 1_000_000) return 'R$ ' + (v / 1_000_000).toFixed(v >= 10_000_000 ? 0 : 1) + 'M';
+      if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(v >= 10_000 ? 0 : 1) + 'k';
+      return 'R$ ' + fmtBR(Math.round(v));
+    }
+    window.addEventListener('message', (ev) => {
+      const m = ev.data;
+      if (!m || m.type !== 'contatos-stats') return;
+      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setText('badgeCount', `${fmtBR(m.total)} carregados`);
+      setText('statTotal', fmtBR(m.total));
+      setText('statWon', fmtBR(m.won));
+      setText('statLost', fmtBR(m.lost));
+      setText('statValue', fmtMoneyShort(m.value));
+    });
+    try { window.parent.postMessage({ type: 'contatos-ready' }, '*'); } catch {}
   </script>
 </body>
 </html>
