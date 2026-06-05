@@ -1605,9 +1605,24 @@ window.addEventListener('message', async (ev) => {
     const { data: ur } = await sb.from('user_roles').select('company_id').eq('user_id', session.user.id).maybeSingle();
     companyId = ur?.company_id;
     try {
-      const { data: prof } = await sb.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
+      const { data: prof } = await sb.from('profiles').select('full_name,avatar_url').eq('id', session.user.id).maybeSingle();
       window._currentUserName = prof?.full_name || session.user.email || 'Usuário';
+      window._currentUserAvatar = prof?.avatar_url || null;
     } catch { window._currentUserName = session.user.email || 'Usuário'; }
+    try {
+      const name = window._currentUserName || 'Usuário';
+      const initials = name.trim().split(/\s+/).slice(0,2).map(s=>s[0]?.toUpperCase()||'').join('') || 'U';
+      const nameEl = document.getElementById('topbarUserName');
+      const avEl = document.getElementById('topbarUserAvatar');
+      if (nameEl) nameEl.textContent = name;
+      if (avEl) {
+        if (window._currentUserAvatar) {
+          avEl.innerHTML = `<img src="${window._currentUserAvatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover" alt="">`;
+        } else {
+          avEl.textContent = initials;
+        }
+      }
+    } catch {}
     await loadAll();
     subscribeRealtime();
   } catch (e) {
