@@ -1604,6 +1604,10 @@ window.addEventListener('message', async (ev) => {
     session = (await sb.auth.getSession()).data.session;
     const { data: ur } = await sb.from('user_roles').select('company_id').eq('user_id', session.user.id).maybeSingle();
     companyId = ur?.company_id;
+    try {
+      const { data: prof } = await sb.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
+      window._currentUserName = prof?.full_name || session.user.email || 'Usuário';
+    } catch { window._currentUserName = session.user.email || 'Usuário'; }
     await loadAll();
     subscribeRealtime();
   } catch (e) {
