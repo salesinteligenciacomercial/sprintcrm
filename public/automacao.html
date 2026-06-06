@@ -74,6 +74,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 .tab-item.active::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--blue);border-radius:0 3px 3px 0}
 .tab-item i{font-size:16px;width:18px;text-align:center;flex-shrink:0}
 .tab-badge{margin-left:auto;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:99px}
+.tab-group .tab-sub{display:none;flex-direction:column;gap:1px;margin:2px 0 4px;padding-left:6px;border-left:1px dashed var(--bg3);margin-left:14px}
+.tab-group.open .tab-sub{display:flex}
+.tab-group.open .tab-chev{transform:rotate(180deg)}
+.tab-subsection{font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;padding:8px 8px 3px}
+.tab-subitem{padding:7px 9px;font-size:12px}
+.tab-subitem i{font-size:14px;width:16px}
 .tb-red{background:var(--red-d);color:var(--red)}
 .tb-amber{background:var(--amber-d);color:var(--amber)}
 .tb-green{background:var(--green-d);color:var(--green)}
@@ -357,8 +363,46 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
   </div>
 
   <div class="tab-section">Canais</div>
-  <div class="tab-item" onclick="switchTab('whatsapp-oficial',this)">
-    <i class="ti ti-brand-whatsapp"></i>WhatsApp Oficial
+  <div class="tab-group" id="waGroup">
+    <div class="tab-item tab-group-head" onclick="toggleWaGroup(this)">
+      <i class="ti ti-brand-whatsapp"></i>WhatsApp Oficial
+      <i class="ti ti-chevron-down tab-chev" style="margin-left:auto;font-size:14px;transition:transform .15s"></i>
+    </div>
+    <div class="tab-sub">
+      <div class="tab-subsection">WhatsApp</div>
+      <div class="tab-item tab-subitem" onclick="switchWa('dashboard',this)">
+        <i class="ti ti-chart-bar"></i>Dashboard
+        <div class="status-dot dot-green"></div>
+      </div>
+      <div class="tab-item tab-subitem" onclick="switchWa('templates',this)">
+        <i class="ti ti-file-text"></i>Templates
+        <span class="tab-badge tb-green">6 aprovados</span>
+      </div>
+      <div class="tab-item tab-subitem" onclick="switchWa('fluxos',this)">
+        <i class="ti ti-workflow"></i>Fluxos
+        <span class="tab-badge tb-blue">3 ativos</span>
+      </div>
+      <div class="tab-subsection">Disparos</div>
+      <div class="tab-item tab-subitem" onclick="switchWa('campanhas',this)">
+        <i class="ti ti-send"></i>Campanhas
+        <span class="tab-badge tb-amber">2</span>
+      </div>
+      <div class="tab-item tab-subitem" onclick="switchWa('agenda',this)">
+        <i class="ti ti-calendar-event"></i>Agendamentos
+      </div>
+      <div class="tab-subsection">Analytics</div>
+      <div class="tab-item tab-subitem" onclick="switchWa('analytics',this)">
+        <i class="ti ti-chart-pie"></i>Métricas Meta
+      </div>
+      <div class="tab-item tab-subitem" onclick="switchWa('custos',this)">
+        <i class="ti ti-coin"></i>Custos &amp; Tarifas
+      </div>
+      <div class="tab-subsection">Config</div>
+      <div class="tab-item tab-subitem" onclick="switchWa('config',this)">
+        <i class="ti ti-settings-2"></i>App &amp; Credenciais
+        <div class="status-dot dot-green"></div>
+      </div>
+    </div>
   </div>
 
   <div class="tab-section">Presença Digital</div>
@@ -1007,7 +1051,7 @@ Att, Rafael - GrowOS</textarea>
 
 <!-- ═══════════════════ WHATSAPP OFICIAL ═══════════════════ -->
 <div class="tab-panel" id="tab-whatsapp-oficial" style="padding:0;overflow:hidden">
-  <iframe src="/whatsapp-oficial.html" title="WhatsApp Oficial — Central Meta" style="width:100%;height:100%;border:0;display:block;min-height:calc(100vh - 7rem)"></iframe>
+  <iframe id="waIframe" src="/whatsapp-oficial.html" title="WhatsApp Oficial — Central Meta" style="width:100%;height:100%;border:0;display:block;min-height:calc(100vh - 7rem)"></iframe>
 </div>
 
 <!-- ═══════════════════ PÁGINA DE CAPTURA ═══════════════════ -->
@@ -1288,6 +1332,27 @@ function switchTab(id, el) {
 
 function post(msg) {
   try { window.parent.postMessage({ __growos: true, ...msg }, '*'); } catch (e) {}
+}
+
+function toggleWaGroup(el) {
+  const g = document.getElementById('waGroup');
+  if (g) g.classList.toggle('open');
+}
+
+function switchWa(panel, el) {
+  const g = document.getElementById('waGroup');
+  if (g) g.classList.add('open');
+  // ativa a aba whatsapp-oficial
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  const tp = document.getElementById('tab-whatsapp-oficial');
+  if (tp) tp.classList.add('active');
+  if (el) el.classList.add('active');
+  // pede ao iframe para trocar de painel interno
+  const iframe = document.getElementById('waIframe');
+  if (iframe && iframe.contentWindow) {
+    iframe.contentWindow.postMessage({ __wa: true, type: 'switchPanel', panel }, '*');
+  }
 }
 
 // Delegação global por texto de botão

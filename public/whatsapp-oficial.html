@@ -1097,8 +1097,21 @@ function switchPanel(id, el) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const panel = document.getElementById('panel-' + id);
   if (panel) panel.classList.add('active');
-  if (el) el.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+  } else {
+    const navEl = document.querySelector('.nav-item[onclick*="\'' + id + '\'"]');
+    if (navEl) navEl.classList.add('active');
+  }
 }
+
+// Listen for parent (automacao.html) requests to switch panel
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (d && d.__wa && d.type === 'switchPanel' && d.panel) {
+    switchPanel(d.panel);
+  }
+});
 function switchInnerTab(contentId, el, tabsId) {
   // hide all grid panels in templates
   document.querySelectorAll('.tpl-grid-panel').forEach(p => p.style.display = 'none');
