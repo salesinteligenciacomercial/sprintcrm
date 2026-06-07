@@ -49,6 +49,7 @@ import { ProductivityPanel } from "@/components/conversas/ProductivityPanel";
 import { PastedImagePreview } from "@/components/conversas/PastedImagePreview";
 import { formatPhoneNumber, safeFormatPhoneNumber, normalizePhoneForComparison, robustFormatPhoneNumber } from "@/utils/phoneFormatter";
 import "@/styles/conversas-redesign.css";
+import "@/styles/lead-info-panel.css";
 import { cleanAllConversationsHistory } from "@/utils/cleanConversationsHistory";
 import { getMediaUrl, MediaExpiredError } from "@/utils/mediaLoader";
 import { throttledProfilePicture } from "@/utils/profilePictureThrottle";
@@ -9862,7 +9863,7 @@ function Conversas() {
               </div>
 
               {/* Info Panel - COM SCROLL */}
-              {showInfoPanel && <div className="w-[340px] bg-background border-l border-border flex flex-col flex-shrink-0 overflow-hidden">
+              {showInfoPanel && <div data-lead-info-panel="true" className="w-[340px] bg-background border-l border-border flex flex-col flex-shrink-0 overflow-hidden">
                   <div className="p-6 space-y-6 flex-1 overflow-y-auto pb-32">
                     {/* Contact Info */}
                     <div className="text-center">
