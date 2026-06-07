@@ -9683,6 +9683,28 @@ function Conversas() {
                         </Button>
                       </div>
                     </div>}
+                  {/* Quick preset messages chips */}
+                  {quickMessages.filter(m => (!m.type || m.type === 'text') && m.content?.trim()).length > 0 && (
+                    <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+                      {quickMessages
+                        .filter(m => (!m.type || m.type === 'text') && m.content?.trim())
+                        .slice(0, 8)
+                        .map(qm => (
+                          <button
+                            key={qm.id}
+                            type="button"
+                            onClick={() => {
+                              setMessageInput(qm.content);
+                              messageTextareaRef.current?.focus();
+                            }}
+                            className="flex-shrink-0 px-3 py-1.5 rounded-full bg-muted hover:bg-accent border border-border text-xs font-medium whitespace-nowrap transition-colors"
+                            title={qm.content}
+                          >
+                            {qm.title}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                   <div className="flex items-end gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
                     <MediaUpload onFileSelected={handleSendMedia} />
                     <Textarea ref={messageTextareaRef} placeholder="Escreva sua mensagem..." value={messageInput} onChange={e => {
