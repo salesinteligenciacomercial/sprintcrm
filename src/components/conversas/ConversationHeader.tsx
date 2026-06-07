@@ -227,7 +227,7 @@ import { toast } from "sonner";
          </div>
             {/* Ações - Versão Desktop (apenas ícones com tooltip) */}
               <TooltipProvider delayDuration={0}>
-              <div className="hidden md:flex items-center gap-1">
+              <div data-conv-header-actions="true" className="hidden md:flex items-center gap-1">
                 {/* Botão Enviar Protocolo */}
                 <Tooltip>
                   <TooltipTrigger asChild>
