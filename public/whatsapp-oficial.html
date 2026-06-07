@@ -497,10 +497,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
     </div>
   </div>
   <div class="inner-tabs" id="tplTabs">
-    <div class="inner-tab active" onclick="switchInnerTab('tplAll',this,'tplTabs')"><i class="ti ti-layout-grid"></i>Todos (8)</div>
-    <div class="inner-tab" onclick="switchInnerTab('tplApproved',this,'tplTabs')"><i class="ti ti-circle-check"></i>Aprovados (6)</div>
-    <div class="inner-tab" onclick="switchInnerTab('tplPending',this,'tplTabs')"><i class="ti ti-clock"></i>Pendentes (1)</div>
-    <div class="inner-tab" onclick="switchInnerTab('tplRejected',this,'tplTabs')"><i class="ti ti-x"></i>Rejeitados (1)</div>
+    <div class="inner-tab active" data-tpl-filter="ALL" onclick="switchTplFilter('ALL',this)"><i class="ti ti-layout-grid"></i>Todos (<span id="tplCountAll">0</span>)</div>
+    <div class="inner-tab" data-tpl-filter="APPROVED" onclick="switchTplFilter('APPROVED',this)"><i class="ti ti-circle-check"></i>Aprovados (<span id="tplCountApproved">0</span>)</div>
+    <div class="inner-tab" data-tpl-filter="PENDING" onclick="switchTplFilter('PENDING',this)"><i class="ti ti-clock"></i>Pendentes (<span id="tplCountPending">0</span>)</div>
+    <div class="inner-tab" data-tpl-filter="REJECTED" onclick="switchTplFilter('REJECTED',this)"><i class="ti ti-x"></i>Rejeitados (<span id="tplCountRejected">0</span>)</div>
   </div>
   <div class="pbody">
     <!-- INFO META -->
@@ -510,137 +510,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
       <a href="https://business.facebook.com/wa/manage/message-templates/" target="_blank" class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-external-link"></i>Meta Manager</a>
     </div>
 
-    <!-- Templates grid -->
-    <div id="tplAll" class="tpl-grid-panel">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-
-        <!-- APPROVED -->
-        <div class="tpl-card approved">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--gd);color:var(--green)"><i class="ti ti-hand-click"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">boas_vindas</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-g" style="font-size:9.5px">APPROVED</span><span class="badge bg-meta" style="font-size:9.5px">MARKETING</span></div>
-            </div>
-          </div>
-          <div class="tpl-body">Olá <span class="var-highlight">{{1}}</span>! 👋<br>Temos uma oferta especial para você...</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--text3)">pt_BR · <span style="font-family:var(--mono)">1.240</span> envios</span>
-            <div class="tpl-actions">
-              <div class="tpl-act" title="Visualizar"><i class="ti ti-eye"></i></div>
-              <div class="tpl-act" title="Duplicar"><i class="ti ti-copy"></i></div>
-              <div class="tpl-act" title="Usar em campanha" style="color:var(--green)"><i class="ti ti-send"></i></div>
-              <div class="tpl-act del" title="Deletar"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tpl-card approved">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--bd);color:var(--blue)"><i class="ti ti-phone-call"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">ola_tudo_bem</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-g" style="font-size:9.5px">APPROVED</span><span class="badge bg-meta" style="font-size:9.5px">MARKETING</span></div>
-            </div>
-          </div>
-          <div class="tpl-body">Olá <span class="var-highlight">{{1}}</span>! Como você está? Aqui é da equipe <span class="var-highlight">{{2}}</span>...</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--text3)">pt_BR · <span style="font-family:var(--mono)">892</span> envios</span>
-            <div class="tpl-actions">
-              <div class="tpl-act"><i class="ti ti-eye"></i></div>
-              <div class="tpl-act"><i class="ti ti-copy"></i></div>
-              <div class="tpl-act" style="color:var(--green)"><i class="ti ti-send"></i></div>
-              <div class="tpl-act del"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tpl-card approved">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--pd);color:var(--purple)"><i class="ti ti-star"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">pois_ligacao</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-g" style="font-size:9.5px">APPROVED</span><span class="badge bg-meta" style="font-size:9.5px">MARKETING</span></div>
-            </div>
-          </div>
-          <div class="tpl-body">Ei <span class="var-highlight">{{1}}</span>! Que tal conversarmos sobre como podemos ajudar <span class="var-highlight">{{2}}</span>?</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--text3)">pt_BR · <span style="font-family:var(--mono)">431</span> envios</span>
-            <div class="tpl-actions">
-              <div class="tpl-act"><i class="ti ti-eye"></i></div>
-              <div class="tpl-act"><i class="ti ti-copy"></i></div>
-              <div class="tpl-act" style="color:var(--green)"><i class="ti ti-send"></i></div>
-              <div class="tpl-act del"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="tpl-card approved">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--td);color:var(--teal)"><i class="ti ti-bell"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">hello_world</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-g" style="font-size:9.5px">APPROVED</span><span class="badge bg-t" style="font-size:9.5px">UTILITY</span></div>
-            </div>
-          </div>
-          <div class="tpl-body">Hello! This is a test message. Your code is <span class="var-highlight">{{1}}</span>.</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--text3)">en_US · <span style="font-family:var(--mono)">12</span> envios</span>
-            <div class="tpl-actions">
-              <div class="tpl-act"><i class="ti ti-eye"></i></div>
-              <div class="tpl-act"><i class="ti ti-copy"></i></div>
-              <div class="tpl-act" style="color:var(--green)"><i class="ti ti-send"></i></div>
-              <div class="tpl-act del"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PENDING -->
-        <div class="tpl-card pending">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--ad);color:var(--amber)"><i class="ti ti-clock"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">promo_verao_25</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-a" style="font-size:9.5px">PENDING</span><span class="badge bg-meta" style="font-size:9.5px">MARKETING</span></div>
-            </div>
-          </div>
-          <div class="tpl-body">🌞 Olá <span class="var-highlight">{{1}}</span>! Nossas promoções de verão chegaram! Aproveite <span class="var-highlight">{{2}}</span>% de desconto...</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--amber)"><i class="ti ti-clock" style="font-size:11px"></i>Aguardando aprovação Meta</span>
-            <div class="tpl-actions">
-              <div class="tpl-act"><i class="ti ti-eye"></i></div>
-              <div class="tpl-act del"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- REJECTED -->
-        <div class="tpl-card rejected">
-          <div class="tpl-header">
-            <div class="tpl-icon" style="background:var(--rd);color:var(--red)"><i class="ti ti-x"></i></div>
-            <div style="flex:1">
-              <div class="tpl-name">teste</div>
-              <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px"><span class="badge bg-r" style="font-size:9.5px">REJECTED</span><span class="badge bg-meta" style="font-size:9.5px">MARKETING</span></div>
-            </div>
-          </div>
-          <div class="tpl-body" style="color:var(--red);opacity:.7">Template rejeitado pela Meta. Verifique as políticas de uso e corrija o conteúdo.</div>
-          <div class="tpl-footer">
-            <span style="font-size:10px;color:var(--red)"><i class="ti ti-alert-circle" style="font-size:11px"></i>Violação de política</span>
-            <div class="tpl-actions">
-              <div class="tpl-act" title="Editar e reenviar" style="color:var(--amber)"><i class="ti ti-edit"></i></div>
-              <div class="tpl-act del"><i class="ti ti-trash"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ADD NEW CARD -->
-        <div class="tpl-card" style="border-style:dashed;border-color:var(--border2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:140px;cursor:pointer" onclick="openNewTemplate()">
-          <div style="width:40px;height:40px;border-radius:50%;background:var(--bg4);border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:20px"><i class="ti ti-plus"></i></div>
-          <div style="font-size:12px;font-weight:600;color:var(--text3)">Criar novo template</div>
-          <div style="font-size:10.5px;color:var(--text3)">Enviar direto para Meta API</div>
-        </div>
+    <div id="tplGridReal" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:30px;font-size:12px">
+        <i class="ti ti-loader-2" style="animation:spin 1s linear infinite;font-size:22px;display:block;margin-bottom:8px"></i>
+        Clique em <strong style="color:var(--green)">Sincronizar Meta</strong> para carregar seus templates reais.
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: VISUALIZAR TEMPLATE ═══ -->
+<div class="modal-bg" id="viewTemplateModal" onclick="if(event.target===this)closeModal('viewTemplateModal')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title" id="viewTplTitle">Template</div>
+      <div class="modal-close" onclick="closeModal('viewTemplateModal')"><i class="ti ti-x"></i></div>
+    </div>
+    <div class="modal-body" id="viewTplBody" style="padding:16px"></div>
   </div>
 </div>
 
@@ -1192,6 +1078,7 @@ async function syncMetaAnalytics() {
     waLastAnalytics = analytics;
 
     await renderTemplatesStatus();
+    await renderTemplatesGrid();
     renderDashboardMetrics(analytics);
     renderRecentActivity(analytics, tplSync.data || {});
     renderCampaignRows(analytics);
@@ -1336,6 +1223,132 @@ function switchPanel(id, el) {
   } else {
     const navEl = document.querySelector('.nav-item[onclick*="\'' + id + '\'"]');
     if (navEl) navEl.classList.add('active');
+  }
+  if (id === 'templates' && waSb && waCompanyId && !window.__tplLoaded) {
+    window.__tplLoaded = true;
+    renderTemplatesGrid().catch(console.error);
+  }
+}
+
+// ─── TEMPLATES GRID (real data) ─────────────────────────────
+let waTplCache = [];
+let waTplFilter = 'ALL';
+
+async function renderTemplatesGrid() {
+  if (!waSb || !waCompanyId) return;
+  try {
+    const { data, error } = await waSb
+      .from('whatsapp_templates')
+      .select('id,name,language,category,status,components,quality_score,created_at')
+      .eq('company_id', waCompanyId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    waTplCache = data || [];
+    const counts = waTplCache.reduce((a, t) => {
+      const s = String(t.status || 'PENDING').toUpperCase();
+      a[s] = (a[s] || 0) + 1; return a;
+    }, {});
+    const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+    setTxt('tplCountAll', waTplCache.length);
+    setTxt('tplCountApproved', counts.APPROVED || 0);
+    setTxt('tplCountPending', counts.PENDING || 0);
+    setTxt('tplCountRejected', counts.REJECTED || 0);
+    drawTplGrid();
+  } catch (err) {
+    console.error('renderTemplatesGrid err', err);
+    const grid = document.getElementById('tplGridReal');
+    if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--red);padding:20px;font-size:12px">Erro ao carregar templates: ${err.message || err}</div>`;
+  }
+}
+
+function getTplBodyText(components) {
+  if (!Array.isArray(components)) return '';
+  const body = components.find(c => (c.type || '').toUpperCase() === 'BODY');
+  return body?.text || '';
+}
+
+function drawTplGrid() {
+  const grid = document.getElementById('tplGridReal');
+  if (!grid) return;
+  const list = waTplFilter === 'ALL' ? waTplCache : waTplCache.filter(t => String(t.status || '').toUpperCase() === waTplFilter);
+  const statusStyles = {
+    APPROVED: { cls: 'approved', badge: 'bg-g', icon: 'ti-circle-check', color: 'var(--green)', bg: 'var(--gd)' },
+    PENDING:  { cls: 'pending',  badge: 'bg-a', icon: 'ti-clock',        color: 'var(--amber)', bg: 'var(--ad)' },
+    REJECTED: { cls: 'rejected', badge: 'bg-r', icon: 'ti-x',            color: 'var(--red)',   bg: 'var(--rd)' },
+  };
+  const cards = list.map(t => {
+    const st = String(t.status || 'PENDING').toUpperCase();
+    const s = statusStyles[st] || statusStyles.PENDING;
+    const bodyTxt = getTplBodyText(t.components).replace(/\{\{(\d+)\}\}/g, '<span class="var-highlight">{{$1}}</span>');
+    const cat = String(t.category || '').toUpperCase();
+    return `<div class="tpl-card ${s.cls}">
+      <div class="tpl-header">
+        <div class="tpl-icon" style="background:${s.bg};color:${s.color}"><i class="ti ${s.icon}"></i></div>
+        <div style="flex:1;min-width:0">
+          <div class="tpl-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.name}</div>
+          <div class="tpl-cat" style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap"><span class="badge ${s.badge}" style="font-size:9.5px">${st}</span>${cat ? `<span class="badge bg-meta" style="font-size:9.5px">${cat}</span>` : ''}</div>
+        </div>
+      </div>
+      <div class="tpl-body" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${bodyTxt || '<em style="color:var(--text3)">Sem corpo</em>'}</div>
+      <div class="tpl-footer">
+        <span style="font-size:10px;color:var(--text3)">${t.language || ''}</span>
+        <div class="tpl-actions">
+          <div class="tpl-act" title="Visualizar" onclick="openViewTemplate('${t.id}')"><i class="ti ti-eye"></i></div>
+          <div class="tpl-act" title="Copiar nome" onclick="navigator.clipboard.writeText('${t.name}');showToast('Nome copiado')"><i class="ti ti-copy"></i></div>
+          <div class="tpl-act del" title="Deletar" onclick="deleteTemplate('${t.name}')"><i class="ti ti-trash"></i></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  const addCard = `<div class="tpl-card" style="border-style:dashed;border-color:var(--border2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-height:140px;cursor:pointer" onclick="openNewTemplate()">
+    <div style="width:40px;height:40px;border-radius:50%;background:var(--bg4);border:1.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:20px"><i class="ti ti-plus"></i></div>
+    <div style="font-size:12px;font-weight:600;color:var(--text3)">Criar novo template</div>
+    <div style="font-size:10.5px;color:var(--text3)">Enviar direto para Meta API</div>
+  </div>`;
+  grid.innerHTML = (list.length ? cards : `<div style="grid-column:1/-1;text-align:center;color:var(--text3);padding:24px;font-size:12px">Nenhum template ${waTplFilter !== 'ALL' ? 'com status ' + waTplFilter : ''} encontrado. Clique em <strong style="color:var(--green)">Sincronizar Meta</strong>.</div>`) + addCard;
+}
+
+function switchTplFilter(filter, el) {
+  waTplFilter = filter;
+  document.querySelectorAll('#tplTabs .inner-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  drawTplGrid();
+}
+
+function openViewTemplate(id) {
+  const t = waTplCache.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('viewTplTitle').textContent = t.name;
+  const body = getTplBodyText(t.components).replace(/\{\{(\d+)\}\}/g, '<span style="background:rgba(245,158,11,.2);color:#f59e0b;padding:1px 4px;border-radius:3px;font-weight:600">{{$1}}</span>').replace(/\n/g, '<br>');
+  const header = (t.components || []).find(c => (c.type || '').toUpperCase() === 'HEADER');
+  const footer = (t.components || []).find(c => (c.type || '').toUpperCase() === 'FOOTER');
+  const buttons = (t.components || []).find(c => (c.type || '').toUpperCase() === 'BUTTONS');
+  document.getElementById('viewTplBody').innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="badge bg-g" style="font-size:10px">${(t.status || '').toUpperCase()}</span>
+      <span class="badge bg-meta" style="font-size:10px">${(t.category || '').toUpperCase()}</span>
+      <span class="badge" style="font-size:10px;background:var(--bg4);color:var(--text2)">${t.language || ''}</span>
+    </div>
+    <div style="background:#0b141a;border-radius:10px;padding:14px;color:#e9edef;font-size:13px;line-height:1.5">
+      ${header?.text ? `<div style="font-weight:700;margin-bottom:6px">${header.text}</div>` : ''}
+      ${header?.format && header.format !== 'TEXT' ? `<div style="background:rgba(255,255,255,.06);border-radius:6px;padding:18px;text-align:center;color:#8696a0;font-size:11px;margin-bottom:8px">[ ${header.format} ]</div>` : ''}
+      <div>${body || '<em>Sem corpo</em>'}</div>
+      ${footer?.text ? `<div style="color:#8696a0;font-size:11px;margin-top:8px">${footer.text}</div>` : ''}
+    </div>
+    ${buttons?.buttons?.length ? `<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">${buttons.buttons.map(b => `<div style="background:var(--bg4);text-align:center;padding:8px;border-radius:6px;color:var(--blue);font-size:12px;font-weight:600">${b.text}</div>`).join('')}</div>` : ''}
+  `;
+  document.getElementById('viewTemplateModal').classList.add('show');
+}
+
+async function deleteTemplate(name) {
+  if (!confirm(`Deletar template "${name}"? Essa ação remove também na Meta.`)) return;
+  try {
+    const r = await waSb.functions.invoke('whatsapp-templates', { body: { action: 'delete', company_id: waCompanyId, template_name: name } });
+    if (r.error || r.data?.error) throw new Error(r.error?.message || r.data?.error);
+    showToast('Template deletado');
+    await renderTemplatesGrid();
+  } catch (e) {
+    showToast('Erro ao deletar: ' + (e.message || e));
   }
 }
 
