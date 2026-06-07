@@ -33,6 +33,7 @@ import {
 import { WhatsAppDashboard } from "@/components/whatsapp/WhatsAppDashboard";
 import { WhatsAppTemplatesManager } from "@/components/whatsapp/WhatsAppTemplatesManager";
 import { DisparoEmMassa } from "@/components/campanhas/DisparoEmMassa";
+import DisparoEmMassaWhatsAppNormal from "@/components/campanhas/DisparoEmMassaWhatsAppNormal";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppQRCode } from "@/components/configuracoes/WhatsAppQRCode";
@@ -1127,7 +1128,26 @@ export default function Configuracoes() {
           <WhatsAppQRCode />
           {currentCompany?.id && <MetaApiConfig companyId={currentCompany.id} />}
           {currentCompany?.id && <MetaIntegrationsConfig companyId={currentCompany.id} />}
-          
+
+          {currentCompany?.id && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-bold">WhatsApp Oficial</h2>
+                <p className="text-sm text-muted-foreground">
+                  Use a API oficial do WhatsApp para ver métricas e lançar campanhas de disparo em massa.
+                </p>
+              </div>
+
+              <WhatsAppDashboard companyId={currentCompany.id} />
+              <DisparoEmMassa />
+              <div className="pt-4">
+                <h3 className="text-lg font-semibold">WhatsApp (via cliente)</h3>
+                <p className="text-sm text-muted-foreground">Enviar disparos em massa usando o cliente/API não oficial (WhatsApp normal).</p>
+                <DisparoEmMassaWhatsAppNormal />
+              </div>
+            </div>
+          )}
+
           {/* Gmail Integration */}
           {currentCompany?.id && <GmailConfig companyId={currentCompany.id} />}
 

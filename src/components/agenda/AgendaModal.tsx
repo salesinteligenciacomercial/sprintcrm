@@ -222,13 +222,25 @@ export function AgendaModal({ open, onOpenChange, lead, onAgendamentoCriado }: A
 
       const { data: compromissos } = await supabase
         .from("compromissos")
-        .select("id, data_hora_inicio, data_hora_fim, agenda_id")
+        .select("id, data_hora_inicio, data_hora_fim, agenda_id, lead_id")
         .gte("data_hora_inicio", dataInicio.toISOString())
         .lte("data_hora_inicio", dataFim.toISOString())
-        .or(`agenda_id.eq.${agendaId},agenda_id.is.null`);
-      
-      console.log('📅 [AgendaModal] Compromissos carregados para agenda:', agendaId, compromissos?.length || 0);
-      setCompromissosExistentes(compromissos || []);
+        .eq("agenda_id", agendaId);
+
+      console.log('📅 [AgendaModal] Compromissos carregados (raw) para agenda:', agendaId, compromissos?.length || 0);
+
+      // Filtrar compromissos para remover registros com lead_id inválido/ausente
+      const compromissosList = compromissos || [];
+      const leadIds = Array.from(new Set(compromissosList.map(c => c.lead_id).filter(Boolean)));
+      if (leadIds.length > 0) {
+        const { data: leads } = await supabase.from('leads').select('id').in('id', leadIds);
+        const validLeadIds = new Set((leads || []).map(l => l.id));
+        const filtered = compromissosList.filter(c => c.lead_id && validLeadIds.has(c.lead_id));
+        console.log('📅 [AgendaModal] Compromissos após filtro de leads válidos:', filtered.length);
+        setCompromissosExistentes(filtered);
+      } else {
+        setCompromissosExistentes([]);
+      }
     } catch (error) {
       console.error("Erro ao carregar compromissos:", error);
     }

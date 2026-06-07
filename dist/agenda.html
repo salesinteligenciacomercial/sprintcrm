@@ -338,7 +338,6 @@
       <div class="actions">
         <span class="status-chip"><span class="dot"></span> <strong>Google Calendar</strong> <span class="conn">conectado</span></span>
         <button class="btn" id="btnSync"><i class="ti ti-refresh"></i> Sincronizar</button>
-        <button class="btn" id="btnClearMock" title="Remover dados locais de exemplo">Limpar dados</button>
         <button class="btn icon" title="Configurações" id="btnConfig"><i class="ti ti-settings"></i></button>
         <button class="btn primary" id="btnCriar"><i class="ti ti-plus"></i> Criar</button>
       </div>
@@ -1051,12 +1050,6 @@
       // ---------- Top buttons ----------
       document.getElementById('btnCriar').addEventListener('click', () => openModal(null));
       document.getElementById('btnSync').addEventListener('click', () => toast('Sincronizado com Google Calendar'));
-      document.getElementById('btnClearMock').addEventListener('click', () => {
-        if(!confirm('Remover todos os compromissos locais de exemplo? Esta ação não afeta dados reais no servidor.')) return;
-        localStorage.removeItem(STORAGE_KEY);
-        renderAll();
-        toast('Dados locais removidos');
-      });
       document.getElementById('btnConfig').addEventListener('click', () => toast('Abrindo configurações...'));
 
       // calendar nav

@@ -6992,10 +6992,10 @@ function Conversas() {
 
       const { data: compromissos } = await supabase
         .from("compromissos")
-        .select("id, data_hora_inicio, data_hora_fim, agenda_id")
+        .select("id, data_hora_inicio, data_hora_fim, agenda_id, lead_id")
         .gte("data_hora_inicio", dataInicio.toISOString())
         .lte("data_hora_inicio", dataFim.toISOString())
-        .or(`agenda_id.eq.${agendaId},agenda_id.is.null`);
+        .eq("agenda_id", agendaId);
       
       console.log('📅 [Conversas] Compromissos carregados para agenda:', agendaId, compromissos?.length || 0);
       setMeetingCompromissosExistentes(compromissos || []);

@@ -1707,7 +1707,6 @@ Posso te mostrar em 10 minutos como funciona?
     <button class="mm-tbtn ghost" onclick="mmUndo()" title="Ctrl+Z">↩</button>
     <button class="mm-tbtn ghost" onclick="mmRedo()" title="Ctrl+Y">↪</button>
     <div class="mm-tsep"></div>
-    <button class="mm-tbtn ghost" id="mm-save-map" onclick="mmSave()">💾 Salvar</button>
     <button class="mm-tbtn ghost" id="mm-toggle-panel" onclick="mmTogglePanel()">🎨 Estilos</button>
     <button class="mm-tbtn ai" onclick="mmOpenAI()">✦ IA</button>
   </div>
@@ -1804,12 +1803,10 @@ Posso te mostrar em 10 minutos como funciona?
           </div>
         </div>
         <div class="mm-psec">
-          <div class="mm-psec-title">📤 Exportar / Importar</div>
+          <div class="mm-psec-title">📤 Exportar</div>
           <button class="mm-expbtn" onclick="mmExportSVG()">🖼 Exportar SVG</button>
           <button class="mm-expbtn" onclick="mmExportJSON()">📄 Exportar JSON</button>
           <button class="mm-expbtn" onclick="mmExportTxt()">📝 Exportar Texto</button>
-          <button class="mm-expbtn" onclick="mmImportJSON()">📂 Importar JSON</button>
-          <button class="mm-expbtn" onclick="mmShare()">🔗 Compartilhar link</button>
         </div>
       </div>
     </div>
@@ -1827,7 +1824,6 @@ Posso te mostrar em 10 minutos como funciona?
   </div>
 </div>
 <div class="mm-toast" id="mm-toast"></div>
-  <input id="mm-import-file" type="file" accept="application/json,.json" style="display:none" onchange="mmImportFile(event)" />
   </div><!-- /content -->
 </div><!-- /main -->
 
@@ -1900,7 +1896,7 @@ function setTab(tab) {
     if (el) el.style.display = 'none';
   });
   const active = document.getElementById('view-' + tab);
-  if (active) { active.style.display = ''; }
+  if (active) { active.style.display = tab === 'kanban' ? 'flex' : ''; }
 
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const tabEl = document.getElementById('tab-' + tab);
@@ -1975,35 +1971,19 @@ document.querySelectorAll('.block-checklist').forEach(el => {
 
   function init(){
     try{ const d=JSON.parse(localStorage.getItem('mm_gs')||'null'); if(d) Object.assign(S,d); }catch(e){}
-    if(!S.maps||!S.maps.length){
-      loadTmpl('processos');
-    } else {
-      const stored = S.maps.find((x) => x.id === S.activeId) || S.maps[0];
-      if(stored) S.activeId = stored.id;
-      activate(S.activeId);
-    }
-    const shareMatch = location.hash.match(/^#share=(.+)$/);
-    if (shareMatch){
-      loadSharedMap(shareMatch[1]);
-      history.replaceState(null, '', location.pathname);
-    }
+    if(!S.maps||!S.maps.length){ loadTmpl('processos'); } else { activate(S.maps[0].id); }
+    renderMapList();
     document.addEventListener('keydown', handleKey);
   }
   function save(){
     const m=S.maps.find(x=>x.id===S.activeId);
-    if(m){
-      m.title = document.getElementById('mm-map-title')?.value || m.title;
-      m.date = new Date().toLocaleDateString('pt-BR');
-      m._n=JSON.parse(JSON.stringify(S.nodes));
-      m._e=JSON.parse(JSON.stringify(S.edges));
-      m._ni=S.nid;
-    }
+    if(m){m._n=JSON.parse(JSON.stringify(S.nodes));m._e=JSON.parse(JSON.stringify(S.edges));m._ni=S.nid;}
     try{ localStorage.setItem('mm_gs',JSON.stringify({maps:S.maps,activeId:S.activeId,nodes:S.nodes,edges:S.edges,nid:S.nid,lineStyle:S.lineStyle})); }catch(e){}
   }
   function newMap(){
     pushH(); saveSnap();
     const id='m'+Date.now();
-    S.maps.push({id,title:'Novo Mapa',emoji:'🧠',date:new Date().toLocaleDateString('pt-BR'),_n:[],_e:[],_ni:1});
+    S.maps.push({id,title:'Novo Mapa',emoji:'🧠',date:new Date().toLocaleDateString('pt-BR')});
     S.activeId=id; S.nodes=[]; S.edges=[]; S.nid=1; selId=null;
     V={x:0,y:0,s:1};
     document.getElementById('mm-map-title').value='Novo Mapa';
@@ -2361,101 +2341,6 @@ document.querySelectorAll('.block-checklist').forEach(el => {
     dl('mapa-mental.txt','data:text/plain;charset=utf-8,'+encodeURIComponent(txt));
     toast('Texto exportado!');
   }
-  function base64Encode(str){
-    const bytes = new TextEncoder().encode(str);
-    let binary = '';
-    bytes.forEach((b) => binary += String.fromCharCode(b));
-    return btoa(binary);
-  }
-  function base64Decode(str){
-    const binary = atob(str);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  }
-  function getActiveMapData(){
-    const m = S.maps.find(x => x.id === S.activeId);
-    return {
-      title: m?.title || document.getElementById('mm-map-title')?.value || 'Mapa Mental',
-      nodes: S.nodes,
-      edges: S.edges,
-    };
-  }
-  function computeNextNid(nodes){
-    let max = 1;
-    nodes.forEach((n) => {
-      const match = /^n(\d+)$/.exec(n.id);
-      if (match) max = Math.max(max, Number(match[1]) + 1);
-    });
-    return max;
-  }
-  function loadImportedMap(data){
-    if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges)){
-      toast('Formato de mapa inválido');
-      return;
-    }
-    pushH(); saveSnap();
-    const id = 'm' + Date.now();
-    const title = data.title || 'Mapa Importado';
-    S.maps.push({
-      id,
-      title,
-      emoji: '🧠',
-      date: new Date().toLocaleDateString('pt-BR'),
-      _n: JSON.parse(JSON.stringify(data.nodes)),
-      _e: JSON.parse(JSON.stringify(data.edges)),
-      _ni: computeNextNid(data.nodes),
-    });
-    activate(id);
-    toast('Mapa importado!');
-  }
-  function mmImportJSON(){
-    const input = document.getElementById('mm-import-file');
-    if (input) input.click();
-  }
-  function mmImportFile(event){
-    const file = event.target.files && event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const data = JSON.parse(reader.result || '{}');
-        loadImportedMap(data);
-      } catch (err) {
-        toast('Arquivo JSON inválido');
-        console.error(err);
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  }
-  function createShareURL(){
-    const mapData = getActiveMapData();
-    const payload = JSON.stringify(mapData);
-    const encoded = base64Encode(payload);
-    return `${location.origin}${location.pathname}#share=${encoded}`;
-  }
-  function mmShare(){
-    try {
-      const url = createShareURL();
-      navigator.clipboard.writeText(url);
-      toast('Link copiado para a área de transferência');
-    } catch (err) {
-      console.error(err);
-      toast('Falha ao criar link');
-    }
-  }
-  function loadSharedMap(encoded){
-    try {
-      const json = base64Decode(encoded);
-      const data = JSON.parse(json);
-      loadImportedMap(data);
-      toast('Mapa compartilhado carregado!');
-    } catch (err) {
-      console.error(err);
-      toast('Link de compartilhamento inválido');
-    }
-  }
   function dl(name,url){const a=document.createElement('a');a.download=name;a.href=url;a.click();}
   function openAI(){ document.getElementById('mm-ai-modal').classList.add('show'); document.getElementById('mm-ai-prompt').focus(); }
   function closeAI(){ document.getElementById('mm-ai-modal').classList.remove('show'); }
@@ -2504,10 +2389,6 @@ document.querySelectorAll('.block-checklist').forEach(el => {
     activate, delMap, addRoot, addChild, addChildB, delNode, delEdge,
     zoom, fit, togglePanel, setColor, setEmoji, lineStyle, undo, redo,
     newMap, loadTmpl, exportSVG, exportJSON, exportTxt, openAI, closeAI, genAI,
-    save,
-    importJSON: mmImportJSON,
-    importFile: mmImportFile,
-    share: mmShare,
     updateTitle(v){ const m=S.maps.find(x=>x.id===S.activeId); if(m){m.title=v;save();renderMapList();} },
     canvasDown, canvasMove, canvasUp, canvasWheel, canvasDbl,
     delSelected, addChildSelected,
@@ -2522,7 +2403,6 @@ function mmZoom(d)         { window._mm.zoom(d); }
 function mmFit()           { window._mm.fit(); }
 function mmUndo()          { window._mm.undo(); }
 function mmRedo()          { window._mm.redo(); }
-function mmSave()          { window._mm.save(); toast('Mapa salvo!'); }
 function mmTogglePanel()   { window._mm.togglePanel(); }
 function mmOpenAI()        { window._mm.openAI(); }
 function mmCloseAI()       { window._mm.closeAI(); }
@@ -2534,9 +2414,6 @@ function mmLoadTmpl(k)     { window._mm.loadTmpl(k); }
 function mmExportSVG()     { window._mm.exportSVG(); }
 function mmExportJSON()    { window._mm.exportJSON(); }
 function mmExportTxt()     { window._mm.exportTxt(); }
-function mmImportJSON()    { window._mm.importJSON(); }
-function mmImportFile(e)   { window._mm.importFile(e); }
-function mmShare()         { window._mm.share(); }
 function mmUpdateTitle(v)  { window._mm.updateTitle(v); }
 function mmCanvasDown(e)   { window._mm.canvasDown(e); }
 function mmCanvasMove(e)   { window._mm.canvasMove(e); }
