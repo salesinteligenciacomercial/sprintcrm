@@ -9701,7 +9701,7 @@ function Conversas() {
                     <Button
                       variant="outline"
                       size="icon"
-                      className="sm:hidden text-muted-foreground border-border flex-shrink-0"
+                      className="text-muted-foreground border-border flex-shrink-0"
                       title={showMobileExtras ? "Minimizar opções" : "Mais opções"}
                       onClick={() => setShowMobileExtras(v => !v)}
                     >
