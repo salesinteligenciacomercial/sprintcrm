@@ -297,6 +297,143 @@
       cursor: pointer;
     }
     .icon-btn:hover { background: hsl(var(--surface-soft)); color: hsl(var(--text)); }
+
+    .tags-panel {
+      position: absolute;
+      right: 22px;
+      top: 84px;
+      width: min(360px, calc(100% - 44px));
+      max-height: calc(100vh - 110px);
+      background: hsl(var(--surface));
+      border: 1px solid hsl(var(--border));
+      border-radius: 14px;
+      box-shadow: 0 18px 40px hsl(160 25% 12% / 0.12);
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 30;
+    }
+    .tags-panel.visible { display: flex; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.32);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 40;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal-panel {
+      width: min(560px, 100%);
+      max-height: calc(100vh - 80px);
+      background: hsl(var(--surface));
+      border-radius: 18px;
+      box-shadow: 0 20px 50px hsl(0 0% 0% / 0.16);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+    .modal-title { margin: 0; font-size: 16px; font-weight: 800; color: hsl(var(--text)); }
+    .modal-body { padding: 0 20px 20px; color: hsl(var(--text-muted)); font-size: 13px; line-height: 1.7; }
+    .modal-body p { margin: 0 0 12px; }
+    .tags-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .tags-panel-header strong { font-size: 14px; color: hsl(var(--text)); }
+    .tags-panel-content { display: flex; flex-direction: column; gap: 10px; }
+    .tags-panel-subtitle { margin: 0; color: hsl(var(--text-muted)); font-size: 12px; }
+    .tags-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .tag-manager-controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .tag-manager-controls input {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid hsl(var(--border));
+      border-radius: 10px;
+      background: hsl(var(--surface));
+      color: hsl(var(--text));
+      padding: 10px 12px;
+      font-size: 13px;
+    }
+    .tag-manager-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .tag-manager-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid hsl(var(--border));
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: hsl(var(--surface-soft));
+    }
+    .tag-manager-item .tag-pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    .tag-manager-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tag-count {
+      color: hsl(var(--text-muted));
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tag-delete {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--surface));
+      color: hsl(var(--text-muted));
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .tag-delete:hover { background: hsl(var(--surface)); color: hsl(var(--danger)); border-color: hsl(var(--danger)); }
+    .tag-pill {
+      border: 1px solid hsl(var(--border));
+      border-radius: 999px;
+      background: hsl(var(--surface-soft));
+      color: hsl(var(--text-muted));
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+    .tag-pill.active { background: hsl(var(--primary)); color: hsl(0 0% 100%); border-color: hsl(var(--primary)); }
+    .lead-tags-section { display: flex; flex-direction: column; gap: 8px; }
+    .lead-tags-title { font-size: 13px; font-weight: 700; color: hsl(var(--text)); }
+    .lead-tags-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .load-more { text-align: center; color: hsl(var(--text-muted)); font-size: 12px; font-weight: 700; padding: 8px 0 2px; }
     .check-area { display: none; align-items: center; margin-top: 8px; }
 
@@ -343,13 +480,30 @@
         </div>
       </div>
       <div class="actions">
-        <button class="btn"><i class="ti ti-tag" aria-hidden="true"></i><span>Tags</span></button>
-        <button class="btn btn-icon" aria-label="Filtros avançados"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></button>
-        <button class="btn"><i class="ti ti-download" aria-hidden="true"></i><span>Exportar</span></button>
-        <button class="btn btn-icon" aria-label="Importar"><i class="ti ti-upload" aria-hidden="true"></i></button>
-        <button class="btn btn-primary"><i class="ti ti-plus" aria-hidden="true"></i><span>Novo</span></button>
+        <button class="btn" id="tagsButton" type="button"><i class="ti ti-tag" aria-hidden="true"></i><span>Tags</span></button>
+        <button class="btn btn-icon" type="button" aria-label="Filtros avançados"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></button>
+        <button class="btn" type="button"><i class="ti ti-download" aria-hidden="true"></i><span>Exportar</span></button>
+        <button class="btn btn-icon" id="importButton" type="button" aria-label="Importar"><i class="ti ti-upload" aria-hidden="true"></i></button>
+        <button class="btn btn-primary" id="newContactButton" type="button"><i class="ti ti-plus" aria-hidden="true"></i><span>Novo</span></button>
       </div>
     </header>
+
+    <div class="tags-panel" id="tagsPanel" aria-hidden="true">
+      <div class="tags-panel-header">
+        <strong id="tagsPanelTitle">Tags do CRM</strong>
+        <button class="icon-btn" id="closeTagsPanel" aria-label="Fechar"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="tags-panel-content">
+        <p class="tags-panel-subtitle" id="tagsPanelSubtitle">Selecione uma tag para filtrar ou veja as tags deste lead.</p>
+        <div class="tag-manager-controls">
+          <input type="text" id="newTagInput" placeholder="Criar nova tag..." aria-label="Criar nova tag" />
+          <button class="btn btn-primary" id="addTagButton" type="button">Criar</button>
+        </div>
+        <div class="tags-list" id="tagList"></div>
+        <div class="tag-manager-list" id="tagManagerList"></div>
+        <div class="lead-tags-section" id="leadTagsSection"></div>
+      </div>
+    </div>
 
     <main class="content">
       <div class="stat-grid">
@@ -393,108 +547,282 @@
         <span>Atualizado agora</span>
       </div>
 
-      <section class="lead-list" id="leadList" aria-label="Lista de contatos">
-        <article class="lead-card" data-status="ganho" data-valor="4500">
-          <div class="accent-bar" style="background:hsl(var(--primary));"></div>
-          <div class="avatar avatar-win">CA</div>
-          <div class="lead-body">
-            <div class="lead-top">
-              <div class="lead-mainline">
-                <span class="lead-name">Carlos Andrade</span>
-                <span class="status-pill pill-ganho"><span class="dot dot-ganho"></span>Ganho</span>
-                <span class="source-badge"><i class="ti ti-tag" aria-hidden="true"></i>Facebook</span>
-              </div>
-              <div class="lead-right">
-                <span class="lead-value">R$ 4.500</span>
-                <div class="action-btns"><button class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div>
-              </div>
-            </div>
-            <div class="lead-contacts">
-              <span class="contact-item"><i class="ti ti-mail"></i>carlos@email.com</span>
-              <span class="contact-item"><i class="ti ti-phone"></i>(71) 99123-4567<button class="wa-btn"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button></span>
-              <span class="contact-item"><i class="ti ti-building"></i><strong>Andrade Corp</strong></span>
-            </div>
-            <div class="tag-row"><span class="tag"><i class="ti ti-tag"></i>cliente-vip</span><span class="tag"><i class="ti ti-tag"></i>odonto</span><span class="date-tag"><i class="ti ti-clock"></i>03 jun</span></div>
-          </div>
-        </article>
+      <section class="lead-list" id="leadList" aria-label="Lista de contatos"></section>
 
-        <article class="lead-card" data-status="novo" data-valor="0">
-          <div class="accent-bar" style="background:hsl(var(--info));"></div>
-          <div class="avatar avatar-info">MF</div>
-          <div class="lead-body">
-            <div class="lead-top">
-              <div class="lead-mainline"><span class="lead-name">Marina Figueiredo</span><span class="status-pill pill-novo"><span class="dot dot-novo"></span>Novo</span></div>
-              <div class="lead-right"><div class="action-btns"><button class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div></div>
-            </div>
-            <div class="lead-contacts"><span class="contact-item"><i class="ti ti-mail"></i>marina.fig@gmail.com</span><span class="contact-item"><i class="ti ti-phone"></i>(11) 98765-4321<button class="wa-btn"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button></span></div>
-            <div class="tag-row"><span class="tag"><i class="ti ti-tag"></i>indicação</span><span class="date-tag"><i class="ti ti-clock"></i>02 jun</span></div>
-          </div>
-        </article>
-
-        <article class="lead-card" data-status="proposta" data-valor="12000">
-          <div class="accent-bar" style="background:hsl(var(--purple));"></div>
-          <div class="avatar avatar-purple">RS</div>
-          <div class="lead-body">
-            <div class="lead-top">
-              <div class="lead-mainline"><span class="lead-name">Roberto Silva</span><span class="status-pill pill-proposta"><span class="dot dot-proposta"></span>Proposta</span><span class="source-badge"><i class="ti ti-tag"></i>Google Ads</span></div>
-              <div class="lead-right"><span class="lead-value">R$ 12.000</span><div class="action-btns"><button class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div></div>
-            </div>
-            <div class="lead-contacts"><span class="contact-item"><i class="ti ti-mail"></i>roberto@empresa.com.br</span><span class="contact-item"><i class="ti ti-phone"></i>(21) 97654-3210<button class="wa-btn"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button></span><span class="contact-item"><i class="ti ti-building"></i><strong>Silva &amp; Cia</strong></span></div>
-            <div class="tag-row"><span class="tag"><i class="ti ti-tag"></i>alta-prioridade</span><span class="tag"><i class="ti ti-tag"></i>implante</span><span class="tag"><i class="ti ti-tag"></i>retorno</span><span class="tag">+1</span><span class="date-tag"><i class="ti ti-clock"></i>01 jun</span></div>
-          </div>
-        </article>
-
-        <article class="lead-card" data-status="qualificado" data-valor="3200">
-          <div class="accent-bar" style="background:hsl(162 84% 39%);"></div>
-          <div class="avatar avatar-win">AL</div>
-          <div class="lead-body">
-            <div class="lead-top">
-              <div class="lead-mainline"><span class="lead-name">Ana Lima</span><span class="status-pill pill-qualificado"><span class="dot dot-qualificado"></span>Qualificado</span></div>
-              <div class="lead-right"><span class="lead-value">R$ 3.200</span><div class="action-btns"><button class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div></div>
-            </div>
-            <div class="lead-contacts"><span class="contact-item"><i class="ti ti-phone"></i>(85) 99000-1122<button class="wa-btn"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button></span><span class="contact-item"><i class="ti ti-building"></i><strong>Clínica Norte</strong></span></div>
-            <div class="tag-row"><span class="date-tag"><i class="ti ti-clock"></i>29 mai</span></div>
-          </div>
-        </article>
-
-        <article class="lead-card" data-status="perdido" data-valor="0">
-          <div class="accent-bar" style="background:hsl(var(--danger));"></div>
-          <div class="avatar avatar-danger">JP</div>
-          <div class="lead-body">
-            <div class="lead-top">
-              <div class="lead-mainline"><span class="lead-name">João Pedro</span><span class="status-pill pill-perdido"><span class="dot dot-perdido"></span>Perdido</span></div>
-              <div class="lead-right"><div class="action-btns"><button class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div></div>
-            </div>
-            <div class="lead-contacts"><span class="contact-item"><i class="ti ti-mail"></i>joao.pedro@outlook.com</span><span class="contact-item"><i class="ti ti-phone"></i>(31) 98888-7777</span></div>
-            <div class="tag-row"><span class="tag"><i class="ti ti-tag"></i>preço</span><span class="date-tag"><i class="ti ti-clock"></i>25 mai</span></div>
-          </div>
-        </article>
-      </section>
-
-      <div class="load-more"><i class="ti ti-chevron-down" aria-hidden="true"></i> Role para carregar mais · Todos os 127 leads carregados</div>
+      <div class="load-more" id="loadMore"><i class="ti ti-chevron-down" aria-hidden="true"></i> Role para carregar mais · carregando leads...</div>
     </main>
   </section>
 
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <strong class="modal-title" id="modalTitle">Ação</strong>
+        <button class="icon-btn" id="closeModal" aria-label="Fechar"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
   <script>
-    const allCards = document.querySelectorAll('.lead-card');
+    const leadList = document.getElementById('leadList');
     const resultEl = document.getElementById('resultsCount');
+    const loadMoreEl = document.getElementById('loadMore');
     const chips = document.querySelectorAll('.chips .chip');
+    const tagsButton = document.getElementById('tagsButton');
+    const tagsPanel = document.getElementById('tagsPanel');
+    const closeTagsPanel = document.getElementById('closeTagsPanel');
+    const tagList = document.getElementById('tagList');
+    const tagsPanelTitle = document.getElementById('tagsPanelTitle');
+    const tagsPanelSubtitle = document.getElementById('tagsPanelSubtitle');
+    const leadTagsSection = document.getElementById('leadTagsSection');
+    const tagManagerList = document.getElementById('tagManagerList');
+    const newTagInput = document.getElementById('newTagInput');
+    const addTagButton = document.getElementById('addTagButton');
     let currentFilter = 'all';
     let selMode = false;
+    let selectedTag = '';
+    let selectedLead = null;
+    let crmLeads = [];
+    let extraTags = [];
+
+    const statusMap = {
+      ganho: { label: 'Ganho', pill: 'pill-ganho', dot: 'dot-ganho', accent: 'hsl(var(--primary))' },
+      perdido: { label: 'Perdido', pill: 'pill-perdido', dot: 'dot-perdido', accent: 'hsl(var(--danger))' },
+      proposta: { label: 'Proposta', pill: 'pill-proposta', dot: 'dot-proposta', accent: 'hsl(var(--purple))' },
+      qualificado: { label: 'Qualificado', pill: 'pill-qualificado', dot: 'dot-qualificado', accent: 'hsl(var(--primary))' },
+      novo: { label: 'Novo', pill: 'pill-novo', dot: 'dot-novo', accent: 'hsl(var(--info))' },
+    };
+
+    function normalizeTags(tags) {
+      if (!tags) return [];
+      if (Array.isArray(tags)) return tags.filter(Boolean).map(String);
+      if (typeof tags === 'string') return tags.split(/,|\|/).map(tag => tag.trim()).filter(Boolean);
+      return [];
+    }
+
+    function getAllTags() {
+      const set = new Set(extraTags.map(String));
+      crmLeads.forEach(lead => normalizeTags(lead.tags).forEach(tag => set.add(tag)));
+      return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+    }
+
+    function getAllTagsWithCount() {
+      const counts = new Map();
+      crmLeads.forEach(lead => normalizeTags(lead.tags).forEach(tag => counts.set(tag, (counts.get(tag) || 0) + 1)));
+      extraTags.forEach(tag => counts.set(tag, counts.get(tag) || 0));
+      return getAllTags().map(tag => ({ tag, count: counts.get(tag) || 0 }));
+    }
+
+    function renderTagList() {
+      if (!tagList) return;
+      const tags = getAllTags();
+      tagList.innerHTML = tags.map(tag => `
+        <button type="button" class="tag-pill ${selectedTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
+      `).join('') || '<div class="tag-pill" style="cursor:default;opacity:0.65;">Nenhuma tag disponível</div>';
+    }
+
+    function renderTagManager() {
+      if (!tagManagerList) return;
+      const tags = getAllTagsWithCount();
+      tagManagerList.innerHTML = tags.map(({ tag, count }) => `
+        <div class="tag-manager-item">
+          <button type="button" class="tag-pill ${selectedTag === tag ? 'active' : ''}" data-tag="${tag}">${tag}</button>
+          <div class="tag-manager-actions">
+            <span class="tag-count">${count} lead${count === 1 ? '' : 's'}</span>
+            <button type="button" class="tag-delete" data-action="delete" data-tag="${tag}" aria-label="Excluir tag">×</button>
+          </div>
+        </div>
+      `).join('') || '<div class="tag-manager-item" style="justify-content:center;">Nenhuma tag cadastrada.</div>';
+    }
+
+    function renderLeadTags(lead) {
+      if (!leadTagsSection) return;
+      const tags = normalizeTags(lead.tags);
+      if (!lead || tags.length === 0) {
+        leadTagsSection.innerHTML = '<p class="lead-tags-title">Nenhuma tag registrada para este lead.</p>';
+        return;
+      }
+      leadTagsSection.innerHTML = `
+        <div class="lead-tags-title">Tags do lead</div>
+        <div class="lead-tags-list">${tags.map(tag => `<span class="tag-pill active">${tag}</span>`).join('')}</div>
+      `;
+    }
+
+    function updatePanelVisibility(show) {
+      if (!tagsPanel) return;
+      tagsPanel.classList.toggle('visible', show);
+      tagsPanel.setAttribute('aria-hidden', show ? 'false' : 'true');
+    }
+
+    function openTagsPanel(lead = null) {
+      selectedLead = lead;
+      selectedTag = '';
+      if (tagsPanelTitle) tagsPanelTitle.textContent = lead ? `Tags de ${lead.name || 'lead'}` : 'Gestor de tags';
+      if (tagsPanelSubtitle) tagsPanelSubtitle.textContent = lead ? 'Gerencie tags deste contato ou do CRM.' : 'Visualize, crie e exclua tags do CRM.';
+      renderTagList();
+      renderTagManager();
+      renderLeadTags(lead);
+      updatePanelVisibility(true);
+    }
+
+    function closeTagsPanelFn() {
+      selectedLead = null;
+      selectedTag = '';
+      renderTagList();
+      renderTagManager();
+      updatePanelVisibility(false);
+      applyFilters(document.getElementById('searchInput')?.value || '');
+    }
+
+    function selectTagFilter(tag) {
+      selectedTag = selectedTag === tag ? '' : tag;
+      renderTagList();
+      renderTagManager();
+      applyFilters(document.getElementById('searchInput').value || '');
+    }
+
+    function createTag(tag) {
+      const normalized = String(tag || '').trim();
+      if (!normalized) return;
+      const existing = getAllTags().find(t => t.toLowerCase() === normalized.toLowerCase());
+      if (existing) return;
+      extraTags.push(normalized);
+      newTagInput.value = '';
+      renderTagList();
+      renderTagManager();
+    }
+
+    function deleteTag(tag) {
+      const normalized = String(tag || '').trim();
+      if (!normalized) return;
+      extraTags = extraTags.filter(t => t !== normalized);
+      crmLeads.forEach(lead => {
+        const tags = normalizeTags(lead.tags).filter(t => t !== normalized);
+        lead.tags = tags.length ? tags : [];
+      });
+      if (selectedTag === normalized) selectedTag = '';
+      renderTagList();
+      renderTagManager();
+      renderLeadTags(selectedLead);
+      applyFilters(document.getElementById('searchInput')?.value || '');
+    }
+
+    function addTagToSelectedLead(tag) {
+      if (!selectedLead) return;
+      const normalized = String(tag || '').trim();
+      if (!normalized) return;
+      const tags = normalizeTags(selectedLead.tags);
+      if (tags.some(t => t.toLowerCase() === normalized.toLowerCase())) return;
+      tags.push(normalized);
+      selectedLead.tags = tags;
+      renderLeadTags(selectedLead);
+      renderTagList();
+      renderTagManager();
+      applyFilters(document.getElementById('searchInput')?.value || '');
+    }
+
+    function setText(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+    function getLeadDataFromCard(card) {
+      const index = Array.from(leadList.children).indexOf(card);
+      return crmLeads[index] || null;
+    }
+
+    function getInitials(name) {
+      if (!name) return '??';
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      if (parts.length === 0) return '??';
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function formatDate(dateValue) {
+      if (!dateValue) return '';
+      const date = new Date(dateValue);
+      if (Number.isNaN(date.getTime())) return '';
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    }
+
+    function fmtBR(n) { try { return new Intl.NumberFormat('pt-BR').format(n || 0); } catch { return String(n || 0); } }
+    function fmtMoneyShort(v) {
+      v = Number(v) || 0;
+      if (v >= 1000000) return 'R$ ' + (v / 1000000).toFixed(v >= 10000000 ? 0 : 1) + 'M';
+      if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k';
+      return 'R$ ' + fmtBR(Math.round(v));
+    }
+
+    function buildLeadCard(lead, index = -1) {
+      const stage = String(lead.stage || '').toLowerCase();
+      const status = statusMap[stage] || { label: stage ? stage[0].toUpperCase() + stage.slice(1) : 'Sem status', pill: 'pill-novo', dot: 'dot-novo', accent: 'hsl(var(--info))' };
+      const name = lead.name || lead.nome || 'Sem nome';
+      const phone = lead.phone || lead.telefone || null;
+      const email = lead.email || '';
+      const company = lead.company || lead.empresa || '';
+      const source = lead.source || '';
+      const value = Number(lead.value || 0);
+      const tags = normalizeTags(lead.tags);
+      const createdAt = formatDate(lead.created_at || lead.createdAt || '');
+
+      const card = document.createElement('article');
+      card.className = 'lead-card';
+      if (index >= 0) card.dataset.leadIndex = String(index);
+      card.dataset.status = stage || 'all';
+      card.dataset.valor = String(value || 0);
+
+      card.innerHTML = `
+        <div class="accent-bar" style="background:${status.accent};"></div>
+        <div class="avatar ${stage === 'perdido' ? 'avatar-danger' : stage === 'ganho' ? 'avatar-win' : stage === 'proposta' ? 'avatar-purple' : stage === 'novo' ? 'avatar-info' : 'avatar-info'}">${getInitials(name)}</div>
+        <div class="lead-body">
+          <div class="lead-top">
+            <div class="lead-mainline">
+              <span class="lead-name">${name}</span>
+              <span class="status-pill ${status.pill}"><span class="dot ${status.dot}"></span>${status.label}</span>
+              ${source ? `<span class="source-badge"><i class="ti ti-tag" aria-hidden="true"></i>${String(source)}</span>` : ''}
+            </div>
+            <div class="lead-right">
+              ${value > 0 ? `<span class="lead-value">${fmtMoneyShort(value)}</span>` : ''}
+              <div class="action-btns"><button type="button" class="icon-btn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button><button type="button" class="icon-btn" aria-label="Tags"><i class="ti ti-tag"></i></button></div>
+            </div>
+          </div>
+          <div class="lead-contacts">
+            ${email ? `<span class="contact-item"><i class="ti ti-mail"></i>${email}</span>` : ''}
+            ${phone ? `<span class="contact-item"><i class="ti ti-phone"></i>${phone}<button type="button" class="wa-btn"><i class="ti ti-brand-whatsapp"></i>WhatsApp</button></span>` : ''}
+            ${company ? `<span class="contact-item"><i class="ti ti-building"></i><strong>${company}</strong></span>` : ''}
+          </div>
+          <div class="tag-row">
+            ${tags.length > 0 ? tags.map(tag => `<span class="tag"><i class="ti ti-tag"></i>${tag}</span>`).join('') : ''}
+            ${createdAt ? `<span class="date-tag"><i class="ti ti-clock"></i>${createdAt}</span>` : ''}
+          </div>
+        </div>
+      `;
+
+      return card;
+    }
 
     function updateCount() {
-      let visible = 0;
-      allCards.forEach(c => { if (c.style.display !== 'none') visible++; });
-      resultEl.textContent = visible < allCards.length ? 'Mostrando ' + visible + ' de 127 leads' : 'Mostrando todos os 127 leads';
+      const visible = Array.from(leadList.children).filter(c => c.style.display !== 'none').length;
+      const total = crmLeads.length;
+      resultEl.textContent = total > 0 ? `Mostrando ${visible} de ${total} leads` : 'Nenhum lead encontrado';
+      loadMoreEl.textContent = total > 0 ? `Role para carregar mais · ${visible} de ${total} leads carregados` : 'Sem leads carregados';
+    }
+
+    function renderLeads(leads) {
+      crmLeads = Array.isArray(leads) ? leads : [];
+      if (!leadList) return;
+      leadList.innerHTML = '';
+      crmLeads.forEach((lead, index) => leadList.appendChild(buildLeadCard(lead, index)));
+      renderTagList();
+      applyFilters(document.getElementById('searchInput')?.value || '');
+      updateCount();
     }
 
     function applyFilters(search) {
-      const input = document.getElementById('searchInput');
-      const s = (search || input.value).toLowerCase().trim();
-      allCards.forEach(c => {
-        const statusMatch = currentFilter === 'all' || c.dataset.status === currentFilter || (currentFilter === 'valor' && parseInt(c.dataset.valor, 10) > 0);
-        const textMatch = !s || c.textContent.toLowerCase().includes(s);
-        c.style.display = (statusMatch && textMatch) ? '' : 'none';
+      const s = String(search || document.getElementById('searchInput').value || '').toLowerCase().trim();
+      Array.from(leadList.children).forEach(card => {
+        const statusMatch = currentFilter === 'all' || card.dataset.status === currentFilter || (currentFilter === 'valor' && Number(card.dataset.valor) > 0);
+        const textMatch = !s || card.textContent.toLowerCase().includes(s);
+        const tagMatch = !selectedTag || card.textContent.toLowerCase().includes(selectedTag.toLowerCase());
+        card.style.display = statusMatch && textMatch && tagMatch ? '' : 'none';
       });
       updateCount();
     }
@@ -503,14 +831,14 @@
       if (el.textContent.includes('Seleção')) return;
       currentFilter = status;
       chips.forEach(c => { if (!c.textContent.includes('Seleção')) c.className = 'chip'; });
-      el.className = 'chip ' + (status === 'ganho' ? 'active-green' : status === 'perdido' ? 'active-red' : 'active');
-      applyFilters();
+      el.className = 'chip active';
+      applyFilters(document.getElementById('searchInput').value || '');
     }
 
     function toggleSelection(el) {
       selMode = !selMode;
       el.className = 'chip' + (selMode ? ' active' : '');
-      allCards.forEach(c => {
+      Array.from(leadList.children).forEach(c => {
         let ca = c.querySelector('.check-area');
         if (!ca) {
           ca = document.createElement('div');
@@ -522,26 +850,110 @@
       });
     }
 
-    document.getElementById('searchInput').addEventListener('input', e => applyFilters(e.target.value));
-
-    // Recebe contagens reais do CRM via postMessage do parent (Leads.tsx)
-    function fmtBR(n) { try { return new Intl.NumberFormat('pt-BR').format(n || 0); } catch { return String(n || 0); } }
-    function fmtMoneyShort(v) {
-      v = Number(v) || 0;
-      if (v >= 1_000_000) return 'R$ ' + (v / 1_000_000).toFixed(v >= 10_000_000 ? 0 : 1) + 'M';
-      if (v >= 1000) return 'R$ ' + (v / 1000).toFixed(v >= 10_000 ? 0 : 1) + 'k';
-      return 'R$ ' + fmtBR(Math.round(v));
+    function handleTagPanelClick(event) {
+      const tagButton = event.target.closest('button.tag-pill[data-tag]');
+      if (!tagButton) return;
+      selectTagFilter(tagButton.dataset.tag);
     }
+
+    function handleTagManagerClick(event) {
+      const deleteButton = event.target.closest('button.tag-delete[data-action="delete"]');
+      if (deleteButton) {
+        deleteTag(deleteButton.dataset.tag);
+        return;
+      }
+      const tagButton = event.target.closest('button.tag-pill[data-tag]');
+      if (!tagButton) return;
+      selectTagFilter(tagButton.dataset.tag);
+    }
+
+    function handleLeadListClick(event) {
+      const btn = event.target.closest('button.icon-btn[aria-label="Tags"]');
+      if (!btn) return;
+      const card = btn.closest('.lead-card');
+      const lead = getLeadDataFromCard(card);
+      if (!lead) return;
+      openTagsPanel(lead);
+    }
+
+    const importButton = document.getElementById('importButton');
+    const newContactButton = document.getElementById('newContactButton');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const closeModal = document.getElementById('closeModal');
+
+    function showModal(title, html) {
+      if (!modalBackdrop || !modalTitle || !modalBody) return;
+      modalTitle.textContent = title;
+      modalBody.innerHTML = html;
+      modalBackdrop.hidden = false;
+      modalBackdrop.classList.add('visible');
+    }
+
+    function closeModalFn() {
+      if (!modalBackdrop) return;
+      modalBackdrop.classList.remove('visible');
+      modalBackdrop.hidden = true;
+    }
+
+    function openImportPanel() {
+      showModal('Importar contatos', `
+        <p>O botão de importação agora está funcionando no iframe.</p>
+        <p>Neste protótipo, a ação abre este painel. Em versões futuras, ele poderá abrir o assistente de importação completo.</p>
+      `);
+    }
+
+    function openNewContactPanel() {
+      showModal('Novo contato', `
+        <p>O botão de novo contato agora está funcionando.</p>
+        <p>Aqui você poderá adicionar um lead novo diretamente.</p>
+      `);
+    }
+
+    tagsButton?.addEventListener('click', () => openTagsPanel());
+    importButton?.addEventListener('click', openImportPanel);
+    newContactButton?.addEventListener('click', openNewContactPanel);
+    addTagButton?.addEventListener('click', () => {
+      const value = newTagInput?.value || '';
+      if (!value.trim()) return;
+      if (selectedLead) {
+        addTagToSelectedLead(value);
+      } else {
+        createTag(value);
+      }
+    });
+    newTagInput?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        addTagButton?.click();
+      }
+    });
+    closeTagsPanel?.addEventListener('click', closeTagsPanelFn);
+    closeModal?.addEventListener('click', closeModalFn);
+    modalBackdrop?.addEventListener('click', (event) => {
+      if (event.target === modalBackdrop) closeModalFn();
+    });
+    tagList?.addEventListener('click', handleTagPanelClick);
+    tagManagerList?.addEventListener('click', handleTagManagerClick);
+    leadList?.addEventListener('click', handleLeadListClick);
+    document.getElementById('searchInput')?.addEventListener('input', e => applyFilters(e.target.value));
+
     window.addEventListener('message', (ev) => {
       const m = ev.data;
-      if (!m || m.type !== 'contatos-stats') return;
-      const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-      setText('badgeCount', `${fmtBR(m.total)} carregados`);
-      setText('statTotal', fmtBR(m.total));
-      setText('statWon', fmtBR(m.won));
-      setText('statLost', fmtBR(m.lost));
-      setText('statValue', fmtMoneyShort(m.value));
+      if (!m || !m.type) return;
+      if (m.type === 'contatos-stats') {
+        setText('badgeCount', `${fmtBR(m.total)} carregados`);
+        setText('statTotal', fmtBR(m.total));
+        setText('statWon', fmtBR(m.won));
+        setText('statLost', fmtBR(m.lost));
+        setText('statValue', fmtMoneyShort(m.value));
+      }
+      if (m.type === 'contatos-data') {
+        renderLeads(m.leads || []);
+      }
     });
+
     try { window.parent.postMessage({ type: 'contatos-ready' }, '*'); } catch {}
   </script>
 </body>

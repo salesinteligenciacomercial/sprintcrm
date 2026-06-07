@@ -7310,16 +7310,18 @@ function Conversas() {
       return;
     }
 
-    // Verificar se a tag já existe
-    if (selectedConv.tags?.includes(newTag.trim())) {
-      toast.error("Esta tag já foi adicionada");
-      return;
-    }
     try {
       setSyncStatus('syncing');
 
       // Buscar lead existente (não criar automaticamente)
       const leadData = leadVinculado || await findLead(selectedConv);
+      const currentTags = selectedConv.tags?.length ? selectedConv.tags : (leadData?.tags || []);
+
+      // Verificar se a tag já existe
+      if (currentTags.includes(newTag.trim())) {
+        toast.error("Esta tag já foi adicionada");
+        return;
+      }
       
       // 🔒 CORREÇÃO: Tags só podem ser adicionadas a leads vinculados
       if (!leadData) {
@@ -7377,15 +7379,17 @@ function Conversas() {
   const addExistingTag = async (tag: string) => {
     if (!selectedConv) return;
 
-    // Verificar se a tag já existe
-    if (selectedConv.tags?.includes(tag)) {
-      return;
-    }
     try {
       setSyncStatus('syncing');
 
       // Buscar lead existente (não criar automaticamente)
       const leadData = leadVinculado || await findLead(selectedConv);
+      const currentTags = selectedConv.tags?.length ? selectedConv.tags : (leadData?.tags || []);
+
+      // Verificar se a tag já existe
+      if (currentTags.includes(tag)) {
+        return;
+      }
       
       // 🔒 CORREÇÃO: Tags só podem ser adicionadas a leads vinculados
       if (!leadData) {
@@ -9513,7 +9517,7 @@ function Conversas() {
         {selectedConv ? <>
             {/* Header - FIXO NO TOPO */}
             <div className="flex-shrink-0 bg-background border-b z-10">
-              <ConversationHeader contactName={selectedConv.contactName} channel={selectedConv.channel} avatarUrl={selectedConv.avatarUrl} produto={selectedConv.produto} valor={selectedConv.valor || (leadVinculado?.value && leadVinculado.value > 0 ? `R$ ${Number(leadVinculado.value).toLocaleString('pt-BR')}` : undefined)} responsavel={selectedConv.responsavel || leadExtraInfo.responsavelNome} tags={selectedConv.tags || leadVinculado?.tags} funnelStage={selectedConv.funnelStage || (leadExtraInfo.etapaNome ? (leadExtraInfo.funilNome ? `${leadExtraInfo.funilNome} → ${leadExtraInfo.etapaNome}` : leadExtraInfo.etapaNome) : undefined)} showInfoPanel={showInfoPanel} onToggleInfoPanel={() => setShowInfoPanel(!showInfoPanel)} syncStatus={syncStatus} leadVinculado={leadVinculado} mostrarBotaoCriarLead={mostrarBotaoCriarLead} onCriarLead={criarLeadManualmente} onFinalizeAtendimento={finalizarAtendimento} onFinalizeAtendimentoSilent={finalizarAtendimentoSilent} onTransferAtendimento={() => setTransferDialogOpen(true)} onChangeAIMode={(mode) => setConversationAIMode(selectedConv.id, mode)} currentAIMode={(aiMode[selectedConv.id] || aiMode[(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')] || 'off') as any} onlineStatus={onlineStatus[selectedConv.id] || 'unknown'} isContactInactive={isContactInactive} onRestoreConversation={handleRestoreConversation} restoringConversation={restoringConversation} restoreProgress={restoreProgress} showBackButton={isMobile} onBack={() => setSelectedConv(null)} protocolNumber={activeProtocol?.protocol_number} protocolStatus={activeProtocol?.status} contactPhone={(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')} companyId={userCompanyId} currentApi={(apiOverrides[selectedConv.id] || selectedConv.origemApi) as any} availableApis={availableApis} onChangeApi={(api) => setApiOverride(selectedConv.id, api)} />
+              <ConversationHeader contactName={selectedConv.contactName} channel={selectedConv.channel} avatarUrl={selectedConv.avatarUrl} produto={selectedConv.produto} valor={selectedConv.valor || (leadVinculado?.value && leadVinculado.value > 0 ? `R$ ${Number(leadVinculado.value).toLocaleString('pt-BR')}` : undefined)} responsavel={selectedConv.responsavel || leadExtraInfo.responsavelNome} tags={(selectedConv.tags && selectedConv.tags.length > 0) ? selectedConv.tags : leadVinculado?.tags} funnelStage={selectedConv.funnelStage || (leadExtraInfo.etapaNome ? (leadExtraInfo.funilNome ? `${leadExtraInfo.funilNome} → ${leadExtraInfo.etapaNome}` : leadExtraInfo.etapaNome) : undefined)} showInfoPanel={showInfoPanel} onToggleInfoPanel={() => setShowInfoPanel(!showInfoPanel)} syncStatus={syncStatus} leadVinculado={leadVinculado} mostrarBotaoCriarLead={mostrarBotaoCriarLead} onCriarLead={criarLeadManualmente} onFinalizeAtendimento={finalizarAtendimento} onFinalizeAtendimentoSilent={finalizarAtendimentoSilent} onTransferAtendimento={() => setTransferDialogOpen(true)} onChangeAIMode={(mode) => setConversationAIMode(selectedConv.id, mode)} currentAIMode={(aiMode[selectedConv.id] || aiMode[(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')] || 'off') as any} onlineStatus={onlineStatus[selectedConv.id] || 'unknown'} isContactInactive={isContactInactive} onRestoreConversation={handleRestoreConversation} restoringConversation={restoringConversation} restoreProgress={restoreProgress} showBackButton={isMobile} onBack={() => setSelectedConv(null)} protocolNumber={activeProtocol?.protocol_number} protocolStatus={activeProtocol?.status} contactPhone={(selectedConv.phoneNumber || selectedConv.id).replace(/[^0-9]/g, '')} companyId={userCompanyId} currentApi={(apiOverrides[selectedConv.id] || selectedConv.origemApi) as any} availableApis={availableApis} onChangeApi={(api) => setApiOverride(selectedConv.id, api)} />
             </div>
             
             {/* Dialog de Transferir Atendimento */}
@@ -10262,10 +10266,10 @@ function Conversas() {
                         <Tag className="h-4 w-4" /> Tags
                       </h4>
                       <div className="flex flex-wrap gap-2 mb-2">
-                        {selectedConv.tags?.map((tag, idx) => <Badge key={idx} variant="secondary">
+                        {(selectedConv.tags?.length ? selectedConv.tags : (leadVinculado?.tags || [])).map((tag, idx) => <Badge key={idx} variant="secondary">
                             {tag}
                           </Badge>)}
-                        {(!selectedConv.tags || selectedConv.tags.length === 0) && <p className="text-sm text-muted-foreground">Nenhuma tag adicionada</p>}
+                        {(!(selectedConv.tags?.length) && !(leadVinculado?.tags?.length)) && <p className="text-sm text-muted-foreground">Nenhuma tag adicionada</p>}
                       </div>
                       <Dialog onOpenChange={open => {
                   if (open) {
@@ -10304,7 +10308,7 @@ function Conversas() {
                                 <ScrollArea className="h-[200px] border rounded-md p-2">
                                   <div className="flex flex-wrap gap-2">
                                     {allTags.map(tag => {
-                              const isSelected = selectedConv.tags?.includes(tag) || false;
+                              const isSelected = (selectedConv.tags?.includes(tag) || leadVinculado?.tags?.includes(tag) || false);
                               return <Badge key={tag} variant={isSelected ? "default" : "outline"} className="cursor-pointer hover:bg-primary/80" onClick={() => {
                                 if (isSelected) {
                                   // Remover tag

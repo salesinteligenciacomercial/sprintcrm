@@ -9,7 +9,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GrowOS — Automação & IA</title>
+<title>Automação & IA</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.x/dist/tabler-icons.min.css">
@@ -34,17 +34,7 @@
 html,body{height:100%;overflow:hidden}
 body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px;display:flex;flex-direction:column}
 
-/* ─── TOPBAR ─────────────────────────── */
-.topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:14px;flex-shrink:0;position:relative;z-index:50}
-.logo{display:flex;align-items:center;gap:9px;margin-right:20px;padding-right:20px;border-right:1px solid var(--border)}
-.logo-mark{width:33px;height:33px;border-radius:9px;background:var(--blue-g);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:15px;color:#fff;box-shadow:0 0 18px rgba(61,135,245,.4)}
-.logo-text{font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:-.3px}
-.logo-text em{color:var(--blue);font-style:normal}
-.page-badge{display:flex;align-items:center;gap:7px}
-.page-icon{width:28px;height:28px;border-radius:var(--r-sm);background:var(--purple-d);display:flex;align-items:center;justify-content:center;color:var(--purple);font-size:15px}
-.page-title{font-family:var(--display);font-size:14px;font-weight:700;color:var(--text)}
-.page-sub{font-size:11px;color:var(--text3);margin-top:1px}
-.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* topbar styles removed — header removed from markup */
 .icon-btn{width:32px;height:32px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);transition:.15s;border:1px solid var(--border);background:transparent;font-size:15px}
 .icon-btn:hover{background:var(--bg3);color:var(--text);border-color:var(--border2)}
 .user-chip{display:flex;align-items:center;gap:7px;padding:4px 10px 4px 4px;border-radius:99px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;transition:.15s}
@@ -314,30 +304,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 </style>
 </head>
 <body>
-
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="logo">
-    <div class="logo-mark">G</div>
-    <div class="logo-text">Grow<em>OS</em></div>
-  </div>
-  <div class="page-badge">
-    <div class="page-icon"><i class="ti ti-brain"></i></div>
-    <div>
-      <div class="page-title">Automação & IA</div>
-      <div class="page-sub">Agentes inteligentes, fluxos e campanhas</div>
-    </div>
-  </div>
-  <div class="topbar-right">
-    <div class="icon-btn" title="Diagnóstico URA"><i class="ti ti-stethoscope"></i></div>
-    <div class="icon-btn" title="Notificações"><i class="ti ti-bell"></i></div>
-    <div class="user-chip">
-      <div class="user-av">RC</div>
-      <span class="user-name">Rafael Costa</span>
-      <i class="ti ti-chevron-down" style="font-size:12px;color:var(--text3)"></i>
-    </div>
-  </div>
-</div>
 
 <!-- LAYOUT -->
 <div class="layout">
@@ -651,7 +617,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <div class="section-title"><i class="ti ti-building" style="color:var(--blue)"></i>Dados da Empresa</div>
         <div class="card-sm" style="margin-bottom:10px">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div><div class="field-label">Nome</div><div style="font-size:12.5px;color:var(--text)">GrowOS Consultoria</div></div>
+            <div><div class="field-label">Nome</div><div style="font-size:12.5px;color:var(--text)">Consultoria</div></div>
             <div><div class="field-label">Segmento</div><div style="font-size:12.5px;color:var(--text)">SaaS / CRM</div></div>
             <div><div class="field-label">Horário</div><div style="font-size:12.5px;color:var(--text)">Seg–Sex, 8h–18h</div></div>
             <div><div class="field-label">WhatsApp</div><div style="font-size:12.5px;color:var(--green)">(11) 9 9999-9999</div></div>
@@ -1008,7 +974,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
 
 Tenho uma proposta especial que preparei para você. Podemos conversar esta semana?
 
-Att, Rafael - GrowOS</textarea>
+Att, Rafael</textarea>
         <div style="font-size:10.5px;color:var(--text3);margin-top:5px">💡 Variáveis disponíveis: {{nome}}, {{empresa}}, {{telefone}}</div>
       </div>
       <div class="field-row">
@@ -1105,7 +1071,7 @@ Att, Rafael - GrowOS</textarea>
           <i class="ti ti-link" style="color:var(--green);font-size:18px"></i>
           <div style="flex:1">
             <div style="font-size:11.5px;font-weight:600;color:var(--green)">Página publicada</div>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">growos.com.br/captura/growos-consultoria</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">seusite.com.br/captura/consultoria</div>
           </div>
           <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-copy"></i>Copiar link</button>
         </div>
@@ -1115,7 +1081,7 @@ Att, Rafael - GrowOS</textarea>
         <div class="section-title" style="margin-bottom:10px"><i class="ti ti-eye" style="color:var(--text2)"></i>Preview</div>
         <div class="capture-preview">
           <div class="cp-hero">
-            <div class="cp-logo">G</div>
+            <div class="cp-logo"><i class="ti ti-rocket"></i></div>
             <div class="cp-title">Transforme seu negócio com IA</div>
             <div class="cp-sub">CRM + Automação para empresas que querem crescer de forma inteligente</div>
             <div class="cp-urgency"><i class="ti ti-bolt" style="font-size:11px"></i>Oferta especial por tempo limitado!</div>
@@ -1204,7 +1170,7 @@ Att, Rafael - GrowOS</textarea>
           <i class="ti ti-world-check" style="color:var(--green);font-size:18px"></i>
           <div style="flex:1">
             <div style="font-size:11.5px;font-weight:600;color:var(--green)">Site publicado e online</div>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">growos.com.br/site/growos-consultoria</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">seusite.com.br/site/consultoria</div>
           </div>
           <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-copy"></i>Copiar link</button>
           <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-external-link"></i>Abrir</button>
@@ -1216,7 +1182,7 @@ Att, Rafael - GrowOS</textarea>
         <div class="section-title" style="margin-bottom:10px"><i class="ti ti-device-laptop" style="color:var(--text2)"></i>Preview do site</div>
         <div class="site-preview">
           <div class="sp-nav">
-            <div class="sp-logo">GrowOS</div>
+            <div class="sp-logo">Automação</div>
             <div class="sp-links"><span>Serviços</span><span>Planos</span><span>Blog</span><span>Contato</span></div>
             <button class="sp-cta-sm">Falar no WhatsApp</button>
           </div>
@@ -1246,7 +1212,7 @@ Att, Rafael - GrowOS</textarea>
     <div class="panel-hdr-icon" style="background:var(--orange-d);color:var(--orange)"><i class="ti ti-plug"></i></div>
     <div class="panel-hdr-text">
       <div class="panel-title">n8n & Webhooks</div>
-      <div class="panel-sub">Conecte o GrowOS a qualquer serviço externo via n8n ou webhook direto</div>
+      <div class="panel-sub">Conecte sua plataforma a qualquer serviço externo via n8n ou webhook direto</div>
     </div>
     <div class="panel-hdr-actions">
       <button class="btn btn-primary"><i class="ti ti-plus"></i>Novo webhook</button>
@@ -1258,7 +1224,7 @@ Att, Rafael - GrowOS</textarea>
         <div style="font-size:32px">🔗</div>
         <div>
           <div style="font-family:var(--display);font-size:14px;font-weight:700;color:var(--orange)">Conectar instância n8n</div>
-          <div style="font-size:12px;color:var(--text2);margin-top:3px">Integre seus workflows n8n com o GrowOS para automações avançadas</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:3px">Integre seus workflows n8n para automações avançadas</div>
         </div>
       </div>
       <div style="margin-top:14px">

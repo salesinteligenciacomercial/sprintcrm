@@ -4,17 +4,12 @@
 // edite somente public/processos-comerciais.html.
 export default function ProcessosComerciais() {
   return (
-    <iframe
-      src="/processos-comerciais.html"
-      title="Processos Comerciais"
-      style={{
-        position: "fixed",
-        inset: 0,
-        width: "100vw",
-        height: "100vh",
-        border: "none",
-        zIndex: 1,
-      }}
-    />
+    <div className="relative h-full min-h-full">
+      <iframe
+        src="/processos-comerciais.html"
+        title="Processos Comerciais"
+        className="absolute inset-0 w-full h-full border-none"
+      />
+    </div>
   );
 }
