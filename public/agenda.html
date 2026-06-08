@@ -1075,6 +1075,8 @@
         document.getElementById('f_confirmEmail').checked = ev?.confirmEmail ?? false;
         document.getElementById('f_notes').value = ev?.notes || '';
         document.getElementById('apptDelete').style.display = ev ? 'inline-flex' : 'none';
+        const rb = document.getElementById('apptReschedule');
+        if(rb) rb.style.display = ev ? 'inline-flex' : 'none';
         document.getElementById('apptModal').style.display = 'flex';
       }
       function closeModal(){ document.getElementById('apptModal').style.display='none'; editingId=null; }
