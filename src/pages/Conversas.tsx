@@ -517,6 +517,7 @@ function Conversas() {
   const [leadVinculado, setLeadVinculado] = useState<any>(null);
   const [showMoverFunilInline, setShowMoverFunilInline] = useState(false);
   const [showTagsInline, setShowTagsInline] = useState(false);
+  const [showEditLeadInline, setShowEditLeadInline] = useState(false);
   const [leadExtraInfo, setLeadExtraInfo] = useState<{ etapaNome?: string; funilNome?: string; responsavelNome?: string }>({});
   const [mostrarBotaoCriarLead, setMostrarBotaoCriarLead] = useState(false);
   const [leadsVinculados, setLeadsVinculados] = useState<Record<string, string>>({}); // conversationId -> leadId
