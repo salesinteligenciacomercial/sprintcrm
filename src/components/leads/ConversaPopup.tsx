@@ -1269,7 +1269,7 @@ export function ConversaPopup({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => setAttachmentsOpen(true)}>
                         <Paperclip className="h-4 w-4 mr-2" />
-                        Prontuário / Anexos
+                        Banco de Dado do Contato
                         {attachmentsCount > 0 && (
                           <Badge variant="secondary" className="ml-2 text-xs">
                             {attachmentsCount}
