@@ -86,6 +86,7 @@ export function useSystemUpdates() {
         description: update.description,
         changes: (Array.isArray(update.changes) ? update.changes : []) as unknown as SystemUpdateChange[],
         tipo: update.tipo as 'feature' | 'fix' | 'improvement',
+        module: (update as any).module ?? null,
         published_at: update.published_at,
         created_by: update.created_by,
         created_at: update.created_at,
