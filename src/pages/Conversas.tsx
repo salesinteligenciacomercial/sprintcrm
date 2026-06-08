@@ -10202,9 +10202,10 @@ function Conversas() {
                           toast.success("Informações sincronizadas com sucesso!");
                         }
                       }
-                    }} triggerButton={<Button size="sm" variant="outline" className="w-full">
-                                  <Pencil className="h-3 w-3 mr-2" /> Editar Informações
+                    }} open={showEditLeadInline} onOpenChange={setShowEditLeadInline} inline triggerButton={<Button size="sm" variant="outline" className="w-full" onClick={() => setShowEditLeadInline(v => !v)}>
+                                  <Pencil className="h-3 w-3 mr-2" /> {showEditLeadInline ? "Fechar" : "Editar Informações"}
                                 </Button>} />
+
                             {/* ✅ Painel de Vendas/Negociações com botões Ganho/Perdido integrados */}
                             <div className="mt-3">
                               <VendasLeadPanel
