@@ -175,6 +175,7 @@ export function useSystemUpdates() {
     description?: string;
     changes: SystemUpdateChange[];
     tipo: 'feature' | 'fix' | 'improvement';
+    module?: string | null;
   }) => {
     try {
       if (!masterCompanyId) {
@@ -184,13 +185,14 @@ export function useSystemUpdates() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      const insertData = {
+      const insertData: any = {
         master_company_id: masterCompanyId,
         version: data.version,
         title: data.title,
         description: data.description || null,
         changes: data.changes as any,
         tipo: data.tipo,
+        module: data.module || null,
         created_by: user.id,
       };
 
