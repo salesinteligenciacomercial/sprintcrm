@@ -20,6 +20,24 @@ const CHANGE_TYPES = [
   { value: 'fix', label: 'Correção', icon: Wrench, color: 'text-orange-500' },
 ] as const;
 
+const MODULES = [
+  { value: '__all__', label: 'Todos os módulos (geral)' },
+  { value: 'Conversas', label: 'Conversas / Bate-papo' },
+  { value: 'Funil', label: 'Funil de Vendas' },
+  { value: 'Leads', label: 'Leads' },
+  { value: 'Agenda', label: 'Agenda' },
+  { value: 'Tarefas', label: 'Tarefas' },
+  { value: 'Automacoes', label: 'Automações / Fluxos' },
+  { value: 'IA', label: 'Inteligência Artificial' },
+  { value: 'Campanhas', label: 'Campanhas / Disparos' },
+  { value: 'Financeiro', label: 'Financeiro' },
+  { value: 'Relatorios', label: 'Relatórios' },
+  { value: 'Configuracoes', label: 'Configurações' },
+  { value: 'Treinamento', label: 'Treinamento' },
+  { value: 'Reunioes', label: 'Reuniões' },
+  { value: 'Discador', label: 'Discador / Call Center' },
+] as const;
+
 export function NovaAtualizacaoDialog({ open, onOpenChange }: NovaAtualizacaoDialogProps) {
   const { createUpdate } = useSystemUpdates();
   const [loading, setLoading] = useState(false);
