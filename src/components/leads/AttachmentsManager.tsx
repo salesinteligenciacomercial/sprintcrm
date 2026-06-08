@@ -96,7 +96,7 @@ export function AttachmentsManager({ onLeadSelected }: AttachmentsManagerProps) 
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast.error("Erro ao carregar prontuários");
+      toast.error("Erro ao carregar banco de dados");
     } finally {
       setLoading(false);
     }
