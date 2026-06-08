@@ -50,6 +50,7 @@ interface LeadAttachmentsProps {
   leadName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  inline?: boolean;
 }
 
 const CATEGORIES = [
