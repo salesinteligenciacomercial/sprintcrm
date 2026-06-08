@@ -761,7 +761,18 @@
       let selectedDate = new Date(viewDate);
       let editingId = null;
 
-      function load(){ try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; } }
+      function isUuidLike(s){ return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s||'').trim()); }
+      function load(){
+        try {
+          const arr = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+          // sanitiza: remove UUIDs salvos antigamente em agenda/prof
+          return arr.map(it => ({
+            ...it,
+            agenda: isUuidLike(it.agenda) ? '' : it.agenda,
+            prof: isUuidLike(it.prof) ? '' : it.prof,
+          }));
+        } catch { return []; }
+      }
       function save(list){ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
       function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2500); }
       function pad(n){ return String(n).padStart(2,'0'); }
