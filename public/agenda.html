@@ -723,18 +723,12 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
           <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:hsl(var(--text-muted)); font-weight:600;">Agenda
             <select id="f_agenda" style="padding:9px 12px; border:1px solid hsl(var(--border)); border-radius:8px; font-size:13px; background:hsl(var(--surface));">
-              <option>Dr. Carlos Pinto — Cardiologia</option>
-              <option>Dra. Ana Souza — Pediatria</option>
-              <option>Dr. João Lima — Clínica Geral</option>
-              <option>Agenda compartilhada</option>
+              <option value="">Carregando agendas...</option>
             </select>
           </label>
           <label style="display:flex; flex-direction:column; gap:6px; font-size:12px; color:hsl(var(--text-muted)); font-weight:600;">Profissional / Especialista
             <select id="f_prof" style="padding:9px 12px; border:1px solid hsl(var(--border)); border-radius:8px; font-size:13px; background:hsl(var(--surface));">
-              <option>Dr. Carlos Pinto</option>
-              <option>Dra. Ana Souza</option>
-              <option>Dr. João Lima</option>
-              <option>Equipe Comercial</option>
+              <option value="">Carregando profissionais...</option>
             </select>
           </label>
         </div>
@@ -821,6 +815,38 @@
   <script>
     (function(){
       const STORAGE_KEY = 'agenda_appointments_v1';
+
+      // Recebe agendas/profissionais reais do CRM via postMessage do React wrapper
+      function populateSelect(id, items, placeholder){
+        const el = document.getElementById(id);
+        if(!el) return;
+        const current = el.value;
+        el.innerHTML = '';
+        if(!items || items.length === 0){
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = placeholder;
+          el.appendChild(opt);
+          return;
+        }
+        items.forEach(it => {
+          const opt = document.createElement('option');
+          opt.value = it.id || it.label;
+          opt.textContent = it.label;
+          el.appendChild(opt);
+        });
+        if(current) el.value = current;
+      }
+      window.addEventListener('message', (e) => {
+        const d = e.data || {};
+        if(d.type === 'agenda:data'){
+          populateSelect('f_agenda', d.agendas, 'Nenhuma agenda cadastrada');
+          populateSelect('f_prof', d.profissionais, 'Nenhum profissional cadastrado');
+        }
+      });
+      // Avisa o parent que está pronto
+      try { window.parent.postMessage({ type: 'agenda:ready' }, '*'); } catch(_) {}
+
       const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
       const dowShort = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
 
@@ -988,8 +1014,8 @@
         document.getElementById('f_start').value = ev?.start || prefill?.start || '09:00';
         document.getElementById('f_end').value = ev?.end || '09:30';
         document.getElementById('f_type').value = ev?.type || 'Consulta';
-        document.getElementById('f_agenda').value = ev?.agenda || 'Dr. Carlos Pinto — Cardiologia';
-        document.getElementById('f_prof').value = ev?.prof || 'Dr. Carlos Pinto';
+        const fa = document.getElementById('f_agenda'); fa.value = ev?.agenda || (fa.options[0] && fa.options[0].value) || '';
+        const fp = document.getElementById('f_prof'); fp.value = ev?.prof || (fp.options[0] && fp.options[0].value) || '';
         document.getElementById('f_value').value = ev?.value ?? '';
         document.getElementById('f_phone').value = ev?.phone || '';
         document.getElementById('f_email').value = ev?.email || '';
