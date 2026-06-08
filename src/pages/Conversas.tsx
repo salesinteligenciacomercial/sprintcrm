@@ -11767,6 +11767,14 @@ function Conversas() {
 
                       </div>
                     </div>
+
+                    {/* Histórico do Lead (timeline) - última seção */}
+                    <LeadActivityTimeline
+                      leadId={leadVinculado?.id}
+                      leadCreatedAt={leadVinculado?.created_at}
+                      leadName={leadVinculado?.name || selectedConv?.contactName}
+                    />
+
                   </div>
                 </div>}
             </div>
