@@ -56,6 +56,7 @@ export function NovaAtualizacaoDialog({ open, onOpenChange }: NovaAtualizacaoDia
     setTitle("");
     setDescription("");
     setTipo('feature');
+    setModule('__all__');
     setChanges([]);
     setNewChangeText("");
     setNewChangeType('feature');
