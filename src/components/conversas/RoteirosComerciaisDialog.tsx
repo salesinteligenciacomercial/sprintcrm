@@ -164,8 +164,8 @@ export function RoteirosComerciaisDialog({ open, onOpenChange, conversationConte
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </WrapperContent>
+      </Wrapper>
 
       {editingId && (
         <ScriptBuilderDialog
