@@ -673,22 +673,25 @@ export function EditarLeadDialog({
   );
 
   if (inline) {
-    if (!open) {
-      return <>{triggerButton}{attachmentsModal}</>;
-    }
     return (
-      <div className="mt-3 space-y-3 p-3 border border-border rounded-lg bg-muted/30">
-        <div className="flex items-center justify-between">
-          <h4 className="font-medium text-sm">Editar Lead</h4>
-          <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        {bodyContent}
+      <>
+        {triggerButton}
+        {open && (
+          <div className="mt-3 space-y-3 p-3 border border-border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm">Editar Lead</h4>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {bodyContent}
+          </div>
+        )}
         {attachmentsModal}
-      </div>
+      </>
     );
   }
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
