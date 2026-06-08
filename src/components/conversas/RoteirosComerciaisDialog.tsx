@@ -27,7 +27,7 @@ interface Props {
   };
 }
 
-export function RoteirosComerciaisDialog({ open, onOpenChange, conversationContext }: Props) {
+export function RoteirosComerciaisDialog({ open, onOpenChange, conversationContext, inline = false }: Props) {
   const { data: scripts, isLoading } = useCommercialScripts();
   const createScript = useCreateScript();
   const deleteScript = useDeleteScript();
