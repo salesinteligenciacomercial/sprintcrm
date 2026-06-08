@@ -46,6 +46,7 @@ export function NovaAtualizacaoDialog({ open, onOpenChange }: NovaAtualizacaoDia
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tipo, setTipo] = useState<'feature' | 'fix' | 'improvement'>('feature');
+  const [module, setModule] = useState<string>('__all__');
   const [changes, setChanges] = useState<SystemUpdateChange[]>([]);
   const [newChangeText, setNewChangeText] = useState("");
   const [newChangeType, setNewChangeType] = useState<'feature' | 'improvement' | 'fix'>('feature');
