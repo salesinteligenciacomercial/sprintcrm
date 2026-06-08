@@ -48,6 +48,7 @@ interface EditarLeadDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   triggerButton?: React.ReactNode;
+  inline?: boolean;
 }
 
 export function EditarLeadDialog({ 
