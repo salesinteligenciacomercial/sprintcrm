@@ -160,6 +160,27 @@ export function NovaAtualizacaoDialog({ open, onOpenChange }: NovaAtualizacaoDia
             </div>
           </div>
 
+          {/* Módulo */}
+          <div className="space-y-2">
+            <Label htmlFor="module">Módulo específico *</Label>
+            <Select value={module} onValueChange={setModule}>
+              <SelectTrigger id="module">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MODULES.map(m => (
+                  <SelectItem key={m.value} value={m.value}>
+                    {m.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Selecione o módulo ao qual esta atualização se refere. Apenas as melhorias deste módulo serão divulgadas — os ajustes em outros módulos permanecem ocultos.
+            </p>
+          </div>
+
+
           {/* Título */}
           <div className="space-y-2">
             <Label htmlFor="title">Título *</Label>
