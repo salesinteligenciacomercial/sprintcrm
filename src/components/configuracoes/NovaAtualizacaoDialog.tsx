@@ -103,6 +103,7 @@ export function NovaAtualizacaoDialog({ open, onOpenChange }: NovaAtualizacaoDia
         description: description.trim() || undefined,
         changes,
         tipo,
+        module: module === '__all__' ? null : module,
       });
 
       if (success) {
