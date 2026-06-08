@@ -56,7 +56,8 @@ export function EditarLeadDialog({
   onLeadUpdated,
   open: openProp,
   onOpenChange: onOpenChangeProp,
-  triggerButton
+  triggerButton,
+  inline = false
 }: EditarLeadDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp !== undefined ? openProp : internalOpen;
