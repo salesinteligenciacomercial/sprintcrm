@@ -10,9 +10,14 @@ export default function Agenda() {
     let cancelled = false;
 
     async function loadAndSend() {
-      const [{ data: agendas }, { data: profs }] = await Promise.all([
+      const [{ data: agendas }, { data: profs }, { data: leads }] = await Promise.all([
         supabase.from("agendas").select("id, nome").order("nome"),
         supabase.from("profissionais").select("id, nome, especialidade").order("nome"),
+        supabase
+          .from("leads")
+          .select("id, name, phone, email")
+          .order("name")
+          .range(0, 999),
       ]);
       if (cancelled) return;
       const payload = {
@@ -21,6 +26,12 @@ export default function Agenda() {
         profissionais: (profs || []).map((p: any) => ({
           id: p.id,
           label: p.especialidade ? `${p.nome} — ${p.especialidade}` : p.nome,
+        })),
+        leads: (leads || []).map((l: any) => ({
+          id: l.id,
+          name: l.name || "",
+          phone: l.phone || "",
+          email: l.email || "",
         })),
       };
       iframeRef.current?.contentWindow?.postMessage(payload, "*");
