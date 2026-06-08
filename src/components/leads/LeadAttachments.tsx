@@ -63,7 +63,7 @@ const CATEGORIES = [
   { value: 'outros', label: 'Outros' }
 ];
 
-export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChange }: LeadAttachmentsProps) {
+export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChange, inline = false }: LeadAttachmentsProps) {
   const [attachments, setAttachments] = useState<LeadAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('todos');
