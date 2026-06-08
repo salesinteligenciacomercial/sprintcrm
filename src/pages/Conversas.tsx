@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { InlineDialog, InlineDialogContent, InlineDialogHeader, InlineDialogTitle, InlineDialogTrigger, InlineDialogFooter, InlineDialogDescription, InlineDialogClose } from "@/components/conversas/InlineDialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10509,26 +10510,28 @@ function Conversas() {
                           <RoteirosComerciaisDialog
                             open={roteirosDialogOpen}
                             onOpenChange={setRoteirosDialogOpen}
+                            inline
                             conversationContext={{
                               conversation_id: selectedConv.id,
                               lead_id: (selectedConv as any).leadId || undefined,
                               telefone_formatado: (selectedConv.phoneNumber || selectedConv.id || "").replace(/[^0-9]/g, ""),
                             }}
                           />
+
                         )}
                         {/* Quick Messages */}
-                        <Dialog>
-                          <DialogTrigger asChild>
+                        <InlineDialog>
+                          <InlineDialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2" title="Mensagens Rápidas">
                               <Zap className="h-4 w-4" />
                               <span>Mensagens Rápidas</span>
                             </Button>
 
-                          </DialogTrigger>
-                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>💡 Mensagens Rápidas</DialogTitle>
-                            </DialogHeader>
+                          </InlineDialogTrigger>
+                          <InlineDialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                            <InlineDialogHeader>
+                              <InlineDialogTitle>💡 Mensagens Rápidas</InlineDialogTitle>
+                            </InlineDialogHeader>
                             
                             <Tabs defaultValue="messages" className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
@@ -10538,17 +10541,17 @@ function Conversas() {
                               
                               <TabsContent value="messages" className="space-y-4">
                                 {/* Botão para criar nova mensagem */}
-                                <Dialog>
-                                  <DialogTrigger asChild>
+                                <InlineDialog>
+                                  <InlineDialogTrigger asChild>
                                     <Button className="w-full">
                                       <Plus className="h-4 w-4 mr-2" />
                                       Criar Nova Mensagem
                                     </Button>
-                                  </DialogTrigger>
-                                  <DialogContent>
-                                    <DialogHeader>
-                                      <DialogTitle>Criar Nova Mensagem</DialogTitle>
-                                    </DialogHeader>
+                                  </InlineDialogTrigger>
+                                  <InlineDialogContent>
+                                    <InlineDialogHeader>
+                                      <InlineDialogTitle>Criar Nova Mensagem</InlineDialogTitle>
+                                    </InlineDialogHeader>
                                     <div className="space-y-3">
                                       <div className="space-y-2">
                                         <Label>Categoria *</Label>
@@ -10629,8 +10632,8 @@ function Conversas() {
                                         Criar Mensagem Rápida
                                       </Button>
                                     </div>
-                                  </DialogContent>
-                                </Dialog>
+                                  </InlineDialogContent>
+                                </InlineDialog>
 
                                 {/* Mensagens organizadas por categoria */}
                                 <div className="border-t pt-4">
@@ -10854,12 +10857,12 @@ function Conversas() {
                                 </div>
                               </TabsContent>
                             </Tabs>
-                          </DialogContent>
-                        </Dialog>
+                          </InlineDialogContent>
+                        </InlineDialog>
 
                         {/* Schedule Message */}
-                        <Dialog>
-                          <DialogTrigger asChild>
+                        <InlineDialog>
+                          <InlineDialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2 relative" title="Agendar Mensagem">
                               <Clock className="h-4 w-4" />
                               <span>Agendar Mensagem</span>
@@ -10868,14 +10871,14 @@ function Conversas() {
                                 </Badge>}
                             </Button>
 
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>⏰ Agendar Mensagem WhatsApp</DialogTitle>
+                          </InlineDialogTrigger>
+                          <InlineDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <InlineDialogHeader>
+                              <InlineDialogTitle>⏰ Agendar Mensagem WhatsApp</InlineDialogTitle>
                               <p className="text-sm text-muted-foreground mt-1">
                                 Programe mensagens para serem enviadas automaticamente
                               </p>
-                            </DialogHeader>
+                            </InlineDialogHeader>
                             
                             <Tabs defaultValue="agendar" className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
@@ -10957,22 +10960,22 @@ function Conversas() {
                                   </div>}
                               </TabsContent>
                             </Tabs>
-                          </DialogContent>
-                        </Dialog>
+                          </InlineDialogContent>
+                        </InlineDialog>
 
                         {/* Schedule Reminder */}
-                        <Dialog>
-                          <DialogTrigger asChild>
+                        <InlineDialog>
+                          <InlineDialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2" title="Gerenciar Lembretes">
                               <Bell className="h-4 w-4" />
                               <span>Gerenciar Lembretes</span>
                             </Button>
 
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Lembretes do Lead</DialogTitle>
-                            </DialogHeader>
+                          </InlineDialogTrigger>
+                          <InlineDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <InlineDialogHeader>
+                              <InlineDialogTitle>Lembretes do Lead</InlineDialogTitle>
+                            </InlineDialogHeader>
                             
                             <Tabs defaultValue="criar" className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
@@ -11202,12 +11205,12 @@ function Conversas() {
                                 </ScrollArea>
                               </TabsContent>
                             </Tabs>
-                          </DialogContent>
-                        </Dialog>
+                          </InlineDialogContent>
+                        </InlineDialog>
 
                         {/* Compromissos e Reuniões */}
-                        <Dialog open={reunioesDialogOpen} onOpenChange={setReunioesDialogOpen}>
-                          <DialogTrigger asChild>
+                        <InlineDialog open={reunioesDialogOpen} onOpenChange={setReunioesDialogOpen}>
+                          <InlineDialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2" title="Compromissos" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
@@ -11235,11 +11238,11 @@ function Conversas() {
                               <span>Compromissos</span>
                             </Button>
 
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Reuniões e Compromissos</DialogTitle>
-                            </DialogHeader>
+                          </InlineDialogTrigger>
+                          <InlineDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <InlineDialogHeader>
+                              <InlineDialogTitle>Reuniões e Compromissos</InlineDialogTitle>
+                            </InlineDialogHeader>
                             
                             <Tabs defaultValue="criar" className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
@@ -11535,12 +11538,12 @@ function Conversas() {
                                 </ScrollArea>
                               </TabsContent>
                             </Tabs>
-                          </DialogContent>
-                        </Dialog>
+                          </InlineDialogContent>
+                        </InlineDialog>
 
                         {/* Tarefas do Lead */}
-                        <Dialog open={tarefasDialogOpen} onOpenChange={setTarefasDialogOpen}>
-                          <DialogTrigger asChild>
+                        <InlineDialog open={tarefasDialogOpen} onOpenChange={setTarefasDialogOpen}>
+                          <InlineDialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2 relative" title="Tarefas" onClick={async () => {
                         // CORREÇÃO: Criar lead automaticamente ao abrir o modal
                         if (!leadVinculado?.id && selectedConv) {
@@ -11571,11 +11574,11 @@ function Conversas() {
                                 </Badge>}
                             </Button>
 
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Tarefas do Lead</DialogTitle>
-                            </DialogHeader>
+                          </InlineDialogTrigger>
+                          <InlineDialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                            <InlineDialogHeader>
+                              <InlineDialogTitle>Tarefas do Lead</InlineDialogTitle>
+                            </InlineDialogHeader>
 
                             <Tabs defaultValue="criar" value={tarefasTabValue} onValueChange={setTarefasTabValue} className="w-full">
                               <TabsList className="grid w-full grid-cols-2">
@@ -11755,8 +11758,8 @@ function Conversas() {
                                 </ScrollArea>
                               </TabsContent>
                             </Tabs>
-                          </DialogContent>
-                        </Dialog>
+                          </InlineDialogContent>
+                        </InlineDialog>
 
                         {/* Banco de Dado do Contato */}
                         <Button 
@@ -11765,20 +11768,36 @@ function Conversas() {
                           title="Banco de Dado do Contato"
                           onClick={() => {
                             if (leadVinculado?.id) {
-                              setAttachmentsOpen(true);
+                              setAttachmentsOpen(v => !v);
                             } else {
                               toast.info('Salve o lead primeiro para acessar o banco de dados');
                             }
                           }}
                         >
                           <Paperclip className="h-4 w-4" />
-                          <span>Banco de Dado do Contato</span>
-                          {attachmentsCount > 0 && (
+                          <span>{attachmentsOpen ? 'Fechar' : 'Banco de Dado do Contato'}</span>
+                          {attachmentsCount > 0 && !attachmentsOpen && (
                             <Badge variant="secondary" className="ml-auto h-5 min-w-5 px-1.5 text-[10px]">
                               {attachmentsCount}
                             </Badge>
                           )}
                         </Button>
+                        {leadVinculado?.id && (
+                          <LeadAttachments
+                            open={attachmentsOpen}
+                            onOpenChange={(o) => {
+                              setAttachmentsOpen(o);
+                              if (!o && leadVinculado?.id) {
+                                carregarAttachmentsCount(leadVinculado.id);
+                              }
+                            }}
+                            leadId={leadVinculado.id}
+                            companyId={userCompanyId || ''}
+                            leadName={leadVinculado.name || selectedConv?.contactName}
+                            inline
+                          />
+                        )}
+
 
 
                       </div>
@@ -11861,20 +11880,9 @@ function Conversas() {
         toast.success('Tarefa criada e vinculada ao lead!');
       }} />
 
-          {/* Modal de Banco de Dado do Contato */}
-          <LeadAttachments
-            open={attachmentsOpen}
-            onOpenChange={(o) => {
-              setAttachmentsOpen(o);
-              if (!o && leadVinculado?.id) {
-                carregarAttachmentsCount(leadVinculado.id);
-              }
-            }}
-            leadId={leadVinculado.id}
-            companyId={userCompanyId || ''}
-            leadName={leadVinculado.name || selectedConv.contactName}
-          />
         </>}
+
+
 
       {/* Dialog: Valor da Venda Rápido */}
       <Dialog open={valorVendaDialogOpen} onOpenChange={setValorVendaDialogOpen}>
