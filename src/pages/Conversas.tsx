@@ -11861,7 +11861,7 @@ function Conversas() {
         toast.success('Tarefa criada e vinculada ao lead!');
       }} />
 
-          {/* Modal de Prontuário / Ficha Técnica */}
+          {/* Modal de Banco de Dado do Contato */}
           <LeadAttachments
             open={attachmentsOpen}
             onOpenChange={(o) => {
