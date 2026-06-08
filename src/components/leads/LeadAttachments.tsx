@@ -180,16 +180,22 @@ export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChang
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const Wrapper: any = inline ? InlineDialog : Dialog;
+  const WrapperContent: any = inline ? InlineDialogContent : DialogContent;
+  const WrapperHeader: any = inline ? InlineDialogHeader : DialogHeader;
+  const WrapperTitle: any = inline ? InlineDialogTitle : DialogTitle;
+
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+      <Wrapper open={open} onOpenChange={onOpenChange}>
+        <WrapperContent className={inline ? "" : "max-w-4xl max-h-[90vh]"}>
+          <WrapperHeader>
+            <WrapperTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Ficha Técnica - {leadName || 'Lead'}
-            </DialogTitle>
-          </DialogHeader>
+              Banco de Dado do Contato - {leadName || 'Lead'}
+            </WrapperTitle>
+          </WrapperHeader>
+
 
           <div className="space-y-4">
             {/* Toolbar */}
