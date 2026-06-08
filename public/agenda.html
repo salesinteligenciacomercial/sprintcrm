@@ -839,15 +839,62 @@
         });
         if(current) el.value = current;
       }
+      let CRM_LEADS = [];
       window.addEventListener('message', (e) => {
         const d = e.data || {};
         if(d.type === 'agenda:data'){
           populateSelect('f_agenda', d.agendas, 'Nenhuma agenda cadastrada');
           populateSelect('f_prof', d.profissionais, 'Nenhum profissional cadastrado');
+          if(Array.isArray(d.leads)) CRM_LEADS = d.leads;
         }
       });
       // Avisa o parent que está pronto
       try { window.parent.postMessage({ type: 'agenda:ready' }, '*'); } catch(_) {}
+
+      // ---------- Autocomplete de contatos do CRM ----------
+      function normalize(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+      function renderLeadSuggestions(q){
+        const box = document.getElementById('f_name_suggest');
+        if(!box) return;
+        const qn = normalize(q);
+        let list = CRM_LEADS;
+        if(qn){
+          list = CRM_LEADS.filter(l => normalize(l.name).includes(qn) || normalize(l.phone).includes(qn) || normalize(l.email).includes(qn));
+        }
+        list = list.slice(0, 20);
+        if(!list.length){ box.style.display='none'; box.innerHTML=''; return; }
+        box.innerHTML = list.map(l => (
+          '<div class="lead-opt" data-id="'+escapeAttr(l.id)+'" style="padding:8px 12px; cursor:pointer; border-bottom:1px solid hsl(var(--border)); font-size:13px;">'
+          + '<div style="font-weight:600; color:hsl(var(--text));">'+escapeHTML(l.name||'(sem nome)')+'</div>'
+          + '<div style="font-size:11px; color:hsl(var(--text-muted));">'+escapeHTML(l.phone||'')+(l.email?' · '+escapeHTML(l.email):'')+'</div>'
+          + '</div>'
+        )).join('');
+        box.style.display='block';
+        box.querySelectorAll('.lead-opt').forEach(el => {
+          el.addEventListener('mousedown', (ev) => {
+            ev.preventDefault();
+            const id = el.getAttribute('data-id');
+            const lead = CRM_LEADS.find(x => String(x.id) === String(id));
+            if(lead){
+              document.getElementById('f_name').value = lead.name || '';
+              if(lead.phone) document.getElementById('f_phone').value = lead.phone;
+              if(lead.email) document.getElementById('f_email').value = lead.email;
+            }
+            box.style.display='none';
+          });
+        });
+      }
+      document.addEventListener('input', (e) => {
+        if(e.target && e.target.id === 'f_name'){ renderLeadSuggestions(e.target.value); }
+      });
+      document.addEventListener('focusin', (e) => {
+        if(e.target && e.target.id === 'f_name'){ renderLeadSuggestions(e.target.value); }
+      });
+      document.addEventListener('focusout', (e) => {
+        if(e.target && e.target.id === 'f_name'){
+          setTimeout(() => { const b=document.getElementById('f_name_suggest'); if(b) b.style.display='none'; }, 150);
+        }
+      });
 
       const monthNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
       const dowShort = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
