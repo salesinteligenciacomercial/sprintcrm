@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { InlineDialog, InlineDialogContent, InlineDialogHeader, InlineDialogTitle } from "./InlineDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +18,6 @@ import { ScriptBuilderDialog } from "./ScriptBuilderDialog";
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  inline?: boolean;
   conversationContext?: {
     conversation_id?: string;
     lead_id?: string;
@@ -27,7 +25,7 @@ interface Props {
   };
 }
 
-export function RoteirosComerciaisDialog({ open, onOpenChange, conversationContext, inline = false }: Props) {
+export function RoteirosComerciaisDialog({ open, onOpenChange, conversationContext }: Props) {
   const { data: scripts, isLoading } = useCommercialScripts();
   const createScript = useCreateScript();
   const deleteScript = useDeleteScript();
@@ -53,26 +51,20 @@ export function RoteirosComerciaisDialog({ open, onOpenChange, conversationConte
     onOpenChange(false);
   };
 
-  const Wrapper: any = inline ? InlineDialog : Dialog;
-  const WrapperContent: any = inline ? InlineDialogContent : DialogContent;
-  const WrapperHeader: any = inline ? InlineDialogHeader : DialogHeader;
-  const WrapperTitle: any = inline ? InlineDialogTitle : DialogTitle;
-
   return (
     <>
-      <Wrapper open={open} onOpenChange={onOpenChange}>
-        <WrapperContent className={inline ? "" : "max-w-3xl max-h-[85vh] overflow-y-auto"}>
-          <WrapperHeader>
-            <WrapperTitle className="flex items-center gap-2">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
               <Workflow className="h-5 w-5 text-primary" /> Roteiros Comerciais
-            </WrapperTitle>
+            </DialogTitle>
             <p className="text-sm text-muted-foreground">
               Crie sequências de mensagens com gatilhos, condições e ações automáticas
             </p>
-          </WrapperHeader>
+          </DialogHeader>
 
           <div className="space-y-3">
-
             {!showNew ? (
               <Button onClick={() => setShowNew(true)} className="w-full">
                 <Plus className="h-4 w-4 mr-2" /> Novo Roteiro
@@ -164,8 +156,8 @@ export function RoteirosComerciaisDialog({ open, onOpenChange, conversationConte
               </div>
             )}
           </div>
-        </WrapperContent>
-      </Wrapper>
+        </DialogContent>
+      </Dialog>
 
       {editingId && (
         <ScriptBuilderDialog

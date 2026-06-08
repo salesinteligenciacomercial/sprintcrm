@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { InlineDialog, InlineDialogContent, InlineDialogHeader, InlineDialogTitle } from '@/components/conversas/InlineDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
@@ -50,7 +49,6 @@ interface LeadAttachmentsProps {
   leadName?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  inline?: boolean;
 }
 
 const CATEGORIES = [
@@ -63,7 +61,7 @@ const CATEGORIES = [
   { value: 'outros', label: 'Outros' }
 ];
 
-export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChange, inline = false }: LeadAttachmentsProps) {
+export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChange }: LeadAttachmentsProps) {
   const [attachments, setAttachments] = useState<LeadAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('todos');
@@ -180,22 +178,16 @@ export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChang
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const Wrapper: any = inline ? InlineDialog : Dialog;
-  const WrapperContent: any = inline ? InlineDialogContent : DialogContent;
-  const WrapperHeader: any = inline ? InlineDialogHeader : DialogHeader;
-  const WrapperTitle: any = inline ? InlineDialogTitle : DialogTitle;
-
   return (
     <>
-      <Wrapper open={open} onOpenChange={onOpenChange}>
-        <WrapperContent className={inline ? "" : "max-w-4xl max-h-[90vh]"}>
-          <WrapperHeader>
-            <WrapperTitle className="flex items-center gap-2">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
-              Banco de Dado do Contato - {leadName || 'Lead'}
-            </WrapperTitle>
-          </WrapperHeader>
-
+              Ficha Técnica - {leadName || 'Lead'}
+            </DialogTitle>
+          </DialogHeader>
 
           <div className="space-y-4">
             {/* Toolbar */}
@@ -339,8 +331,8 @@ export function LeadAttachments({ leadId, companyId, leadName, open, onOpenChang
               <span>{attachments.filter(a => a.category === 'depois').length} depois</span>
             </div>
           </div>
-        </WrapperContent>
-      </Wrapper>
+        </DialogContent>
+      </Dialog>
 
       <UploadAttachmentDialog
         open={uploadDialogOpen}
