@@ -11879,6 +11879,7 @@ function Conversas() {
           />
         </>}
 
+
       {/* Dialog: Valor da Venda Rápido */}
       <Dialog open={valorVendaDialogOpen} onOpenChange={setValorVendaDialogOpen}>
         <DialogContent className="max-w-sm">
