@@ -48,6 +48,7 @@ interface EditarLeadDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   triggerButton?: React.ReactNode;
+  inline?: boolean;
 }
 
 export function EditarLeadDialog({ 
@@ -55,7 +56,8 @@ export function EditarLeadDialog({
   onLeadUpdated,
   open: openProp,
   onOpenChange: onOpenChangeProp,
-  triggerButton
+  triggerButton,
+  inline = false
 }: EditarLeadDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp !== undefined ? openProp : internalOpen;
@@ -327,17 +329,10 @@ export function EditarLeadDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      {triggerButton && (
-        <DialogTrigger asChild>
-          {triggerButton}
-        </DialogTrigger>
-      )}
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Editar Lead</DialogTitle>
-        </DialogHeader>
+  const bodyContent = (
+    <>
+
+
         {initialLoading ? (
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
@@ -664,18 +659,54 @@ export function EditarLeadDialog({
           </div>
           </form>
         )}
-      </DialogContent>
+    </>
+  );
 
-      {/* Lead Attachments Modal */}
-      {userCompanyId && (
-        <LeadAttachments
-          open={attachmentsOpen}
-          onOpenChange={setAttachmentsOpen}
-          leadId={lead.id}
-          companyId={userCompanyId}
-          leadName={lead.nome}
-        />
+  const attachmentsModal = userCompanyId && (
+    <LeadAttachments
+      open={attachmentsOpen}
+      onOpenChange={setAttachmentsOpen}
+      leadId={lead.id}
+      companyId={userCompanyId}
+      leadName={lead.nome}
+    />
+  );
+
+  if (inline) {
+    return (
+      <>
+        {triggerButton}
+        {open && (
+          <div className="mt-3 space-y-3 p-3 border border-border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm">Editar Lead</h4>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            {bodyContent}
+          </div>
+        )}
+        {attachmentsModal}
+      </>
+    );
+  }
+
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      {triggerButton && (
+        <DialogTrigger asChild>
+          {triggerButton}
+        </DialogTrigger>
       )}
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Editar Lead</DialogTitle>
+        </DialogHeader>
+        {bodyContent}
+      </DialogContent>
+      {attachmentsModal}
     </Dialog>
   );
 }
