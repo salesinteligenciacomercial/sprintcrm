@@ -837,7 +837,12 @@
             const ev = items.find(it => it.date===fmtDateISO(d) && it.start && parseInt(it.start)===h);
             if(ev){
               const e = document.createElement('div'); e.className='ev '+colorOf(ev.type);
-              e.innerHTML = '<div class="nm">'+escapeHTML(ev.name)+'</div><div class="tm">'+ev.start+' – '+(ev.end||'')+'</div>';
+              const subt = [ev.type, ev.prof].filter(Boolean).join(' • ');
+              const tip = [ev.name, ev.start+' – '+(ev.end||''), ev.type, ev.agenda, ev.prof, ev.phone, ev.email, ev.notes].filter(Boolean).join('\n');
+              e.title = tip;
+              e.innerHTML = '<div class="nm">'+escapeHTML(ev.name)+'</div>'
+                + '<div class="tm">'+ev.start+' – '+(ev.end||'')+'</div>'
+                + (subt ? '<div class="tm" style="opacity:.85;">'+escapeHTML(subt)+'</div>' : '');
               e.addEventListener('click', (evt) => { evt.stopPropagation(); openModal(ev.id); });
               cell.appendChild(e);
             }
