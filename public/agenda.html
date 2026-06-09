@@ -1434,7 +1434,8 @@
         }
       });
 
-      function renderAll(){ renderCalendar(); renderWeek(); renderList(); }
+      function renderAll(){ renderCalendar(); renderWeek(); renderList(); try { if(typeof window.__renderAgendaMonth === 'function') window.__renderAgendaMonth(); } catch(_){} document.dispatchEvent(new CustomEvent('agenda:data-changed')); }
+      window.openModal = openModal;
       renderAll();
     })();
   </script>
