@@ -958,12 +958,85 @@
         document.getElementById('f_confirmNow').checked = ev?.confirmNow ?? true;
         document.getElementById('f_confirmEmail').checked = ev?.confirmEmail ?? false;
         document.getElementById('f_notes').value = ev?.notes || '';
+        // Duração inferida do compromisso (ou 30min padrão)
+        const durSel = document.getElementById('f_duration');
+        if(ev?.start && ev?.end){
+          const [sh,sm] = ev.start.split(':').map(Number);
+          const [eh,em] = ev.end.split(':').map(Number);
+          const dur = (eh*60+em) - (sh*60+sm);
+          const opt = Array.from(durSel.options).find(o => parseInt(o.value)===dur);
+          durSel.value = opt ? opt.value : '30';
+        } else durSel.value = '30';
         document.getElementById('apptDelete').style.display = ev ? 'inline-flex' : 'none';
         const rb = document.getElementById('apptReschedule');
         if(rb) rb.style.display = ev ? 'inline-flex' : 'none';
         document.getElementById('apptModal').style.display = 'flex';
+        renderSlots();
       }
       function closeModal(){ document.getElementById('apptModal').style.display='none'; editingId=null; }
+
+      // ---------- Seletor de horários ----------
+      function pad2(n){ return String(n).padStart(2,'0'); }
+      function minToHHMM(m){ return pad2(Math.floor(m/60))+':'+pad2(m%60); }
+      function hhmmToMin(s){ const [h,m] = String(s||'0:0').split(':').map(Number); return (h||0)*60+(m||0); }
+      function renderSlots(){
+        const box = document.getElementById('f_slots');
+        if(!box) return;
+        const date = document.getElementById('f_date').value;
+        const dur = parseInt(document.getElementById('f_duration').value) || 30;
+        const selectedStart = document.getElementById('f_start').value;
+        const items = load().filter(i => i.date === date && i.id !== editingId);
+        const now = new Date();
+        const isToday = date === fmtDateISO(now);
+        const nowMin = now.getHours()*60 + now.getMinutes();
+        const START_MIN = 8*60, END_MIN = 18*60, STEP = 30;
+        let free = 0, busy = 0;
+        let html = '';
+        for(let t = START_MIN; t + dur <= END_MIN; t += STEP){
+          const slotStart = t, slotEnd = t + dur;
+          const past = isToday && slotEnd <= nowMin;
+          const occupied = items.some(i => {
+            const s = hhmmToMin(i.start), e = hhmmToMin(i.end || minToHHMM(s+30));
+            return slotStart < e && slotEnd > s;
+          });
+          const selected = selectedStart && hhmmToMin(selectedStart) === slotStart;
+          let bg = 'hsl(var(--surface))', color = 'hsl(var(--text))', dot = 'hsl(var(--success))', cursor='pointer', border='hsl(var(--border))';
+          if(past){ color='hsl(var(--text-muted))'; dot='hsl(var(--text-muted))'; cursor='not-allowed'; }
+          else if(occupied){ color='hsl(var(--danger))'; dot='hsl(var(--danger))'; cursor='not-allowed'; }
+          else free++;
+          if(occupied && !past) busy++;
+          if(selected){ bg='hsl(var(--info) / 0.12)'; border='hsl(var(--info))'; }
+          const disabled = past || occupied;
+          html += '<button type="button" data-slot="'+minToHHMM(slotStart)+'" data-end="'+minToHHMM(slotEnd)+'" '+(disabled?'disabled':'')
+            + ' style="padding:8px 6px; border:1px solid '+border+'; border-radius:8px; background:'+bg+'; color:'+color
+            + '; font-size:12px; font-weight:600; cursor:'+cursor+'; display:flex; flex-direction:column; align-items:center; gap:2px;'
+            + (disabled?'opacity:.55;':'')+ '">'
+            + minToHHMM(slotStart)
+            + '<span style="width:6px; height:6px; border-radius:999px; background:'+dot+';"></span>'
+            + '</button>';
+        }
+        box.innerHTML = html;
+        document.getElementById('slots_free_count').textContent = free;
+        document.getElementById('slots_busy_count').textContent = busy;
+        box.querySelectorAll('button[data-slot]:not([disabled])').forEach(b => {
+          b.addEventListener('click', () => {
+            document.getElementById('f_start').value = b.getAttribute('data-slot');
+            document.getElementById('f_end').value = b.getAttribute('data-end');
+            renderSlots();
+          });
+        });
+      }
+      document.addEventListener('change', (e) => {
+        if(e.target && (e.target.id === 'f_date' || e.target.id === 'f_duration')){
+          const dur = parseInt(document.getElementById('f_duration').value) || 30;
+          const start = document.getElementById('f_start').value;
+          if(start){
+            document.getElementById('f_end').value = minToHHMM(hhmmToMin(start)+dur);
+          }
+          renderSlots();
+        }
+        if(e.target && e.target.id === 'f_start'){ renderSlots(); }
+      });
 
       document.getElementById('apptClose').addEventListener('click', closeModal);
       document.getElementById('apptCancel').addEventListener('click', closeModal);
