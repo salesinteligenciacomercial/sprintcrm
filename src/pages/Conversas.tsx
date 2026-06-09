@@ -9804,12 +9804,8 @@ function Conversas() {
                         />
                       )}
                       <Dialog open={showQuickRepliesPopup} onOpenChange={setShowQuickRepliesPopup}>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="icon" className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 border-amber-300" title="Respostas Rápidas">
-                            <Zap className="h-5 w-5" />
-                          </Button>
-                        </DialogTrigger>
                         <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+
                           <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                               <Zap className="h-5 w-5 text-amber-500" />
