@@ -991,7 +991,8 @@
         const now = new Date();
         const isToday = date === fmtDateISO(now);
         const nowMin = now.getHours()*60 + now.getMinutes();
-        const START_MIN = 8*60, END_MIN = 18*60, STEP = 30;
+        const _bh2 = (function(){ try { return JSON.parse(localStorage.getItem('agenda_business_hours')) || {start:7,end:21}; } catch(_) { return {start:7,end:21}; } })();
+        const START_MIN = _bh2.start*60, END_MIN = (_bh2.end+1)*60, STEP = 30;
         let free = 0, busy = 0;
         let html = '';
         for(let t = START_MIN; t + dur <= END_MIN; t += STEP){
