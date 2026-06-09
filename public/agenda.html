@@ -543,6 +543,11 @@
                   const today = new Date();
                   const y = today.getFullYear(), m = today.getMonth();
                   title.textContent = `Visão mensal — ${MES_FULL[m]} ${y}`;
+                  // load appointments
+                  let items = [];
+                  try { items = JSON.parse(localStorage.getItem('agenda_appointments_v1')) || []; } catch(_){ items = []; }
+                  const byDate = {};
+                  items.forEach(it => { if(!it || !it.date) return; (byDate[it.date] = byDate[it.date] || []).push(it); });
                   const first = new Date(y, m, 1);
                   const startDow = first.getDay();
                   const daysInMonth = new Date(y, m+1, 0).getDate();
@@ -550,17 +555,48 @@
                   for(const d of DOW){
                     html += `<div style="text-align:center; font-size:11px; font-weight:700; color:hsl(var(--text-muted)); padding:6px 0;">${d}</div>`;
                   }
-                  for(let i=0;i<startDow;i++){
-                    html += '<div></div>';
-                  }
+                  for(let i=0;i<startDow;i++){ html += '<div></div>'; }
                   for(let d=1; d<=daysInMonth; d++){
+                    const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const dayItems = byDate[iso] || [];
                     const isToday = (d===today.getDate());
-                    html += `<div style="aspect-ratio:1; border:1px solid hsl(var(--border)); border-radius:8px; padding:6px; font-size:13px; font-weight:600; cursor:pointer; ${isToday?'background:hsl(var(--info)); color:white;':'background:hsl(var(--surface-soft)); color:hsl(var(--text));'} display:flex; flex-direction:column;">${d}</div>`;
+                    const bg = isToday ? 'background:hsl(var(--info)); color:white;' : 'background:hsl(var(--surface-soft)); color:hsl(var(--text));';
+                    let inner = `<div style="display:flex; align-items:center; justify-content:space-between;"><span>${d}</span>`;
+                    if(dayItems.length){
+                      inner += `<span style="background:${isToday?'rgba(255,255,255,0.25)':'hsl(var(--info))'}; color:white; font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px;">${dayItems.length}</span>`;
+                    }
+                    inner += '</div>';
+                    // event chips (max 2)
+                    dayItems.slice(0,2).forEach(ev => {
+                      const t = (ev.start||'').slice(0,5);
+                      const label = (ev.client || ev.title || 'Compromisso');
+                      inner += `<div style="margin-top:3px; font-size:10px; font-weight:600; padding:2px 4px; border-radius:4px; background:${isToday?'rgba(255,255,255,0.2)':'hsl(var(--info) / 0.15)'}; color:${isToday?'white':'hsl(var(--info))'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t} ${label}</div>`;
+                    });
+                    if(dayItems.length>2){
+                      inner += `<div style="font-size:9px; opacity:0.75; margin-top:2px;">+${dayItems.length-2} mais</div>`;
+                    }
+                    html += `<div data-month-day="${iso}" style="min-height:78px; border:1px solid hsl(var(--border)); border-radius:8px; padding:6px; font-size:13px; font-weight:600; cursor:pointer; ${bg} display:flex; flex-direction:column; gap:2px; overflow:hidden;">${inner}</div>`;
                   }
                   html += '</div>';
                   mg.innerHTML = html;
+                  mg.querySelectorAll('[data-month-day]').forEach(cell => {
+                    cell.addEventListener('click', () => {
+                      const iso = cell.getAttribute('data-month-day');
+                      try {
+                        if(typeof window.openModal === 'function'){
+                          window.openModal(null, { date: iso });
+                        } else {
+                          // fallback: set selectedDate and switch back to week view
+                          const ev = new CustomEvent('agenda:select-day', { detail: { date: iso } });
+                          document.dispatchEvent(ev);
+                        }
+                      } catch(_){}
+                    });
+                  });
                 }
+                window.__renderAgendaMonth = renderMonth;
 
+                let currentView = 'semana';
                 const toggle = document.getElementById('view_toggle');
                 if(toggle){
                   toggle.addEventListener('click', (e) => {
@@ -568,14 +604,14 @@
                     if(!btn) return;
                     toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    const view = btn.dataset.view;
+                    currentView = btn.dataset.view;
                     const wg = document.getElementById('week_grid');
                     const mg = document.getElementById('month_grid');
-                    if(view === 'mensal'){
+                    if(currentView === 'mensal'){
                       wg.style.display = 'none';
                       mg.style.display = 'block';
                       renderMonth();
-                    } else if(view === 'dia'){
+                    } else if(currentView === 'dia'){
                       mg.style.display = 'none';
                       wg.style.display = '';
                       renderDay();
@@ -586,6 +622,13 @@
                     }
                   });
                 }
+                // Refresh month when data changes
+                window.addEventListener('storage', (e) => {
+                  if(e.key === 'agenda_appointments_v1' && currentView === 'mensal') renderMonth();
+                });
+                document.addEventListener('agenda:data-changed', () => {
+                  if(currentView === 'mensal') renderMonth();
+                });
               })();
             </script>
           </div>
