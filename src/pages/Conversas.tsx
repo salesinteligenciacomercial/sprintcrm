@@ -507,6 +507,9 @@ function Conversas() {
   const [quickMessages, setQuickMessages] = useState<QuickMessage[]>([]);
   const [quickCategories, setQuickCategories] = useState<QuickMessageCategory[]>([]);
   const [showQuickRepliesPopup, setShowQuickRepliesPopup] = useState(false); // Estado para popup de respostas rápidas
+  const [chipEditor, setChipEditor] = useState<{ open: boolean; mode: 'create' | 'edit'; id?: string; title: string; content: string; category: string }>({ open: false, mode: 'create', title: '', content: '', category: '' });
+  const [savingChip, setSavingChip] = useState(false);
+
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [scheduledMessages, setScheduledMessages] = useState<any[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -9676,28 +9679,146 @@ function Conversas() {
                       </div>
                     </div>}
                   {/* Quick preset messages chips */}
-                  {quickMessages.filter(m => (!m.type || m.type === 'text') && m.content?.trim()).length > 0 && (
-                    <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
-                      {quickMessages
-                        .filter(m => (!m.type || m.type === 'text') && m.content?.trim())
-                        .slice(0, 8)
-                        .map(qm => (
+                  <div className="mb-2 flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin items-center">
+                    {quickMessages
+                      .filter(m => (!m.type || m.type === 'text') && m.content?.trim())
+                      .slice(0, 12)
+                      .map(qm => (
+                        <div key={qm.id} className="group relative flex-shrink-0">
                           <button
-                            key={qm.id}
                             type="button"
                             onClick={() => {
                               setMessageInput(qm.content);
                               messageTextareaRef.current?.focus();
                             }}
-                            className="flex-shrink-0 px-3 py-1.5 rounded-full bg-muted hover:bg-accent border border-border text-xs font-medium whitespace-nowrap transition-colors"
+                            className="pl-3 pr-8 py-1.5 rounded-full bg-muted hover:bg-accent border border-border text-xs font-medium whitespace-nowrap transition-colors"
                             title={qm.content}
                           >
                             {qm.title}
                           </button>
-                        ))}
-                    </div>
-                  )}
+                          <div className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-0.5 bg-background/95 rounded-full px-0.5">
+                            <button
+                              type="button"
+                              title="Editar"
+                              className="p-0.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setChipEditor({ open: true, mode: 'edit', id: qm.id, title: qm.title, content: qm.content, category: qm.category });
+                              }}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              title="Excluir"
+                              className="p-0.5 rounded hover:bg-destructive/10 text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (confirm(`Excluir mensagem rápida "${qm.title}"?`)) {
+                                  deleteQuickMessage(qm.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    <button
+                      type="button"
+                      title="Nova mensagem rápida"
+                      onClick={() => setChipEditor({ open: true, mode: 'create', title: '', content: '', category: quickCategories[0]?.id || '' })}
+                      className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary text-xs font-medium whitespace-nowrap transition-colors"
+                    >
+                      <Plus className="h-3 w-3" /> Nova
+                    </button>
+                    <button
+                      type="button"
+                      title="Ver todas as respostas rápidas"
+                      onClick={() => setShowQuickRepliesPopup(true)}
+                      className="flex-shrink-0 px-3 py-1.5 rounded-full bg-muted hover:bg-accent border border-border text-xs font-medium whitespace-nowrap transition-colors"
+                    >
+                      Ver todas
+                    </button>
+                  </div>
+
+                  <Dialog open={chipEditor.open} onOpenChange={(o) => setChipEditor(s => ({ ...s, open: o }))}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{chipEditor.mode === 'create' ? 'Nova mensagem rápida' : 'Editar mensagem rápida'}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Título</label>
+                          <Input value={chipEditor.title} onChange={e => setChipEditor(s => ({ ...s, title: e.target.value }))} placeholder="Ex: Saudação" />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Mensagem</label>
+                          <Textarea value={chipEditor.content} onChange={e => setChipEditor(s => ({ ...s, content: e.target.value }))} placeholder="Digite a mensagem..." rows={4} />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium mb-1 block">Categoria</label>
+                          <Select value={chipEditor.category} onValueChange={(v) => setChipEditor(s => ({ ...s, category: v }))}>
+                            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                            <SelectContent>
+                              {quickCategories.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {quickCategories.length === 0 && (
+                            <p className="text-xs text-muted-foreground mt-1">Crie uma categoria no painel "Respostas Rápidas".</p>
+                          )}
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button variant="outline" onClick={() => setChipEditor(s => ({ ...s, open: false }))} disabled={savingChip}>Cancelar</Button>
+                          <Button
+                            disabled={savingChip || !chipEditor.title.trim() || !chipEditor.content.trim() || !chipEditor.category}
+                            onClick={async () => {
+                              setSavingChip(true);
+                              try {
+                                if (chipEditor.mode === 'create') {
+                                  const { data: { user } } = await supabase.auth.getUser();
+                                  const { data: companyData } = await supabase.rpc('get_my_company_id');
+                                  if (!user || !companyData) throw new Error('Sem autenticação');
+                                  const { error } = await supabase.from('quick_messages').insert({
+                                    company_id: companyData,
+                                    owner_id: user.id,
+                                    title: chipEditor.title.trim(),
+                                    content: chipEditor.content.trim(),
+                                    category_id: chipEditor.category,
+                                    message_type: 'text',
+                                  });
+                                  if (error) throw error;
+                                  toast.success('Mensagem rápida criada!');
+                                } else if (chipEditor.id) {
+                                  const { error } = await supabase.from('quick_messages').update({
+                                    title: chipEditor.title.trim(),
+                                    content: chipEditor.content.trim(),
+                                    category_id: chipEditor.category,
+                                  }).eq('id', chipEditor.id);
+                                  if (error) throw error;
+                                  toast.success('Mensagem rápida atualizada!');
+                                }
+                                await loadQuickMessages();
+                                setChipEditor({ open: false, mode: 'create', title: '', content: '', category: '' });
+                              } catch (err: any) {
+                                console.error(err);
+                                toast.error('Erro ao salvar mensagem rápida');
+                              } finally {
+                                setSavingChip(false);
+                              }
+                            }}
+                          >
+                            {savingChip ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
                   <div className="flex items-end gap-1.5 sm:gap-2 flex-nowrap relative">
+
                     <MediaUpload onFileSelected={handleSendMedia} />
 
                     <Button
