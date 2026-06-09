@@ -475,9 +475,10 @@
           <div class="panel">
             <div class="panel-head week-toolbar">
               <div class="panel-title"><i class="ti ti-calendar-week"></i> <span id="week_title">Visão semanal</span></div>
-              <div class="view-toggle">
-                <button>Dia</button>
-                <button class="active">Semana</button>
+              <div class="view-toggle" id="view_toggle">
+                <button data-view="dia">Dia</button>
+                <button class="active" data-view="semana">Semana</button>
+                <button data-view="mensal">Mensal</button>
               </div>
             </div>
             <div class="week-grid" id="week_grid"></div>
