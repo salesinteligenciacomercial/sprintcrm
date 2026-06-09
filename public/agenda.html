@@ -519,6 +519,73 @@
                 document.addEventListener('DOMContentLoaded', render);
                 render();
                 window.__renderAgendaWeek = render;
+
+                // Day / Month views + toggle
+                const MES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+                function renderDay(){
+                  const grid = document.getElementById('week_grid');
+                  const title = document.getElementById('week_title');
+                  if(!grid || !title) return;
+                  const today = new Date();
+                  title.textContent = `Visão diária — ${today.getDate()} ${MES_ABREV[today.getMonth()]}`;
+                  let html = '<div class="wh-head"></div>';
+                  html += `<div class="wh-head today" style="grid-column: span 7;"><span>${DOW[today.getDay()]}</span><span class="num">${today.getDate()}</span></div>`;
+                  for(const h of HOURS){
+                    html += `<div class="wh-time">${String(h).padStart(2,'0')}:00</div>`;
+                    html += `<div class="wh-slot wh-cell today-col" style="grid-column: span 7;"></div>`;
+                  }
+                  grid.innerHTML = html;
+                }
+                function renderMonth(){
+                  const mg = document.getElementById('month_grid');
+                  const title = document.getElementById('week_title');
+                  if(!mg || !title) return;
+                  const today = new Date();
+                  const y = today.getFullYear(), m = today.getMonth();
+                  title.textContent = `Visão mensal — ${MES_FULL[m]} ${y}`;
+                  const first = new Date(y, m, 1);
+                  const startDow = first.getDay();
+                  const daysInMonth = new Date(y, m+1, 0).getDate();
+                  let html = '<div style="display:grid; grid-template-columns: repeat(7,1fr); gap:6px;">';
+                  for(const d of DOW){
+                    html += `<div style="text-align:center; font-size:11px; font-weight:700; color:hsl(var(--text-muted)); padding:6px 0;">${d}</div>`;
+                  }
+                  for(let i=0;i<startDow;i++){
+                    html += '<div></div>';
+                  }
+                  for(let d=1; d<=daysInMonth; d++){
+                    const isToday = (d===today.getDate());
+                    html += `<div style="aspect-ratio:1; border:1px solid hsl(var(--border)); border-radius:8px; padding:6px; font-size:13px; font-weight:600; cursor:pointer; ${isToday?'background:hsl(var(--info)); color:white;':'background:hsl(var(--surface-soft)); color:hsl(var(--text));'} display:flex; flex-direction:column;">${d}</div>`;
+                  }
+                  html += '</div>';
+                  mg.innerHTML = html;
+                }
+
+                const toggle = document.getElementById('view_toggle');
+                if(toggle){
+                  toggle.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-view]');
+                    if(!btn) return;
+                    toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const view = btn.dataset.view;
+                    const wg = document.getElementById('week_grid');
+                    const mg = document.getElementById('month_grid');
+                    if(view === 'mensal'){
+                      wg.style.display = 'none';
+                      mg.style.display = 'block';
+                      renderMonth();
+                    } else if(view === 'dia'){
+                      mg.style.display = 'none';
+                      wg.style.display = '';
+                      renderDay();
+                    } else {
+                      mg.style.display = 'none';
+                      wg.style.display = '';
+                      render();
+                    }
+                  });
+                }
               })();
             </script>
           </div>
