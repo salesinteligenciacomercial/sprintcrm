@@ -27,7 +27,7 @@ import ProcessPagePublic from "./pages/ProcessPagePublic";
 import Treinamento from "./pages/Treinamento";
 import Financeiro from "./pages/Financeiro";
 import GrowSalesBI from "./pages/GrowSalesBI";
-import Prospeccao from "./pages/Prospeccao";
+// Prospeccao removido — substituído pelo Call Center
 import MetasVendas from "./pages/MetasVendas";
 import RotinaInteligentePage from "./pages/RotinaInteligente";
 import BIClinico from "./pages/BIClinico";
