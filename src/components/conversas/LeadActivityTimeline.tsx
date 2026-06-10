@@ -21,12 +21,21 @@ import {
   PhoneOff,
   GitBranch,
   Percent,
+  Sparkles,
+  Brain,
+  Copy,
+  AlertTriangle,
+  Target,
+  MessageCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   leadId?: string | null;
   leadCreatedAt?: string | null;
   leadName?: string | null;
+  contactPhone?: string | null;
+  companyId?: string | null;
 }
 
 type EventType =
