@@ -790,7 +790,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
           <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Nome da campanha</label>
           <input id="cmpName" placeholder="Ex: Black Friday 2026" style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font)" />
         </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;cursor:pointer">
+          <input id="cmpProspeccao" type="checkbox" style="margin-top:3px;accent-color:var(--green)" />
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">🎯 Marcar leads selecionados para prospecção</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px">Adiciona automaticamente os leads desta campanha à fila de prospecção (canal WhatsApp).</div>
+          </div>
+        </label>
         <div>
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Tipo de mensagem</label>
+          <div id="cmpMsgTypeTabs" style="display:flex;gap:6px;margin-top:6px">
+            <button type="button" data-type="template" onclick="setCampaignMsgType('template')" class="cmp-tab cmp-tab-active" style="flex:1;background:var(--gd);border:1px solid var(--green);color:var(--green);padding:8px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-template"></i>Template <span style="background:var(--text);color:var(--bg);padding:1px 5px;border-radius:8px;font-size:9.5px">Meta</span></button>
+            <button type="button" data-type="text" onclick="setCampaignMsgType('text')" class="cmp-tab" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-file-text"></i>Texto</button>
+            <button type="button" data-type="image" onclick="setCampaignMsgType('image')" class="cmp-tab" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-photo"></i>Imagem</button>
+            <button type="button" data-type="video" onclick="setCampaignMsgType('video')" class="cmp-tab" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);padding:8px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-video"></i>Vídeo</button>
+          </div>
+        </div>
+        <div id="cmpTemplateBlock">
           <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Template aprovado</label>
           <select id="cmpTemplate" onchange="onCampaignTemplateChange()" style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font)">
             <option value="">Selecione...</option>
@@ -805,6 +821,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13
         <div id="cmpMediaWrap" style="display:none">
           <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">URL da mídia do cabeçalho</label>
           <input id="cmpMediaUrl" placeholder="https://..." style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font)" />
+        </div>
+        <div id="cmpFreeMediaWrap" style="display:none">
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em"><span id="cmpFreeMediaLabel">URL da mídia</span></label>
+          <input id="cmpFreeMediaUrl" placeholder="https://..." style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font)" />
+        </div>
+        <div id="cmpFreeTextWrap" style="display:none">
+          <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em"><span id="cmpFreeTextLabel">Mensagem</span></label>
+          <textarea id="cmpFreeText" rows="4" placeholder="Digite a mensagem que será enviada para todos os leads selecionados... Use {{nome}} para personalizar." style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-sm);padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);resize:vertical"></textarea>
+          <div style="font-size:10.5px;color:var(--amber);margin-top:5px">⚠️ Envio fora do template só funciona para leads com janela de 24h aberta (conversa recente).</div>
         </div>
         <div>
           <label style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Filtrar leads (tag opcional)</label>
@@ -1654,11 +1679,47 @@ async function openNewCampaign() {
   document.getElementById('cmpMediaWrap').style.display = 'none';
   document.getElementById('cmpTplHint').textContent = '';
   document.getElementById('cmpLeadsCount').textContent = 'Carregando leads...';
+  document.getElementById('cmpProspeccao').checked = false;
+  document.getElementById('cmpFreeText').value = '';
+  document.getElementById('cmpFreeMediaUrl').value = '';
   cmpSelectedTpl = null;
+  setCampaignMsgType('template');
   await Promise.all([ensureCampaignLeadsLoaded(), ensureCampaignTemplatesLoaded()]);
   populateCampaignTemplates();
   populateCampaignTagFilter();
   updateCampaignLeadsCount();
+}
+
+let cmpMsgType = 'template';
+function setCampaignMsgType(type) {
+  cmpMsgType = type;
+  document.querySelectorAll('#cmpMsgTypeTabs .cmp-tab').forEach(b => {
+    const active = b.dataset.type === type;
+    b.style.background = active ? 'var(--gd)' : 'var(--bg3)';
+    b.style.border = active ? '1px solid var(--green)' : '1px solid var(--border2)';
+    b.style.color = active ? 'var(--green)' : 'var(--text2)';
+  });
+  document.getElementById('cmpTemplateBlock').style.display = type === 'template' ? '' : 'none';
+  if (type !== 'template') {
+    document.getElementById('cmpVarsWrap').style.display = 'none';
+    document.getElementById('cmpMediaWrap').style.display = 'none';
+  } else {
+    onCampaignTemplateChange();
+  }
+  const freeText = document.getElementById('cmpFreeTextWrap');
+  const freeMedia = document.getElementById('cmpFreeMediaWrap');
+  const textLabel = document.getElementById('cmpFreeTextLabel');
+  const mediaLabel = document.getElementById('cmpFreeMediaLabel');
+  if (type === 'text') {
+    freeText.style.display = ''; freeMedia.style.display = 'none';
+    textLabel.textContent = 'Mensagem';
+  } else if (type === 'image' || type === 'video') {
+    freeText.style.display = ''; freeMedia.style.display = '';
+    textLabel.textContent = 'Legenda (opcional)';
+    mediaLabel.textContent = type === 'image' ? 'URL da imagem' : 'URL do vídeo';
+  } else {
+    freeText.style.display = 'none'; freeMedia.style.display = 'none';
+  }
 }
 
 function populateCampaignTemplates() {
@@ -1793,20 +1854,28 @@ async function submitCampaign() {
   const pauseAfter = parseInt(document.getElementById('cmpPauseAfter').value, 10) || 15;
   const pauseDur = parseInt(document.getElementById('cmpPauseDur').value, 10) || 120;
   const mediaUrl = document.getElementById('cmpMediaUrl').value.trim();
+  const freeText = document.getElementById('cmpFreeText').value.trim();
+  const freeMedia = document.getElementById('cmpFreeMediaUrl').value.trim();
+  const prospeccao = document.getElementById('cmpProspeccao').checked;
 
   if (!name) { showToast('Informe o nome da campanha'); return; }
-  if (!tplId || !cmpSelectedTpl) { showToast('Selecione um template'); return; }
+  if (cmpMsgType === 'template' && (!tplId || !cmpSelectedTpl)) { showToast('Selecione um template'); return; }
+  if (cmpMsgType === 'text' && !freeText) { showToast('Digite a mensagem'); return; }
+  if ((cmpMsgType === 'image' || cmpMsgType === 'video') && !freeMedia) { showToast('Informe a URL da mídia'); return; }
   const leads = getFilteredCampaignLeads();
   if (!leads.length) { showToast('Nenhum lead selecionado'); return; }
 
-  const header = (cmpSelectedTpl.components || []).find(c => (c.type || '').toUpperCase() === 'HEADER');
-  if (header && header.format && header.format !== 'TEXT') {
-    const hasHandle = !!(header.example && header.example.header_handle && header.example.header_handle[0]);
-    if (!hasHandle && !mediaUrl) { showToast(`Informe a URL da mídia (${header.format})`); return; }
+  let tplComps = null;
+  if (cmpMsgType === 'template') {
+    const header = (cmpSelectedTpl.components || []).find(c => (c.type || '').toUpperCase() === 'HEADER');
+    if (header && header.format && header.format !== 'TEXT') {
+      const hasHandle = !!(header.example && header.example.header_handle && header.example.header_handle[0]);
+      if (!hasHandle && !mediaUrl) { showToast(`Informe a URL da mídia (${header.format})`); return; }
+    }
+    const vars = collectCampaignVars();
+    tplComps = buildTplComponentsForCampaign(cmpSelectedTpl, vars, mediaUrl);
   }
 
-  const vars = collectCampaignVars();
-  const tplComps = buildTplComponentsForCampaign(cmpSelectedTpl, vars, mediaUrl);
   const campaignId = `campanha_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   const btn = document.getElementById('cmpSubmitBtn');
   btn.disabled = true;
@@ -1819,19 +1888,34 @@ async function submitCampaign() {
       campaign_name: name,
       status: 'pending',
       total_leads: leads.length,
-      message_type: 'template',
-      message_content: null,
-      template_name: cmpSelectedTpl.name,
-      template_language: cmpSelectedTpl.language || 'pt_BR',
+      message_type: cmpMsgType,
+      message_content: cmpMsgType === 'template' ? null : freeText,
+      template_name: cmpMsgType === 'template' ? cmpSelectedTpl.name : null,
+      template_language: cmpMsgType === 'template' ? (cmpSelectedTpl.language || 'pt_BR') : null,
       template_components: tplComps,
-      template_media_url: mediaUrl || null,
-      media_storage_url: null,
+      template_media_url: cmpMsgType === 'template' ? (mediaUrl || null) : null,
+      media_storage_url: (cmpMsgType === 'image' || cmpMsgType === 'video') ? freeMedia : null,
       delay_between_messages: delay,
       pause_after_messages: pauseAfter,
       pause_duration: pauseDur,
       leads_data: leads.map(l => ({ id: l.id, name: l.name, telefone: l.telefone, phone: l.phone })),
     });
     if (insErr) throw insErr;
+
+    if (prospeccao) {
+      try {
+        const { data: queues } = await waSb.from('prospecting_queues').select('id').eq('company_id', waCompanyId).eq('channel', 'whatsapp').limit(1);
+        let queueId = queues && queues[0] && queues[0].id;
+        if (!queueId) {
+          const { data: newQ } = await waSb.from('prospecting_queues').insert({ company_id: waCompanyId, name: 'WhatsApp', channel: 'whatsapp' }).select('id').single();
+          queueId = newQ && newQ.id;
+        }
+        if (queueId) {
+          const rows = leads.filter(l => l.id).map(l => ({ queue_id: queueId, lead_id: l.id, company_id: waCompanyId, status: 'pending' }));
+          if (rows.length) await waSb.from('prospecting_queue_leads').insert(rows);
+        }
+      } catch (pErr) { console.warn('Prospecção opcional falhou', pErr); }
+    }
 
     waSb.functions.invoke('disparo-em-massa', { body: { campaign_id: campaignId } }).catch(err => {
       console.error('Erro ao acionar disparo-em-massa', err);
