@@ -346,14 +346,62 @@ function Maquina() {
               ))}
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: C.grayBg, border: `1.5px solid ${C.border}`, borderRadius: 12, marginBottom: 20 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: C.grayBg, border: `1.5px solid ${C.border}`, borderRadius: 12, marginBottom: 14 }}>
               <input type="checkbox" checked={meta.manterEstrutura} onChange={(e) => setMeta({ ...meta, manterEstrutura: e.target.checked })}
                 style={{ width: 40, height: 22, accentColor: C.green, cursor: "pointer" }} />
-              <div>
+              <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Manter a mesma estrutura comercial atual?</div>
-                <div style={{ fontSize: 12, color: C.textSub }}>Operação fica com {diag.sdrs} SDR(s) e {diag.closers} Closer(s).</div>
+                <div style={{ fontSize: 12, color: C.textSub }}>
+                  {meta.manterEstrutura
+                    ? `Operação fica com ${diag.sdrs} SDR(s) e ${diag.closers} Closer(s).`
+                    : "Estrutura liberada para edição abaixo — redimensione o time."}
+                </div>
               </div>
             </div>
+
+            {!meta.manterEstrutura && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14, padding: 14, border: `1.5px dashed ${C.green}`, borderRadius: 12, background: C.greenBg }}>
+                <div>
+                  <label style={labelStyle}>Novos SDRs / Atendentes</label>
+                  <input style={inputStyle} type="number" min={0} value={diag.sdrs} onChange={(e) => setDiag({ ...diag, sdrs: +e.target.value })} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Novos Closers / Vendedores</label>
+                  <input style={inputStyle} type="number" min={0} value={diag.closers} onChange={(e) => setDiag({ ...diag, closers: +e.target.value })} />
+                </div>
+              </div>
+            )}
+
+            {/* Detalhamento da meta + evolução */}
+            {meta.metaFat > 0 && (
+              <div style={{ border: `1.5px solid ${C.greenBorder}`, background: C.greenBg, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.greenDark, marginBottom: 10 }}>📈 Detalhamento da meta e evolução</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 14 }}>
+                  {[
+                    ["Meta total no prazo", fmtR(meta.metaFat * meta.prazo)],
+                    ["Meta mensal", fmtR(meta.metaFat)],
+                    ["Meta semanal", fmtR(meta.metaFat / 4.33)],
+                    ["Meta diária (22 dias úteis)", fmtR(meta.metaFat / 22)],
+                  ].map(([lbl, val]) => (
+                    <div key={lbl} style={{ background: C.white, borderRadius: 10, padding: "10px 12px", border: `1px solid ${C.greenBorder}` }}>
+                      <div style={{ fontSize: 10, color: C.textSub, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".4px" }}>{lbl}</div>
+                      <div style={{ fontSize: 16, fontWeight: 800, color: C.greenDark, marginTop: 2 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 12, color: C.textSub, marginBottom: 6, display: "flex", justifyContent: "space-between" }}>
+                  <span>Progresso da semana</span>
+                  <span style={{ fontWeight: 700, color: C.greenDark }}>{fmtR(progressoSemana)} / {fmtR(meta.metaFat / 4.33)}</span>
+                </div>
+                <div style={{ background: C.greenBorder, borderRadius: 99, height: 10, overflow: "hidden", marginBottom: 8 }}>
+                  <div style={{ width: `${Math.min(100, (progressoSemana / (meta.metaFat / 4.33 || 1)) * 100)}%`, height: "100%", background: `linear-gradient(90deg, ${C.green}, ${C.greenDark})`, transition: "width .4s" }} />
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input type="number" min={0} value={progressoSemana} onChange={(e) => setProgressoSemana(+e.target.value)} style={{ ...inputStyle, maxWidth: 200 }} placeholder="Faturamento já realizado na semana" />
+                  <span style={{ fontSize: 11, color: C.textSub }}>Atualize conforme as vendas forem entrando.</span>
+                </div>
+              </div>
+            )}
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
               <button onClick={() => setStep(1)} style={{ background: "none", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "11px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer", color: C.textSub, fontFamily: "inherit" }}>← Voltar</button>
