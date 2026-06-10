@@ -433,6 +433,68 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
                 </div>
               )}
 
+              {tab === "aovivo" && (
+                <div className="tab-pane">
+                  <div className="sec-hdr">
+                    <h2>ATENDIMENTOS ATIVOS AGORA</h2>
+                    <span>{liveAttendances.reduce((s, l) => s + l.phones.length, 0)} conversas em andamento</span>
+                  </div>
+                  {liveAttendances.length === 0 ? (
+                    <div className="empty">
+                      <div className="ico">💤</div>
+                      Nenhum atendimento ativo no momento.
+                    </div>
+                  ) : (
+                    <div className="live-grid">
+                      {liveAttendances.map((l) => {
+                        const now = Date.now();
+                        const startedMin = Math.max(0, Math.round((now - new Date(l.startedAt).getTime()) / 60000));
+                        const lastMin = Math.max(0, Math.round((now - new Date(l.lastActivityAt).getTime()) / 60000));
+                        return (
+                          <div key={l.userId} className="live-card">
+                            <div className="live-top">
+                              <div className="live-avatar">
+                                <span className="pulse-ring"></span>
+                                {initials(l.userName)}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className="live-name">{l.userName}</div>
+                                <div className="live-since">🟢 Atendendo há {startedMin} min · última msg há {lastMin} min</div>
+                              </div>
+                              <span className="online-badge">● Online</span>
+                            </div>
+                            <div className="live-stats">
+                              <div className="live-stat">
+                                <div className="live-stat-val green">{l.phones.length}</div>
+                                <div className="live-stat-lbl">Conversas</div>
+                              </div>
+                              <div className="live-stat">
+                                <div className="live-stat-val amber">{startedMin}min</div>
+                                <div className="live-stat-lbl">Tempo no ar</div>
+                              </div>
+                              <div className="live-stat">
+                                <div className="live-stat-val blue">{lastMin}min</div>
+                                <div className="live-stat-lbl">Última msg</div>
+                              </div>
+                            </div>
+                            {l.phones.length > 0 && (
+                              <div className="lead-attending">
+                                <div className="lead-atend-title">Leads sendo atendidos agora</div>
+                                <div className="lead-atend-list">
+                                  {l.phones.map((p, i) => (
+                                    <span key={i} className="lead-pill">👤 {p}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {tab === "ranking" && (
                 <div className="tab-pane">
                   <div className="formula-note">
