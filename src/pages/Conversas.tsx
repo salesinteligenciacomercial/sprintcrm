@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CountdownTimer } from "@/components/conversas/CountdownTimer";
 import { ConversationHeader } from "@/components/conversas/ConversationHeader";
+import { CoachIAFloatingButton } from "@/components/conversas/CoachIAFloatingButton";
 import { ConversationListItem } from "@/components/conversas/ConversationListItem";
 import { MessageItem } from "@/components/conversas/MessageItem";
 import { ForwardMessageDialog } from "@/components/conversas/ForwardMessageDialog";
