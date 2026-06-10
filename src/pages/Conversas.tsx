@@ -3358,15 +3358,16 @@ function Conversas() {
         ascending: false
       });
 
-      // ⚡ CORREÇÃO: Para append, usar offset baseado no número de conversas já carregadas
-      // Em vez de buscar por data, usar paginação real com offset
-      if (append && conversations.length > 0) {
-        // Contar quantas mensagens já temos carregadas para usar como offset
-        const totalMensagensCarregadas = conversations.reduce((acc, c) => acc + c.messages.length, 0);
-        console.log(`📊 [APPEND] Total mensagens já carregadas: ${totalMensagensCarregadas}, usando como offset`);
-
-        // Usar range para paginação real
-        query = query.range(totalMensagensCarregadas, totalMensagensCarregadas + MESSAGES_TO_FETCH - 1);
+      // ⚡ CORREÇÃO: Paginação real via offset persistido (conversationsOffset).
+      // Evita o bug em que o offset calculado a partir das mensagens em memória
+      // pulava blocos do banco (após agrupamento por conversa) e retornava vazio,
+      // fazendo o botão "Carregar mais" voltar para as conversas iniciais.
+      if (append) {
+        const offset = conversationsOffset > 0
+          ? conversationsOffset
+          : conversations.reduce((acc, c) => acc + c.messages.length, 0);
+        console.log(`📊 [APPEND] Usando offset ${offset} para buscar próximas ${MESSAGES_TO_FETCH} mensagens`);
+        query = query.range(offset, offset + MESSAGES_TO_FETCH - 1);
       } else {
         query = query.limit(MESSAGES_TO_FETCH);
       }
