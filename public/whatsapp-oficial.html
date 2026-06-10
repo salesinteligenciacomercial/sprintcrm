@@ -2032,8 +2032,8 @@ async function submitCampaign() {
   if (cmpMsgType === 'template' && (!tplId || !cmpSelectedTpl)) { showToast('Selecione um template'); return; }
   if (cmpMsgType === 'text' && !freeText) { showToast('Digite a mensagem'); return; }
   if ((cmpMsgType === 'image' || cmpMsgType === 'video') && !freeMedia) { showToast('Informe a URL da mídia'); return; }
-  const leads = getFilteredCampaignLeads();
-  if (!leads.length) { showToast('Nenhum lead selecionado'); return; }
+  const leads = getSelectedCampaignLeads();
+  if (!leads.length) { showToast('Selecione pelo menos um lead'); return; }
 
   let tplComps = null;
   if (cmpMsgType === 'template') {
