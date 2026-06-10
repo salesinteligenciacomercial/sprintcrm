@@ -1708,18 +1708,25 @@ document.addEventListener('keydown', e => {
 // ─── CAMPANHAS (disparo em massa) ─────────────────────────────
 let cmpLeadsCache = [];
 let cmpTagsCache = [];
+let cmpSegmentosCache = [];
 let cmpSelectedTpl = null;
+let cmpSelectedLeadIds = new Set();
 
 async function ensureCampaignLeadsLoaded() {
   if (cmpLeadsCache.length || !waSb || !waCompanyId) return;
   try {
-    const rows = await fetchPagedTable('leads', 'id,name,telefone,phone,tags', (q) =>
+    const rows = await fetchPagedTable('leads', 'id,name,telefone,phone,tags,status,segmento,created_at,last_disparo_at,disparo_count', (q) =>
       q.eq('company_id', waCompanyId).or('telefone.not.is.null,phone.not.is.null')
     );
     cmpLeadsCache = rows.filter(l => l.telefone || l.phone);
     const tagSet = new Set();
-    cmpLeadsCache.forEach(l => Array.isArray(l.tags) && l.tags.forEach(t => tagSet.add(t)));
+    const segSet = new Set();
+    cmpLeadsCache.forEach(l => {
+      if (Array.isArray(l.tags)) l.tags.forEach(t => tagSet.add(t));
+      if (l.segmento) segSet.add(l.segmento);
+    });
     cmpTagsCache = Array.from(tagSet).sort();
+    cmpSegmentosCache = Array.from(segSet).sort();
   } catch (e) {
     console.error('Erro ao carregar leads para campanha', e);
   }
