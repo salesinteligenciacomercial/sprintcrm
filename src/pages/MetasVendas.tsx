@@ -208,11 +208,10 @@ function Maquina() {
     ["Faturamento bruto (R$)", "fat"],
   ];
 
-  const planFields: Array<{ lbl: string; val?: number; opts?: string[] }> = [
-    { lbl: "Modelo de negócio", opts: ["B2B Consultivo (SDR + Closer)", "B2C Direto", "SaaS Self-serve"] },
-    { lbl: "Meta de receita mensal (R$)", val: meta.metaFat },
-    { lbl: "SDRs no time", val: diag.sdrs },
-    { lbl: "Closers / Vendedores", val: diag.closers },
+  const summaryCards = [
+    { label: "Gap a fechar", value: fmtR(gap), sub: "por mês", color: C.red },
+    { label: "Crescimento total", value: cresc + "%", sub: "sobre o atual", color: C.green },
+    { label: "Crescimento mensal médio", value: crescMes + "%", sub: "ao mês", color: C.purple },
   ];
 
   const summaryCards = [
