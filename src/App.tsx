@@ -27,7 +27,7 @@ import ProcessPagePublic from "./pages/ProcessPagePublic";
 import Treinamento from "./pages/Treinamento";
 import Financeiro from "./pages/Financeiro";
 import GrowSalesBI from "./pages/GrowSalesBI";
-import Prospeccao from "./pages/Prospeccao";
+// Prospeccao removido — substituído pelo Call Center
 import MetasVendas from "./pages/MetasVendas";
 import RotinaInteligentePage from "./pages/RotinaInteligente";
 import BIClinico from "./pages/BIClinico";
@@ -121,7 +121,7 @@ const App = () => (
               <Route path="reunioes" element={<Navigate to="/chat-equipe" replace />} />
               <Route path="discador" element={<CallCenterPreview />} />
               <Route path="processos" element={<ProcessosComerciais />} />
-              <Route path="prospeccao" element={<Prospeccao />} />
+              <Route path="prospeccao" element={<Navigate to="/discador" replace />} />
               <Route path="metas-vendas" element={<MetasVendas />} />
               <Route path="rotina" element={<RotinaInteligentePage />} />
               <Route path="bi-clinico" element={<BIClinico />} />
