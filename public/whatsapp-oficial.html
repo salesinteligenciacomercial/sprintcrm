@@ -1616,6 +1616,325 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.modal-bg.show').forEach(m => m.classList.remove('show'));
   }
 });
+
+// ─── CAMPANHAS (disparo em massa) ─────────────────────────────
+let cmpLeadsCache = [];
+let cmpTagsCache = [];
+let cmpSelectedTpl = null;
+
+async function ensureCampaignLeadsLoaded() {
+  if (cmpLeadsCache.length || !waSb || !waCompanyId) return;
+  try {
+    const rows = await fetchPagedTable('leads', 'id,name,telefone,phone,tags', (q) =>
+      q.eq('company_id', waCompanyId).or('telefone.not.is.null,phone.not.is.null')
+    );
+    cmpLeadsCache = rows.filter(l => l.telefone || l.phone);
+    const tagSet = new Set();
+    cmpLeadsCache.forEach(l => Array.isArray(l.tags) && l.tags.forEach(t => tagSet.add(t)));
+    cmpTagsCache = Array.from(tagSet).sort();
+  } catch (e) {
+    console.error('Erro ao carregar leads para campanha', e);
+  }
+}
+
+async function ensureCampaignTemplatesLoaded() {
+  if (!waTplCache.length && !window.__tplLoaded) {
+    window.__tplLoaded = true;
+    await renderTemplatesGrid().catch(() => {});
+  }
+}
+
+async function openNewCampaign() {
+  if (!waSb || !waCompanyId) { showToast('Sessão ainda carregando...'); return; }
+  document.getElementById('newCampaignModal').classList.add('show');
+  document.getElementById('cmpName').value = '';
+  document.getElementById('cmpTemplate').value = '';
+  document.getElementById('cmpTagFilter').value = '';
+  document.getElementById('cmpVarsWrap').style.display = 'none';
+  document.getElementById('cmpMediaWrap').style.display = 'none';
+  document.getElementById('cmpTplHint').textContent = '';
+  document.getElementById('cmpLeadsCount').textContent = 'Carregando leads...';
+  cmpSelectedTpl = null;
+  await Promise.all([ensureCampaignLeadsLoaded(), ensureCampaignTemplatesLoaded()]);
+  populateCampaignTemplates();
+  populateCampaignTagFilter();
+  updateCampaignLeadsCount();
+}
+
+function populateCampaignTemplates() {
+  const sel = document.getElementById('cmpTemplate');
+  const approved = waTplCache.filter(t => String(t.status || '').toUpperCase() === 'APPROVED');
+  sel.innerHTML = '<option value="">Selecione...</option>' +
+    approved.map(t => `<option value="${t.id}">${t.name} (${t.language || 'pt_BR'})</option>`).join('');
+  if (!approved.length) {
+    document.getElementById('cmpTplHint').innerHTML = '<span style="color:var(--amber)">Nenhum template aprovado. Crie e aguarde aprovação em "Templates".</span>';
+  }
+}
+
+function populateCampaignTagFilter() {
+  const sel = document.getElementById('cmpTagFilter');
+  sel.innerHTML = '<option value="">Todos os leads com telefone</option>' +
+    cmpTagsCache.map(t => `<option value="${t}">Tag: ${t}</option>`).join('');
+}
+
+function getFilteredCampaignLeads() {
+  const tag = document.getElementById('cmpTagFilter').value;
+  if (!tag) return cmpLeadsCache;
+  return cmpLeadsCache.filter(l => Array.isArray(l.tags) && l.tags.includes(tag));
+}
+
+function updateCampaignLeadsCount() {
+  const count = getFilteredCampaignLeads().length;
+  const el = document.getElementById('cmpLeadsCount');
+  if (count === 0) {
+    el.innerHTML = '<span style="color:var(--red)">Nenhum lead encontrado com esse filtro</span>';
+  } else {
+    el.innerHTML = `<i class="ti ti-users"></i> <strong>${count}</strong> lead${count !== 1 ? 's' : ''} ser${count !== 1 ? 'ão' : 'á'} contactado${count !== 1 ? 's' : ''}`;
+  }
+}
+
+function extractTplVars(tpl) {
+  const vars = new Set();
+  (tpl.components || []).forEach(c => {
+    if (c.text) (c.text.match(/\{\{(\d+)\}\}/g) || []).forEach(m => vars.add(m.replace(/[{}]/g, '')));
+  });
+  return Array.from(vars).sort((a, b) => +a - +b);
+}
+
+function onCampaignTemplateChange() {
+  const id = document.getElementById('cmpTemplate').value;
+  cmpSelectedTpl = waTplCache.find(t => t.id === id) || null;
+  const varsWrap = document.getElementById('cmpVarsWrap');
+  const varsList = document.getElementById('cmpVarsList');
+  const mediaWrap = document.getElementById('cmpMediaWrap');
+  const hint = document.getElementById('cmpTplHint');
+  if (!cmpSelectedTpl) {
+    varsWrap.style.display = 'none';
+    mediaWrap.style.display = 'none';
+    hint.textContent = '';
+    return;
+  }
+  hint.textContent = `Categoria: ${cmpSelectedTpl.category || '—'} · Status: APPROVED`;
+  const vars = extractTplVars(cmpSelectedTpl);
+  if (vars.length === 0) {
+    varsWrap.style.display = 'none';
+  } else {
+    varsWrap.style.display = 'block';
+    varsList.innerHTML = vars.map((v, i) => `
+      <div>
+        <label style="font-size:11px;color:var(--text2);font-weight:600">Variável {{${v}}}${i === 0 ? ' (sugerido: {{nome}})' : ''}</label>
+        <input data-var="${v}" value="${i === 0 ? '{{nome}}' : ''}" placeholder="Valor para {{${v}}}" style="width:100%;margin-top:4px;background:var(--bg4);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 10px;color:var(--text);font-size:12.5px;font-family:var(--font)" />
+      </div>
+    `).join('');
+  }
+  const header = (cmpSelectedTpl.components || []).find(c => (c.type || '').toUpperCase() === 'HEADER');
+  const isMediaHeader = header && header.format && header.format !== 'TEXT';
+  const hasHandle = !!(header && header.example && header.example.header_handle && header.example.header_handle[0]);
+  mediaWrap.style.display = (isMediaHeader && !hasHandle) ? 'block' : 'none';
+  if (isMediaHeader && !hasHandle) {
+    mediaWrap.querySelector('label').textContent = `URL da mídia do cabeçalho (${header.format})`;
+  }
+}
+
+function collectCampaignVars() {
+  const obj = {};
+  document.querySelectorAll('#cmpVarsList input[data-var]').forEach(el => {
+    obj[el.dataset.var] = el.value || '';
+  });
+  return obj;
+}
+
+function buildTplComponentsForCampaign(tpl, vars, mediaUrl) {
+  const components = [];
+  if (!tpl.components) return components;
+  const header = tpl.components.find(c => (c.type || '').toUpperCase() === 'HEADER');
+  if (header) {
+    if (header.format && header.format !== 'TEXT') {
+      const fmt = header.format.toLowerCase();
+      const handle = header.example && header.example.header_handle && header.example.header_handle[0];
+      if (mediaUrl) {
+        components.push({ type: 'header', parameters: [{ type: fmt, [fmt]: { link: mediaUrl } }] });
+      } else if (handle) {
+        const isUrl = String(handle).startsWith('http');
+        components.push({ type: 'header', parameters: [{ type: fmt, [fmt]: isUrl ? { link: handle } : { id: handle } }] });
+      }
+    } else if (header.text && header.text.includes('{{')) {
+      const params = (header.text.match(/\{\{(\d+)\}\}/g) || []).map(m => {
+        const n = m.replace(/[{}]/g, '');
+        return { type: 'text', text: (vars[n] || 'Cliente').replace('{{nome}}', 'Cliente') };
+      });
+      if (params.length) components.push({ type: 'header', parameters: params });
+    }
+  }
+  const body = tpl.components.find(c => (c.type || '').toUpperCase() === 'BODY');
+  if (body && body.text && body.text.includes('{{')) {
+    const params = (body.text.match(/\{\{(\d+)\}\}/g) || []).map(m => {
+      const n = m.replace(/[{}]/g, '');
+      // keep {{nome}} marker; edge function / receivers replace it per-lead
+      return { type: 'text', text: vars[n] || 'Cliente' };
+    });
+    if (params.length) components.push({ type: 'body', parameters: params });
+  }
+  const btns = tpl.components.find(c => (c.type || '').toUpperCase() === 'BUTTONS');
+  if (btns && btns.buttons) {
+    btns.buttons.forEach((b, i) => {
+      if (b.type === 'QUICK_REPLY') {
+        components.push({ type: 'button', sub_type: 'quick_reply', index: String(i), parameters: [{ type: 'payload', payload: b.text || `btn_${i}` }] });
+      }
+    });
+  }
+  return components;
+}
+
+async function submitCampaign() {
+  const name = document.getElementById('cmpName').value.trim();
+  const tplId = document.getElementById('cmpTemplate').value;
+  const delay = parseInt(document.getElementById('cmpDelay').value, 10) || 7;
+  const pauseAfter = parseInt(document.getElementById('cmpPauseAfter').value, 10) || 15;
+  const pauseDur = parseInt(document.getElementById('cmpPauseDur').value, 10) || 120;
+  const mediaUrl = document.getElementById('cmpMediaUrl').value.trim();
+
+  if (!name) { showToast('Informe o nome da campanha'); return; }
+  if (!tplId || !cmpSelectedTpl) { showToast('Selecione um template'); return; }
+  const leads = getFilteredCampaignLeads();
+  if (!leads.length) { showToast('Nenhum lead selecionado'); return; }
+
+  const header = (cmpSelectedTpl.components || []).find(c => (c.type || '').toUpperCase() === 'HEADER');
+  if (header && header.format && header.format !== 'TEXT') {
+    const hasHandle = !!(header.example && header.example.header_handle && header.example.header_handle[0]);
+    if (!hasHandle && !mediaUrl) { showToast(`Informe a URL da mídia (${header.format})`); return; }
+  }
+
+  const vars = collectCampaignVars();
+  const tplComps = buildTplComponentsForCampaign(cmpSelectedTpl, vars, mediaUrl);
+  const campaignId = `campanha_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  const btn = document.getElementById('cmpSubmitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader-2" style="animation:spin .8s linear infinite"></i>Iniciando...';
+
+  try {
+    const { error: insErr } = await waSb.from('disparo_campaigns').insert({
+      id: campaignId,
+      company_id: waCompanyId,
+      campaign_name: name,
+      status: 'pending',
+      total_leads: leads.length,
+      message_type: 'template',
+      message_content: null,
+      template_name: cmpSelectedTpl.name,
+      template_language: cmpSelectedTpl.language || 'pt_BR',
+      template_components: tplComps,
+      template_media_url: mediaUrl || null,
+      media_storage_url: null,
+      delay_between_messages: delay,
+      pause_after_messages: pauseAfter,
+      pause_duration: pauseDur,
+      leads_data: leads.map(l => ({ id: l.id, name: l.name, telefone: l.telefone, phone: l.phone })),
+    });
+    if (insErr) throw insErr;
+
+    waSb.functions.invoke('disparo-em-massa', { body: { campaign_id: campaignId } }).catch(err => {
+      console.error('Erro ao acionar disparo-em-massa', err);
+    });
+
+    showToast('✅ Campanha iniciada! O envio continua em segundo plano.');
+    closeModal('newCampaignModal');
+    renderCampaignsList();
+  } catch (e) {
+    console.error('Erro ao criar campanha', e);
+    showToast('Erro: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send"></i>Iniciar disparo';
+  }
+}
+
+async function renderCampaignsList() {
+  const wrap = document.getElementById('campaignsListWrap');
+  if (!waSb || !waCompanyId) return;
+  try {
+    const { data, error } = await waSb
+      .from('disparo_campaigns')
+      .select('id,campaign_name,status,total_leads,sent_count,error_count,is_paused,template_name,created_at')
+      .eq('company_id', waCompanyId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    if (!data || !data.length) {
+      wrap.innerHTML = `<div class="card" style="text-align:center;padding:40px;border-style:dashed">
+        <i class="ti ti-send" style="font-size:38px;color:var(--text3);opacity:.4"></i>
+        <div style="font-size:14px;font-weight:700;color:var(--text2);margin-top:12px">Nenhuma campanha criada ainda</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:5px">Selecione leads, escolha um template aprovado e configure o disparo</div>
+        <button class="btn btn-green" style="margin-top:14px" onclick="openNewCampaign()"><i class="ti ti-plus"></i>Criar primeira campanha</button>
+      </div>`;
+      return;
+    }
+    const stMap = {
+      pending:    { c: 'bg-a', label: 'Pendente' },
+      sending:    { c: 'bg-b', label: 'Enviando' },
+      completed:  { c: 'bg-g', label: 'Concluída' },
+      cancelled:  { c: 'bg-r', label: 'Cancelada' },
+      error:      { c: 'bg-r', label: 'Erro' },
+    };
+    wrap.innerHTML = `
+      <div class="card" style="padding:0;overflow:hidden">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead style="background:var(--bg4)">
+            <tr style="text-align:left;color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.06em">
+              <th style="padding:10px 14px">Campanha</th>
+              <th style="padding:10px 14px">Template</th>
+              <th style="padding:10px 14px;text-align:right">Enviadas</th>
+              <th style="padding:10px 14px;text-align:right">Erros</th>
+              <th style="padding:10px 14px">Status</th>
+              <th style="padding:10px 14px">Criada em</th>
+              <th style="padding:10px 14px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(c => {
+              const s = stMap[c.status] || { c: 'bg-a', label: c.status };
+              const dt = c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '—';
+              const pct = c.total_leads ? Math.round((c.sent_count / c.total_leads) * 100) : 0;
+              const canCancel = c.status === 'pending' || c.status === 'sending';
+              return `<tr style="border-top:1px solid var(--border)">
+                <td style="padding:10px 14px;font-weight:600">${c.campaign_name || '—'}<div style="font-size:10.5px;color:var(--text3);font-weight:400">${c.total_leads || 0} leads</div></td>
+                <td style="padding:10px 14px;color:var(--text2)">${c.template_name || '—'}</td>
+                <td style="padding:10px 14px;text-align:right" class="mono">${c.sent_count || 0} <span style="color:var(--text3)">(${pct}%)</span></td>
+                <td style="padding:10px 14px;text-align:right;color:${(c.error_count || 0) > 0 ? 'var(--red)' : 'var(--text3)'}" class="mono">${c.error_count || 0}</td>
+                <td style="padding:10px 14px"><span class="badge ${s.c}">${c.is_paused ? 'Pausada' : s.label}</span></td>
+                <td style="padding:10px 14px;color:var(--text3);font-size:11px">${dt}</td>
+                <td style="padding:10px 14px;text-align:right">${canCancel ? `<button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="cancelCampaign('${c.id}')"><i class="ti ti-x"></i>Cancelar</button>` : ''}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } catch (e) {
+    console.error('Erro ao listar campanhas', e);
+    wrap.innerHTML = `<div class="card" style="color:var(--red);text-align:center;padding:20px">Erro ao carregar campanhas: ${e.message || e}</div>`;
+  }
+}
+
+async function cancelCampaign(id) {
+  if (!confirm('Cancelar essa campanha? Mensagens já enviadas não serão revertidas.')) return;
+  try {
+    const { error } = await waSb.from('disparo_campaigns').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+    showToast('Campanha cancelada');
+    renderCampaignsList();
+  } catch (e) {
+    showToast('Erro ao cancelar: ' + (e.message || e));
+  }
+}
+
+// Hook into switchPanel to auto-render campaigns when entering the panel
+const __origSwitchPanel = switchPanel;
+switchPanel = function(id, el) {
+  __origSwitchPanel(id, el);
+  if (id === 'campanhas' && waSb && waCompanyId) {
+    renderCampaignsList();
+  }
+};
 </script>
 </body>
 </html>
