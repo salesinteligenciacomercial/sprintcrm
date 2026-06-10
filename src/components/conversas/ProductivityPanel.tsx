@@ -93,6 +93,46 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, companyId, dateRange, selectedUserId]);
 
+  useEffect(() => {
+    if (!open || !companyId) return;
+    fetchLiveAttendances();
+    const id = setInterval(fetchLiveAttendances, 15000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, companyId]);
+
+  const fetchLiveAttendances = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("active_attendances")
+        .select("attending_user_id, attending_user_name, started_at, last_activity_at, telefone_formatado, expires_at")
+        .eq("company_id", companyId)
+        .gt("expires_at", new Date().toISOString());
+      if (error) throw error;
+      const map = new Map<string, LiveAttendance>();
+      (data || []).forEach((r: any) => {
+        const uid = r.attending_user_id;
+        if (!uid) return;
+        if (!map.has(uid)) {
+          map.set(uid, {
+            userId: uid,
+            userName: r.attending_user_name || "Usuário",
+            startedAt: r.started_at,
+            lastActivityAt: r.last_activity_at,
+            phones: [],
+          });
+        }
+        const item = map.get(uid)!;
+        if (r.telefone_formatado) item.phones.push(r.telefone_formatado);
+        if (r.started_at < item.startedAt) item.startedAt = r.started_at;
+        if (r.last_activity_at > item.lastActivityAt) item.lastActivityAt = r.last_activity_at;
+      });
+      setLiveAttendances(Array.from(map.values()).sort((a, b) => b.phones.length - a.phones.length));
+    } catch (e) {
+      console.error("Erro ao carregar atendimentos ao vivo:", e);
+    }
+  };
+
   const fetchProductivityData = async () => {
     setLoading(true);
     try {
