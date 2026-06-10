@@ -127,7 +127,7 @@ serve(async (req) => {
       lead.profile_picture_url && isWhatsAppUrlExpired(lead.profile_picture_url)
     );
 
-    const leads = [...(leadsWithout || []), ...leadsWithExpiredUrl].slice(0, 100);
+    const leads = [...(leadsWithout || []), ...leadsWithExpiredUrl].slice(0, 25);
 
     console.log(`📊 [BATCH] ${leadsWithout?.length || 0} sem foto, ${leadsWithExpiredUrl.length} com foto expirada, processando ${leads.length}`);
 
