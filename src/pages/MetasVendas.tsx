@@ -430,26 +430,78 @@ function Maquina() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-              {planFields.map((f, i) => (
-                <div key={i}>
-                  <label style={labelStyle}>{f.lbl}</label>
-                  {f.opts ? (
-                    <select style={{ ...inputStyle }}>{f.opts.map((o) => <option key={o}>{o}</option>)}</select>
-                  ) : (
-                    <input style={inputStyle} defaultValue={f.val} />
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10 }}>📦 Portfólio de Ofertas</div>
-            <div style={{ border: `2px dashed ${C.border}`, borderRadius: 14, padding: "28px 20px", textAlign: "center", color: C.textSub, fontSize: 13, marginBottom: 20 }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>
-              Nenhuma oferta cadastrada.
-              <div style={{ marginTop: 10 }}>
-                <button style={{ background: C.green, color: "#fff", border: "none", borderRadius: 10, padding: "8px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>+ Adicionar Oferta</button>
+              <div>
+                <label style={labelStyle}>Modelo de negócio</label>
+                <select style={inputStyle} value={plano.modelo} onChange={(e) => setPlano({ ...plano, modelo: e.target.value })}>
+                  {["B2B Consultivo (SDR + Closer)", "B2C Direto", "SaaS Self-serve"].map((o) => <option key={o}>{o}</option>)}
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>Meta de receita mensal (R$)</label>
+                <input style={inputStyle} type="number" value={meta.metaFat} onChange={(e) => setMeta({ ...meta, metaFat: +e.target.value })} />
+              </div>
+              <div>
+                <label style={labelStyle}>SDRs no time</label>
+                <input style={inputStyle} type="number" min={0} value={diag.sdrs} onChange={(e) => setDiag({ ...diag, sdrs: +e.target.value })} />
+              </div>
+              <div>
+                <label style={labelStyle}>Closers / Vendedores</label>
+                <input style={inputStyle} type="number" min={0} value={diag.closers} onChange={(e) => setDiag({ ...diag, closers: +e.target.value })} />
               </div>
             </div>
+
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>📦 Portfólio de Ofertas</span>
+              {offers.length > 0 && (
+                <span style={{ fontSize: 11, color: C.textSub, fontWeight: 600 }}>
+                  Receita potencial: <b style={{ color: C.greenDark }}>{fmtR(offers.reduce((s, o) => s + o.ticket * o.qtd, 0))}</b>
+                </span>
+              )}
+            </div>
+
+            {offers.length > 0 && (
+              <div style={{ border: `1.5px solid ${C.border}`, borderRadius: 12, marginBottom: 12, overflow: "hidden" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 40px", gap: 8, padding: "10px 14px", background: C.grayBg, fontSize: 11, fontWeight: 700, color: C.textSub, textTransform: "uppercase", letterSpacing: ".4px" }}>
+                  <span>Oferta</span><span>Ticket</span><span>Qtd/mês</span><span>Receita</span><span></span>
+                </div>
+                {offers.map((o, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 40px", gap: 8, padding: "10px 14px", borderTop: `1px solid ${C.border}`, fontSize: 13, alignItems: "center" }}>
+                    <span style={{ fontWeight: 600, color: C.text }}>{o.nome}</span>
+                    <span>{fmtR(o.ticket)}</span>
+                    <span>{o.qtd}</span>
+                    <span style={{ fontWeight: 700, color: C.greenDark }}>{fmtR(o.ticket * o.qtd)}</span>
+                    <button onClick={() => setOffers(offers.filter((_, idx) => idx !== i))} style={{ background: "none", border: "none", color: C.red, cursor: "pointer", fontSize: 16 }}>×</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {newOffer ? (
+              <div style={{ border: `2px solid ${C.green}`, borderRadius: 14, padding: 14, marginBottom: 20, background: C.greenBg }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.greenDark, marginBottom: 10 }}>Nova oferta</div>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 10, marginBottom: 10 }}>
+                  <div><label style={labelStyle}>Nome</label><input style={inputStyle} value={newOffer.nome} onChange={(e) => setNewOffer({ ...newOffer, nome: e.target.value })} placeholder="Ex: Consultoria mensal" /></div>
+                  <div><label style={labelStyle}>Ticket (R$)</label><input style={inputStyle} type="number" min={0} value={newOffer.ticket} onChange={(e) => setNewOffer({ ...newOffer, ticket: +e.target.value })} /></div>
+                  <div><label style={labelStyle}>Qtd/mês</label><input style={inputStyle} type="number" min={0} value={newOffer.qtd} onChange={(e) => setNewOffer({ ...newOffer, qtd: +e.target.value })} /></div>
+                </div>
+                <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                  <button onClick={() => setNewOffer(null)} style={{ background: C.white, color: C.textSub, border: `1.5px solid ${C.border}`, borderRadius: 10, padding: "7px 16px", fontWeight: 600, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Cancelar</button>
+                  <button
+                    onClick={() => {
+                      if (!newOffer.nome.trim()) { toast.error("Informe o nome da oferta"); return; }
+                      setOffers([...offers, newOffer]);
+                      setNewOffer(null);
+                    }}
+                    style={{ background: C.green, color: "#fff", border: "none", borderRadius: 10, padding: "7px 18px", fontWeight: 700, fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}
+                  >Salvar oferta</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ border: `2px dashed ${C.border}`, borderRadius: 14, padding: offers.length > 0 ? "16px 20px" : "28px 20px", textAlign: "center", color: C.textSub, fontSize: 13, marginBottom: 20 }}>
+                {offers.length === 0 && (<><div style={{ fontSize: 32, marginBottom: 8 }}>📦</div>Nenhuma oferta cadastrada.<div style={{ height: 10 }} /></>)}
+                <button onClick={() => setNewOffer({ nome: "", ticket: 0, qtd: 0 })} style={{ background: C.green, color: "#fff", border: "none", borderRadius: 10, padding: "8px 20px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit" }}>+ Adicionar Oferta</button>
+              </div>
+            )}
 
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <button onClick={() => setStep(2)} style={{ background: "none", border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "11px 20px", fontWeight: 600, fontSize: 13, cursor: "pointer", color: C.textSub, fontFamily: "inherit" }}>← Voltar</button>
