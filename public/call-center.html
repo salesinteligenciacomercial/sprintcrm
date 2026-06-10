@@ -1238,14 +1238,62 @@ function endCall() {
   });
 }
 
-// Chip toggle
-document.querySelectorAll('.fchip').forEach(chip => {
-  chip.addEventListener('click', function() {
-    const bar = this.closest('.filter-bar');
-    bar.querySelectorAll('.fchip.active').forEach(c => c.classList.remove('active'));
+// ===== Filtros de chip + canal (sidebar) =====
+var currentChannel = 'coldcall';
+var currentFilter  = 'all';
+
+var CHANNEL_META = {
+  coldcall:  { title: 'Cold Call',  sub: '1578 contatos · 0 prospectados hoje' },
+  whatsapp:  { title: 'WhatsApp',   sub: '— prospecção via mensagem' },
+  email:     { title: 'E-mail',     sub: '— prospecção via e-mail' },
+  instagram: { title: 'Instagram',  sub: '— prospecção via DM' }
+};
+
+function applyLeadFilters() {
+  var cards = document.querySelectorAll('#tab-lista .lead-card');
+  var visible = 0;
+  cards.forEach(function(card){
+    var ch = card.getAttribute('data-channel') || 'coldcall';
+    var st = (card.getAttribute('data-status') || '').split(/\s+/);
+    var matchChannel = (ch === currentChannel);
+    var matchFilter  = (currentFilter === 'all') || (st.indexOf(currentFilter) !== -1);
+    var show = matchChannel && matchFilter;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  var empty = document.getElementById('leadEmpty');
+  if (empty) empty.style.display = visible === 0 ? '' : 'none';
+}
+
+function selectChannel(el) {
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  el.classList.add('active');
+  currentChannel = el.getAttribute('data-channel') || 'coldcall';
+  var meta = CHANNEL_META[currentChannel] || CHANNEL_META.coldcall;
+  var t = document.querySelector('.title-text');
+  var s = document.querySelector('.title-sub');
+  if (t) t.textContent = meta.title;
+  if (s) s.textContent = meta.sub;
+  // forçar Lista quando trocar canal
+  var listaTab = document.querySelector('.ttab');
+  if (listaTab && typeof showTab === 'function') showTab('lista', listaTab);
+  applyLeadFilters();
+}
+
+// Chip click → filtra de verdade
+document.querySelectorAll('.fchip[data-filter]').forEach(function(chip){
+  chip.addEventListener('click', function(){
+    var bar = this.closest('.filter-bar');
+    bar.querySelectorAll('.fchip.active').forEach(function(c){ c.classList.remove('active'); });
     this.classList.add('active');
+    currentFilter = this.getAttribute('data-filter') || 'all';
+    applyLeadFilters();
   });
 });
+
+// Estado inicial
+applyLeadFilters();
+
 </script>
 </body>
 </html>
