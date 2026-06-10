@@ -3414,12 +3414,18 @@ function Conversas() {
         } : null
       });
 
-      // ⚡ CORREÇÃO: Verificar se há mais conversas para carregar
-      // Se retornou exatamente o limite, provavelmente há mais mensagens no banco
+      // ⚡ CORREÇÃO: Atualizar offset persistido e flag hasMore com base no que veio do banco
       const hasMoreMessages = conversasData.length === MESSAGES_TO_FETCH;
-      if (!append && hasMoreMessages) {
-        console.log(`⚠️ [LOAD] Retornou exatamente ${MESSAGES_TO_FETCH} mensagens - pode haver mais no banco`);
-        setHasMoreConversations(true); // Garantir que o botão "carregar mais" apareça
+      if (append) {
+        setConversationsOffset(prev => (prev > 0 ? prev : conversations.reduce((acc, c) => acc + c.messages.length, 0)) + conversasData.length);
+      } else {
+        setConversationsOffset(conversasData.length);
+      }
+      setHasMoreConversations(hasMoreMessages);
+      if (append && conversasData.length === 0) {
+        console.log('⚠️ [APPEND] Nenhuma mensagem mais antiga encontrada no banco');
+        toast.info('Não há mais histórico para carregar');
+        return;
       }
 
       // ⚡ CORREÇÃO CRÍTICA: FILTROS RIGOROSOS para prevenir bugs e mensagens de outras instâncias
