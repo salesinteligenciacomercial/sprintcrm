@@ -77,12 +77,60 @@ const TYPE_META: Record<EventType, { icon: any; color: string; label: string }> 
 const fmtCurrency = (v: number | null | undefined) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName }: Props) {
+export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName, contactPhone, companyId }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
-  const load = async () => {
+  // ⚡ Coach IA oculto — analisa a conversa e sugere abordagem/script
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [coachLoading, setCoachLoading] = useState(false);
+  const [coachReport, setCoachReport] = useState<any | null>(null);
+  const [coachError, setCoachError] = useState<string | null>(null);
+
+  const runCoach = async () => {
+    if (!companyId) {
+      toast.error("Empresa não identificada para a análise.");
+      return;
+    }
+    if (!leadId && !contactPhone) {
+      toast.error("Sem lead ou telefone para analisar.");
+      return;
+    }
+    setCoachLoading(true);
+    setCoachError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lead-coach-analyze", {
+        body: {
+          lead_id: leadId || null,
+          phone: contactPhone || null,
+          company_id: companyId,
+          lead_name: leadName || null,
+          contact_name: leadName || null,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setCoachReport((data as any)?.report || null);
+    } catch (e: any) {
+      const msg = e?.message || "Falha ao gerar análise.";
+      setCoachError(msg);
+      toast.error(msg);
+    } finally {
+      setCoachLoading(false);
+    }
+  };
+
+  const copyMensagem = async () => {
+    const txt = coachReport?.mensagem_sugerida;
+    if (!txt) return;
+    try {
+      await navigator.clipboard.writeText(txt);
+      toast.success("Mensagem copiada!");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
     if (!leadId) return;
     setLoading(true);
     try {
