@@ -40,7 +40,15 @@ interface UserProductivity {
 }
 
 type PeriodType = "today" | "week" | "month";
-type TabType = "resumo" | "ranking";
+type TabType = "resumo" | "aovivo" | "ranking";
+
+interface LiveAttendance {
+  userId: string;
+  userName: string;
+  startedAt: string;
+  lastActivityAt: string;
+  phones: string[];
+}
 
 const initials = (name: string) =>
   (name || "?")
@@ -65,6 +73,7 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
     compromissos: 0, lembretes: 0, tarefas: 0, prontuarios: 0, mensagensAgendadas: 0,
   });
   const [userProductivity, setUserProductivity] = useState<UserProductivity[]>([]);
+  const [liveAttendances, setLiveAttendances] = useState<LiveAttendance[]>([]);
 
   const { members } = useTeamMembers();
 
@@ -83,6 +92,46 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
     if (open && companyId) fetchProductivityData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, companyId, dateRange, selectedUserId]);
+
+  useEffect(() => {
+    if (!open || !companyId) return;
+    fetchLiveAttendances();
+    const id = setInterval(fetchLiveAttendances, 15000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, companyId]);
+
+  const fetchLiveAttendances = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("active_attendances")
+        .select("attending_user_id, attending_user_name, started_at, last_activity_at, telefone_formatado, expires_at")
+        .eq("company_id", companyId)
+        .gt("expires_at", new Date().toISOString());
+      if (error) throw error;
+      const map = new Map<string, LiveAttendance>();
+      (data || []).forEach((r: any) => {
+        const uid = r.attending_user_id;
+        if (!uid) return;
+        if (!map.has(uid)) {
+          map.set(uid, {
+            userId: uid,
+            userName: r.attending_user_name || "Usuário",
+            startedAt: r.started_at,
+            lastActivityAt: r.last_activity_at,
+            phones: [],
+          });
+        }
+        const item = map.get(uid)!;
+        if (r.telefone_formatado) item.phones.push(r.telefone_formatado);
+        if (r.started_at < item.startedAt) item.startedAt = r.started_at;
+        if (r.last_activity_at > item.lastActivityAt) item.lastActivityAt = r.last_activity_at;
+      });
+      setLiveAttendances(Array.from(map.values()).sort((a, b) => b.phones.length - a.phones.length));
+    } catch (e) {
+      console.error("Erro ao carregar atendimentos ao vivo:", e);
+    }
+  };
 
   const fetchProductivityData = async () => {
     setLoading(true);
@@ -305,6 +354,10 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
               {/* TABS */}
               <div className="tabs-nav">
                 <button className={`tab-btn ${tab === "resumo" ? "active" : ""}`} onClick={() => setTab("resumo")}>📊 Resumo</button>
+                <button className={`tab-btn ${tab === "aovivo" ? "active" : ""}`} onClick={() => setTab("aovivo")}>
+                  <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#22d07a", marginRight: 4, verticalAlign: "middle" }} />
+                  Ao Vivo
+                </button>
                 <button className={`tab-btn ${tab === "ranking" ? "active" : ""}`} onClick={() => setTab("ranking")}>🏆 Ranking</button>
               </div>
 
@@ -372,6 +425,68 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
                                 </div>
                               )}
                             </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tab === "aovivo" && (
+                <div className="tab-pane">
+                  <div className="sec-hdr">
+                    <h2>ATENDIMENTOS ATIVOS AGORA</h2>
+                    <span>{liveAttendances.reduce((s, l) => s + l.phones.length, 0)} conversas em andamento</span>
+                  </div>
+                  {liveAttendances.length === 0 ? (
+                    <div className="empty">
+                      <div className="ico">💤</div>
+                      Nenhum atendimento ativo no momento.
+                    </div>
+                  ) : (
+                    <div className="live-grid">
+                      {liveAttendances.map((l) => {
+                        const now = Date.now();
+                        const startedMin = Math.max(0, Math.round((now - new Date(l.startedAt).getTime()) / 60000));
+                        const lastMin = Math.max(0, Math.round((now - new Date(l.lastActivityAt).getTime()) / 60000));
+                        return (
+                          <div key={l.userId} className="live-card">
+                            <div className="live-top">
+                              <div className="live-avatar">
+                                <span className="pulse-ring"></span>
+                                {initials(l.userName)}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className="live-name">{l.userName}</div>
+                                <div className="live-since">🟢 Atendendo há {startedMin} min · última msg há {lastMin} min</div>
+                              </div>
+                              <span className="online-badge">● Online</span>
+                            </div>
+                            <div className="live-stats">
+                              <div className="live-stat">
+                                <div className="live-stat-val green">{l.phones.length}</div>
+                                <div className="live-stat-lbl">Conversas</div>
+                              </div>
+                              <div className="live-stat">
+                                <div className="live-stat-val amber">{startedMin}min</div>
+                                <div className="live-stat-lbl">Tempo no ar</div>
+                              </div>
+                              <div className="live-stat">
+                                <div className="live-stat-val blue">{lastMin}min</div>
+                                <div className="live-stat-lbl">Última msg</div>
+                              </div>
+                            </div>
+                            {l.phones.length > 0 && (
+                              <div className="lead-attending">
+                                <div className="lead-atend-title">Leads sendo atendidos agora</div>
+                                <div className="lead-atend-list">
+                                  {l.phones.map((p, i) => (
+                                    <span key={i} className="lead-pill">👤 {p}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
