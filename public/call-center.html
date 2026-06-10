@@ -328,20 +328,20 @@ code { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
   </div>
   <nav class="nav">
     <div class="nav-section">Prospecção</div>
-    <div class="nav-item active">
+    <div class="nav-item active" data-channel="coldcall" onclick="selectChannel(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21L8.91 10.35a11.046 11.046 0 005.516 5.516l.964-1.314a1 1 0 011.21-.502l4.493 1.498A1 1 0 0122 16.72V20a2 2 0 01-2 2h-1C9.716 22 2 14.284 2 5v-1a2 2 0 012-2z"/></svg>
       Cold Call
       <span class="nav-badge">1578</span>
     </div>
-    <div class="nav-item">
+    <div class="nav-item" data-channel="whatsapp" onclick="selectChannel(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
       WhatsApp
     </div>
-    <div class="nav-item">
+    <div class="nav-item" data-channel="email" onclick="selectChannel(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg>
       E-mail
     </div>
-    <div class="nav-item">
+    <div class="nav-item" data-channel="instagram" onclick="selectChannel(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37zM17.5 6.5h.01"/></svg>
       Instagram
     </div>
