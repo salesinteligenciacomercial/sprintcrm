@@ -354,6 +354,10 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
               {/* TABS */}
               <div className="tabs-nav">
                 <button className={`tab-btn ${tab === "resumo" ? "active" : ""}`} onClick={() => setTab("resumo")}>📊 Resumo</button>
+                <button className={`tab-btn ${tab === "aovivo" ? "active" : ""}`} onClick={() => setTab("aovivo")}>
+                  <span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: "#22d07a", marginRight: 4, verticalAlign: "middle" }} />
+                  Ao Vivo
+                </button>
                 <button className={`tab-btn ${tab === "ranking" ? "active" : ""}`} onClick={() => setTab("ranking")}>🏆 Ranking</button>
               </div>
 
