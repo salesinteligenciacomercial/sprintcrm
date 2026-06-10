@@ -4189,12 +4189,11 @@ function Conversas() {
           const merged = Array.from(conversasMap.values());
           console.log(`✅ [APPEND] ${conversasNovasCount} conversas novas, ${mensagensNovasCount} mensagens adicionadas a conversas existentes`);
 
-          // Se não encontrou NENHUMA novidade (nem conversas nem mensagens), não há mais para carregar
+          // Se não encontrou NENHUMA novidade nesse bloco, ainda pode haver mais histórico
+          // mais antigo no banco — apenas avisamos e mantemos hasMoreConversations conforme
+          // calculado a partir do tamanho do retorno do banco.
           if (conversasNovasCount === 0 && mensagensNovasCount === 0) {
-            console.log('⚠️ [APPEND] Nenhuma novidade encontrada (todas as conversas e mensagens já estão carregadas)');
-            setHasMoreConversations(false);
-            toast.info('Todas as conversas já estão carregadas');
-            return prev;
+            console.log('⚠️ [APPEND] Bloco sem novidades — tente novamente para buscar mais antigos');
           }
 
           // Salvar no cache COM company_id
