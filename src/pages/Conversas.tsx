@@ -11922,6 +11922,8 @@ function Conversas() {
                       leadId={leadVinculado?.id}
                       leadCreatedAt={leadVinculado?.created_at}
                       leadName={leadVinculado?.name || selectedConv?.contactName}
+                      contactPhone={(selectedConv?.phoneNumber || selectedConv?.id || '').replace(/[^0-9]/g, '')}
+                      companyId={userCompanyId}
                     />
 
                   </div>

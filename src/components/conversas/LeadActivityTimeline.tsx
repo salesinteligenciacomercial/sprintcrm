@@ -21,12 +21,21 @@ import {
   PhoneOff,
   GitBranch,
   Percent,
+  Sparkles,
+  Brain,
+  Copy,
+  AlertTriangle,
+  Target,
+  MessageCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface Props {
   leadId?: string | null;
   leadCreatedAt?: string | null;
   leadName?: string | null;
+  contactPhone?: string | null;
+  companyId?: string | null;
 }
 
 type EventType =
@@ -68,10 +77,60 @@ const TYPE_META: Record<EventType, { icon: any; color: string; label: string }> 
 const fmtCurrency = (v: number | null | undefined) =>
   v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName }: Props) {
+export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName, contactPhone, companyId }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
+
+  // ⚡ Coach IA oculto — analisa a conversa e sugere abordagem/script
+  const [coachOpen, setCoachOpen] = useState(false);
+  const [coachLoading, setCoachLoading] = useState(false);
+  const [coachReport, setCoachReport] = useState<any | null>(null);
+  const [coachError, setCoachError] = useState<string | null>(null);
+
+  const runCoach = async () => {
+    if (!companyId) {
+      toast.error("Empresa não identificada para a análise.");
+      return;
+    }
+    if (!leadId && !contactPhone) {
+      toast.error("Sem lead ou telefone para analisar.");
+      return;
+    }
+    setCoachLoading(true);
+    setCoachError(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("lead-coach-analyze", {
+        body: {
+          lead_id: leadId || null,
+          phone: contactPhone || null,
+          company_id: companyId,
+          lead_name: leadName || null,
+          contact_name: leadName || null,
+        },
+      });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      setCoachReport((data as any)?.report || null);
+    } catch (e: any) {
+      const msg = e?.message || "Falha ao gerar análise.";
+      setCoachError(msg);
+      toast.error(msg);
+    } finally {
+      setCoachLoading(false);
+    }
+  };
+
+  const copyMensagem = async () => {
+    const txt = coachReport?.mensagem_sugerida;
+    if (!txt) return;
+    try {
+      await navigator.clipboard.writeText(txt);
+      toast.success("Mensagem copiada!");
+    } catch {
+      toast.error("Não foi possível copiar.");
+    }
+  };
 
   const load = async () => {
     if (!leadId) return;
@@ -299,6 +358,187 @@ export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName }: Props)
 
       {open && (
         <div className="border-t">
+          {/* ⚡ Coach IA oculto — análise consultiva da conversa */}
+          <div className="border-b bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+            <button
+              type="button"
+              onClick={() => setCoachOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 hover:bg-primary/10 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Brain className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">Coach IA — Análise da conversa</span>
+                {coachReport?.temperatura && (
+                  <Badge
+                    variant="secondary"
+                    className={`h-5 text-[10px] ${
+                      coachReport.temperatura === "quente"
+                        ? "bg-red-500/15 text-red-600"
+                        : coachReport.temperatura === "morno"
+                        ? "bg-amber-500/15 text-amber-600"
+                        : "bg-sky-500/15 text-sky-600"
+                    }`}
+                  >
+                    {coachReport.temperatura}
+                  </Badge>
+                )}
+              </div>
+              {coachOpen ? <ChevronUp className="h-4 w-4 text-primary" /> : <ChevronDown className="h-4 w-4 text-primary" />}
+            </button>
+
+            {coachOpen && (
+              <div className="px-3 pb-3 pt-1 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Especialista oculto em SDR, abordagem, comunicação, negociação e vendas. Analisa o histórico e sugere o que deveria ter sido feito.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={runCoach}
+                    disabled={coachLoading || (!leadId && !contactPhone) || !companyId}
+                    className="h-7 px-2 text-[11px] gap-1 shrink-0"
+                  >
+                    {coachLoading ? (
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    {coachReport ? "Reanalisar" : "Analisar"}
+                  </Button>
+                </div>
+
+                {coachError && (
+                  <div className="text-[11px] text-destructive bg-destructive/10 rounded-md px-2 py-1.5">
+                    {coachError}
+                  </div>
+                )}
+
+                {!coachReport && !coachLoading && !coachError && (
+                  <div className="text-[11px] text-muted-foreground italic">
+                    Clique em <b>Analisar</b> para gerar uma leitura crítica da conversa com este contato.
+                  </div>
+                )}
+
+                {coachReport && (
+                  <div className="space-y-2 text-xs">
+                    {/* Resumo + estágio + risco */}
+                    <div className="rounded-md border bg-background/60 p-2 space-y-1">
+                      <p className="text-foreground leading-snug">{coachReport.resumo_interacao}</p>
+                      <div className="flex items-center flex-wrap gap-1.5">
+                        {coachReport.estagio_percebido && (
+                          <Badge variant="outline" className="h-5 text-[10px] capitalize">
+                            {String(coachReport.estagio_percebido).replace(/_/g, " ")}
+                          </Badge>
+                        )}
+                        {typeof coachReport.risco_de_perda === "number" && (
+                          <Badge
+                            variant="outline"
+                            className={`h-5 text-[10px] ${
+                              coachReport.risco_de_perda >= 70
+                                ? "border-red-500/40 text-red-600"
+                                : coachReport.risco_de_perda >= 40
+                                ? "border-amber-500/40 text-amber-600"
+                                : "border-emerald-500/40 text-emerald-600"
+                            }`}
+                          >
+                            Risco {coachReport.risco_de_perda}%
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Erros & perdas */}
+                    {Array.isArray(coachReport.erros_e_perdas) && coachReport.erros_e_perdas.length > 0 && (
+                      <div className="rounded-md border border-red-500/20 bg-red-500/5 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <AlertTriangle className="h-3 w-3 text-red-500" />
+                          <span className="text-[11px] font-semibold text-red-600">Onde se perdeu oportunidade</span>
+                        </div>
+                        <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-foreground/90">
+                          {coachReport.erros_e_perdas.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Pontos fortes */}
+                    {Array.isArray(coachReport.pontos_fortes) && coachReport.pontos_fortes.length > 0 && (
+                      <div className="rounded-md border border-emerald-500/20 bg-emerald-500/5 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <CheckSquare className="h-3 w-3 text-emerald-500" />
+                          <span className="text-[11px] font-semibold text-emerald-600">Pontos fortes</span>
+                        </div>
+                        <ul className="list-disc pl-4 space-y-0.5 text-[11px] text-foreground/90">
+                          {coachReport.pontos_fortes.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Abordagem ideal */}
+                    {coachReport.abordagem_ideal && (
+                      <div className="rounded-md border bg-background/60 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Target className="h-3 w-3 text-primary" />
+                          <span className="text-[11px] font-semibold text-foreground">Script / abordagem ideal</span>
+                        </div>
+                        <p className="text-[11px] text-foreground/90 whitespace-pre-wrap leading-snug">
+                          {coachReport.abordagem_ideal}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Comunicação mais assertiva */}
+                    {coachReport.comunicacao_mais_assertiva && (
+                      <div className="rounded-md border bg-background/60 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <MessageCircle className="h-3 w-3 text-primary" />
+                          <span className="text-[11px] font-semibold text-foreground">Comunicação mais assertiva</span>
+                        </div>
+                        <p className="text-[11px] text-foreground/90 whitespace-pre-wrap leading-snug">
+                          {coachReport.comunicacao_mais_assertiva}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Objeções */}
+                    {Array.isArray(coachReport.objecoes_detectadas) && coachReport.objecoes_detectadas.length > 0 && (
+                      <div className="rounded-md border bg-background/60 p-2">
+                        <span className="text-[11px] font-semibold text-foreground">Objeções detectadas</span>
+                        <ul className="list-disc pl-4 mt-0.5 space-y-0.5 text-[11px] text-foreground/90">
+                          {coachReport.objecoes_detectadas.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Próximos passos */}
+                    {Array.isArray(coachReport.proximos_passos) && coachReport.proximos_passos.length > 0 && (
+                      <div className="rounded-md border bg-background/60 p-2">
+                        <span className="text-[11px] font-semibold text-foreground">Próximos passos</span>
+                        <ol className="list-decimal pl-4 mt-0.5 space-y-0.5 text-[11px] text-foreground/90">
+                          {coachReport.proximos_passos.map((s: string, i: number) => <li key={i}>{s}</li>)}
+                        </ol>
+                      </div>
+                    )}
+
+                    {/* Mensagem pronta */}
+                    {coachReport.mensagem_sugerida && (
+                      <div className="rounded-md border border-primary/30 bg-primary/5 p-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-semibold text-primary">Mensagem pronta para enviar</span>
+                          <Button variant="ghost" size="sm" onClick={copyMensagem} className="h-6 px-2 text-[10px] gap-1">
+                            <Copy className="h-3 w-3" /> Copiar
+                          </Button>
+                        </div>
+                        <p className="text-[11px] text-foreground whitespace-pre-wrap leading-snug">
+                          {coachReport.mensagem_sugerida}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center justify-between px-3 py-2">
             <span className="text-xs text-muted-foreground">
               {leadId ? "Atividades do contato em tempo real" : "Vincule um lead para ver o histórico"}
@@ -307,6 +547,7 @@ export function LeadActivityTimeline({ leadId, leadCreatedAt, leadName }: Props)
               <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
             </Button>
           </div>
+
 
           {!leadId ? (
             <div className="px-3 py-6 text-center text-xs text-muted-foreground">
