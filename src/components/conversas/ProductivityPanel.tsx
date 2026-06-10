@@ -73,6 +73,7 @@ export function ProductivityPanel({ open, onOpenChange, companyId }: Productivit
     compromissos: 0, lembretes: 0, tarefas: 0, prontuarios: 0, mensagensAgendadas: 0,
   });
   const [userProductivity, setUserProductivity] = useState<UserProductivity[]>([]);
+  const [liveAttendances, setLiveAttendances] = useState<LiveAttendance[]>([]);
 
   const { members } = useTeamMembers();
 
