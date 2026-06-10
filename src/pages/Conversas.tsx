@@ -3358,15 +3358,16 @@ function Conversas() {
         ascending: false
       });
 
-      // ⚡ CORREÇÃO: Para append, usar offset baseado no número de conversas já carregadas
-      // Em vez de buscar por data, usar paginação real com offset
-      if (append && conversations.length > 0) {
-        // Contar quantas mensagens já temos carregadas para usar como offset
-        const totalMensagensCarregadas = conversations.reduce((acc, c) => acc + c.messages.length, 0);
-        console.log(`📊 [APPEND] Total mensagens já carregadas: ${totalMensagensCarregadas}, usando como offset`);
-
-        // Usar range para paginação real
-        query = query.range(totalMensagensCarregadas, totalMensagensCarregadas + MESSAGES_TO_FETCH - 1);
+      // ⚡ CORREÇÃO: Paginação real via offset persistido (conversationsOffset).
+      // Evita o bug em que o offset calculado a partir das mensagens em memória
+      // pulava blocos do banco (após agrupamento por conversa) e retornava vazio,
+      // fazendo o botão "Carregar mais" voltar para as conversas iniciais.
+      if (append) {
+        const offset = conversationsOffset > 0
+          ? conversationsOffset
+          : conversations.reduce((acc, c) => acc + c.messages.length, 0);
+        console.log(`📊 [APPEND] Usando offset ${offset} para buscar próximas ${MESSAGES_TO_FETCH} mensagens`);
+        query = query.range(offset, offset + MESSAGES_TO_FETCH - 1);
       } else {
         query = query.limit(MESSAGES_TO_FETCH);
       }
@@ -3413,12 +3414,18 @@ function Conversas() {
         } : null
       });
 
-      // ⚡ CORREÇÃO: Verificar se há mais conversas para carregar
-      // Se retornou exatamente o limite, provavelmente há mais mensagens no banco
+      // ⚡ CORREÇÃO: Atualizar offset persistido e flag hasMore com base no que veio do banco
       const hasMoreMessages = conversasData.length === MESSAGES_TO_FETCH;
-      if (!append && hasMoreMessages) {
-        console.log(`⚠️ [LOAD] Retornou exatamente ${MESSAGES_TO_FETCH} mensagens - pode haver mais no banco`);
-        setHasMoreConversations(true); // Garantir que o botão "carregar mais" apareça
+      if (append) {
+        setConversationsOffset(prev => (prev > 0 ? prev : conversations.reduce((acc, c) => acc + c.messages.length, 0)) + conversasData.length);
+      } else {
+        setConversationsOffset(conversasData.length);
+      }
+      setHasMoreConversations(hasMoreMessages);
+      if (append && conversasData.length === 0) {
+        console.log('⚠️ [APPEND] Nenhuma mensagem mais antiga encontrada no banco');
+        toast.info('Não há mais histórico para carregar');
+        return;
       }
 
       // ⚡ CORREÇÃO CRÍTICA: FILTROS RIGOROSOS para prevenir bugs e mensagens de outras instâncias
@@ -4182,12 +4189,11 @@ function Conversas() {
           const merged = Array.from(conversasMap.values());
           console.log(`✅ [APPEND] ${conversasNovasCount} conversas novas, ${mensagensNovasCount} mensagens adicionadas a conversas existentes`);
 
-          // Se não encontrou NENHUMA novidade (nem conversas nem mensagens), não há mais para carregar
+          // Se não encontrou NENHUMA novidade nesse bloco, ainda pode haver mais histórico
+          // mais antigo no banco — apenas avisamos e mantemos hasMoreConversations conforme
+          // calculado a partir do tamanho do retorno do banco.
           if (conversasNovasCount === 0 && mensagensNovasCount === 0) {
-            console.log('⚠️ [APPEND] Nenhuma novidade encontrada (todas as conversas e mensagens já estão carregadas)');
-            setHasMoreConversations(false);
-            toast.info('Todas as conversas já estão carregadas');
-            return prev;
+            console.log('⚠️ [APPEND] Bloco sem novidades — tente novamente para buscar mais antigos');
           }
 
           // Salvar no cache COM company_id
