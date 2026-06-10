@@ -9178,14 +9178,15 @@ function Conversas() {
                 try {
                   let companyId = userCompanyId || userCompanyIdRef.current;
                   if (!companyId) {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (user) {
-                      const { data: profile } = await supabase
-                        .from('profiles')
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                      const { data: userRole } = await supabase
+                        .from('user_roles')
                         .select('company_id')
-                        .eq('id', user.id)
+                        .eq('user_id', session.user.id)
                         .maybeSingle();
-                      companyId = profile?.company_id || null;
+                      companyId = userRole?.company_id || null;
+                      if (companyId) setUserCompanyId(companyId);
                     }
                   }
                   if (!companyId) {
