@@ -104,3 +104,6 @@ verify_jwt = true
 
 [functions.meta-oauth-callback]
 verify_jwt = false
+
+[functions.lead-coach-analyze]
+verify_jwt = true
