@@ -2140,6 +2140,36 @@ document.addEventListener('keydown', e => {
   if (e.key === 'k' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); openSearch(); }
 });
 
+// ===== Mouse-wheel scrolling guarantee for the page editor =====
+// Ensures the wheel always scrolls the page area, even when the cursor is
+// over contenteditable blocks, the title, the cover, or page margins.
+document.addEventListener('wheel', function (e) {
+  const ws = document.getElementById('view-workspace');
+  if (!ws || getComputedStyle(ws).display === 'none') return;
+  const pa = ws.querySelector('.page-area');
+  if (!pa) return;
+
+  const t = e.target;
+  // Let dedicated scrollable UI handle its own wheel (slash menu, search, tables, code)
+  if (t && t.closest) {
+    if (t.closest('.slash-menu, .search-results, .modal, #view-mindmap, .mm-canvas')) return;
+    // any intermediate element that can itself scroll vertically
+    let el = t.nodeType === 1 ? t : t.parentElement;
+    while (el && el !== pa && el !== document.body) {
+      const cs = getComputedStyle(el);
+      if (/(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 2) return;
+      if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      el = el.parentElement;
+    }
+    // ignore wheel happening over the sidebar or other panes
+    if (!ws.contains(t) && t !== document.body && t !== document.documentElement) return;
+  }
+
+  if (pa.scrollHeight <= pa.clientHeight + 2) return;
+  e.preventDefault();
+  pa.scrollTop += (e.deltaMode === 1 ? e.deltaY * 24 : e.deltaY);
+}, { passive: false });
+
 function hideSlash() { document.getElementById('slash-menu').style.display = 'none'; }
 
 function _inEditor(el) { return !!(el && el.closest && el.closest('.block-editor')); }
