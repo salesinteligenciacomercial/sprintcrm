@@ -4,11 +4,11 @@
 // edite somente public/processos-comerciais.html.
 export default function ProcessosComerciais() {
   return (
-    <div className="relative h-full min-h-full">
+    <div className="relative h-[calc(100vh-5rem)] min-h-[640px] w-full overflow-hidden">
       <iframe
         src="/processos-comerciais.html"
         title="Processos Comerciais"
-        className="absolute inset-0 w-full h-full border-none"
+        className="absolute inset-0 block h-full w-full border-none"
       />
     </div>
   );
