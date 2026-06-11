@@ -2161,14 +2161,29 @@ document.addEventListener('wheel', function (e) {
       if (/(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2 && Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
       el = el.parentElement;
     }
-    // ignore wheel happening over the sidebar or other panes
-    if (!ws.contains(t) && t !== document.body && t !== document.documentElement) return;
+    // ignore wheel happening over the left sidebar or top tabs, but keep the
+    // whole workspace editable page scrollable even when the cursor is over
+    // the right panel or page margins.
+    if (t.closest('.sidebar, .tabbar, .topbar')) return;
   }
 
   if (pa.scrollHeight <= pa.clientHeight + 2) return;
   e.preventDefault();
   pa.scrollTop += (e.deltaMode === 1 ? e.deltaY * 24 : e.deltaY);
 }, { passive: false });
+
+document.addEventListener('keydown', function (e) {
+  const ws = document.getElementById('view-workspace');
+  if (!ws || getComputedStyle(ws).display === 'none') return;
+  const pa = ws.querySelector('.page-area');
+  if (!pa || pa.scrollHeight <= pa.clientHeight + 2) return;
+  if (e.target && e.target.closest && e.target.closest('input, textarea, [contenteditable="true"], .slash-menu')) return;
+  const step = Math.max(80, pa.clientHeight * 0.82);
+  if (e.key === 'PageDown') { e.preventDefault(); pa.scrollTop += step; }
+  if (e.key === 'PageUp') { e.preventDefault(); pa.scrollTop -= step; }
+  if (e.key === 'Home') { e.preventDefault(); pa.scrollTop = 0; }
+  if (e.key === 'End') { e.preventDefault(); pa.scrollTop = pa.scrollHeight; }
+});
 
 function hideSlash() { document.getElementById('slash-menu').style.display = 'none'; }
 
