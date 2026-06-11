@@ -2335,11 +2335,23 @@ window.addEventListener('DOMContentLoaded', () => {
   btn.className = 'btn btn-sm btn-ghost';
   btn.textContent = '+ Adicionar bloco';
   btn.style.cssText = 'margin-top:14px;opacity:.65;font-size:12px;';
-  btn.onclick = () => {
-    const blocks = editor.querySelectorAll(':scope > .block');
+  btn.onclick = (ev) => {
+    ev.stopPropagation();
+    const ed = _getEditorEl() || editor;
+    const blocks = ed.querySelectorAll(':scope > .block');
     const lastBlock = blocks.length ? blocks[blocks.length - 1] : null;
     const lastCe = lastBlock ? lastBlock.querySelector('[contenteditable]') : null;
-    _insertBlockAfter(lastCe, 'p');
+    // Open the block-type menu anchored at the button; selecting an item
+    // inserts the chosen block (título, texto, tabela, checklist, etc.)
+    __slashEl = lastCe;
+    const menu = document.getElementById('slash-menu');
+    const rect = btn.getBoundingClientRect();
+    menu.style.display = 'block';
+    const mh = Math.min(420, window.innerHeight - 24);
+    let top = rect.bottom + 8;
+    if (top + mh > window.innerHeight) top = Math.max(8, window.innerHeight - mh - 8);
+    menu.style.top = top + 'px';
+    menu.style.left = Math.min(rect.left, Math.max(8, window.innerWidth - 256)) + 'px';
   };
   editor.after(btn);
 });
