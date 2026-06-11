@@ -2248,18 +2248,28 @@ function slashAI() {
   toggleAI();
 }
 
+// Positions the slash menu so it always fits inside the viewport:
+// measures the real height, opens above the anchor when there's no room
+// below, and clamps top/left to the screen edges.
+function _positionSlashMenu(rect) {
+  const menu = document.getElementById('slash-menu');
+  const margin = 12;
+  menu.style.display = 'block';
+  menu.style.maxHeight = (window.innerHeight - margin * 2) + 'px';
+  const h = menu.offsetHeight;
+  const w = menu.offsetWidth || 240;
+  let top = rect.bottom + 8;
+  if (top + h > window.innerHeight - margin) {
+    if (rect.top - h - 8 >= margin) top = rect.top - h - 8;          // open above
+    else top = Math.max(margin, window.innerHeight - margin - h);    // clamp to screen
+  }
+  menu.style.top = top + 'px';
+  menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8)) + 'px';
+}
+
 function _showSlashFor(ce) {
   __slashEl = ce;
-  setTimeout(() => {
-    const rect = ce.getBoundingClientRect();
-    const menu = document.getElementById('slash-menu');
-    menu.style.display = 'block';
-    const mh = Math.min(420, window.innerHeight - 24);
-    let top = rect.bottom + 8;
-    if (top + mh > window.innerHeight) top = Math.max(8, window.innerHeight - mh - 8);
-    menu.style.top = top + 'px';
-    menu.style.left = Math.min(rect.left, Math.max(8, window.innerWidth - 256)) + 'px';
-  }, 10);
+  setTimeout(() => _positionSlashMenu(ce.getBoundingClientRect()), 10);
 }
 
 // Fallback: detect "/" typed via input events (mobile keyboards / IME)
@@ -2344,14 +2354,7 @@ window.addEventListener('DOMContentLoaded', () => {
     // Open the block-type menu anchored at the button; selecting an item
     // inserts the chosen block (título, texto, tabela, checklist, etc.)
     __slashEl = lastCe;
-    const menu = document.getElementById('slash-menu');
-    const rect = btn.getBoundingClientRect();
-    menu.style.display = 'block';
-    const mh = Math.min(420, window.innerHeight - 24);
-    let top = rect.bottom + 8;
-    if (top + mh > window.innerHeight) top = Math.max(8, window.innerHeight - mh - 8);
-    menu.style.top = top + 'px';
-    menu.style.left = Math.min(rect.left, Math.max(8, window.innerWidth - 256)) + 'px';
+    _positionSlashMenu(btn.getBoundingClientRect());
   };
   editor.after(btn);
 });
