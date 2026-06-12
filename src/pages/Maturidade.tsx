@@ -187,11 +187,18 @@ export default function Maturidade() {
               <h2 className="text-lg font-semibold">Diagnóstico Comercial Unificado</h2>
             </div>
             <p className="text-sm text-muted-foreground max-w-3xl">
-              Um único fluxo: começamos pelo GROW Revenue Intelligence (4 pilares guiados) e seguimos direto para dores, SWOT, alavancas e plano de ação IA.
+              Fluxo guiado GROW Sales Group: pilares, dores, alavancas e plano de ação.
             </p>
-            <Diagnostico360 />
+            <div className="relative w-full overflow-hidden rounded-xl border bg-background" style={{ height: "calc(100vh - 16rem)", minHeight: 640 }}>
+              <iframe
+                src="/diagnostico-comercial.html"
+                title="Diagnóstico Comercial"
+                className="absolute inset-0 block h-full w-full border-none"
+              />
+            </div>
           </section>
         </TabsContent>
+
 
         {/* MATURIDADE & EVOLUÇÃO — agrupa Pilares, CRM, RH, Fase, Métricas Norte e Ritmos */}
         <TabsContent value="evolucao" className="space-y-10">
