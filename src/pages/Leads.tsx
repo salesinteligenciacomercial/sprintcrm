@@ -114,10 +114,52 @@ export default function Leads() {
       }
     };
 
+    const createLead = async (lead: any) => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user?.id) throw new Error("Usuário não autenticado.");
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("company_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!userRole?.company_id) throw new Error("Empresa não encontrada.");
+
+        const { error } = await supabase.from("leads").insert({
+          name: lead.name,
+          phone: lead.phone,
+          email: lead.email,
+          source: lead.source || "manual",
+          value: lead.value,
+          notes: lead.notes,
+          status: "novo",
+          company_id: userRole.company_id,
+          created_by: user.id,
+        } as any);
+        if (error) throw error;
+
+        send({ type: "contatos-lead-created", ok: true });
+        loadStats();
+        loadContacts();
+      } catch (err: any) {
+        console.error("[Leads create]", err);
+        send({
+          type: "contatos-lead-created",
+          ok: false,
+          error: err?.message || "Erro ao salvar contato.",
+        });
+      }
+    };
+
     const onMessage = (ev: MessageEvent) => {
       if (ev.data?.type === "contatos-ready") {
         loadStats();
         loadContacts();
+      }
+      if (ev.data?.type === "contatos-create-lead") {
+        createLead(ev.data.lead);
       }
     };
     window.addEventListener("message", onMessage);
