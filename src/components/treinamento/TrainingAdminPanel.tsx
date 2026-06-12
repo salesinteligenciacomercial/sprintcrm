@@ -132,6 +132,9 @@ export function TrainingAdminPanel({
                       )}
                       <CardTitle className="text-base flex-1 flex items-center gap-2 flex-wrap">
                         <span>{module.title}</span>
+                        <Badge variant="default" className="bg-primary/15 text-primary border-primary/30">
+                          {TRACK_LABEL[module.track] || TRACK_LABEL.plataforma}
+                        </Badge>
                         {module.scope === 'global' ? (
                           <Badge variant="secondary" className="gap-1"><Globe className="h-3 w-3" />Global</Badge>
                         ) : (
