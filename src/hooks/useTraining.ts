@@ -160,7 +160,7 @@ export function useTraining() {
     }
   };
 
-  const createModule = async (data: { title: string; description?: string; icon?: string; scope?: TrainingScope }) => {
+  const createModule = async (data: { title: string; description?: string; icon?: string; scope?: TrainingScope; track?: TrainingTrack }) => {
     try {
       if (!companyId) throw new Error('Company ID not found');
       
@@ -179,6 +179,7 @@ export function useTraining() {
           icon: data.icon || 'book',
           order_index: maxOrder,
           scope: data.scope || 'company',
+          track: data.track || 'plataforma',
           created_by: user?.id
         } as any);
       
@@ -192,7 +193,7 @@ export function useTraining() {
     }
   };
 
-  const updateModule = async (id: string, data: { title?: string; description?: string; icon?: string }) => {
+  const updateModule = async (id: string, data: { title?: string; description?: string; icon?: string; track?: TrainingTrack }) => {
     try {
       const { error } = await supabase
         .from('training_modules')
