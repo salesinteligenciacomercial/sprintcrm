@@ -44,12 +44,22 @@ const moduleAccessOptions = [
   { key: 'configuracoes', label: 'Configurações' },
 ];
 
+type TrainingTrack = 'onboarding' | 'sdr' | 'closer' | 'gestao' | 'plataforma';
+
+const trackOptions: { value: TrainingTrack; label: string; description: string }[] = [
+  { value: 'onboarding', label: '🚀 Onboarding BPO', description: 'Boas-vindas, cultura e fundamentos do operador BPO' },
+  { value: 'sdr', label: '📞 Trilha SDR', description: 'Prospecção, qualificação, scripts de cold call e cadência' },
+  { value: 'closer', label: '🎯 Trilha Closer', description: 'Diagnóstico, negociação, objeções e fechamento' },
+  { value: 'gestao', label: '👔 Trilha Gestão', description: 'Coaching, KPIs, forecast e gestão de time comercial' },
+  { value: 'plataforma', label: '⚙️ Plataforma (CRM)', description: 'Tutoriais de uso das ferramentas do GROW OS' },
+];
+
 interface CreateModuleDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   canCreateGlobal?: boolean;
-  onSubmit: (data: { title: string; description?: string; icon?: string; related_modules?: string[]; scope?: 'global' | 'company' }) => Promise<void>;
-  editingModule?: { id: string; title: string; description: string | null; icon: string; related_modules?: string[]; scope?: 'global' | 'company' } | null;
+  onSubmit: (data: { title: string; description?: string; icon?: string; related_modules?: string[]; scope?: 'global' | 'company'; track?: TrainingTrack }) => Promise<void>;
+  editingModule?: { id: string; title: string; description: string | null; icon: string; related_modules?: string[]; scope?: 'global' | 'company'; track?: TrainingTrack } | null;
 }
 
 export function CreateModuleDialog({ 
@@ -63,6 +73,7 @@ export function CreateModuleDialog({
   const [description, setDescription] = useState("");
   const [icon, setIcon] = useState("book");
   const [scope, setScope] = useState<'global' | 'company'>('company');
+  const [track, setTrack] = useState<TrainingTrack>('plataforma');
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -73,12 +84,14 @@ export function CreateModuleDialog({
         setDescription(editingModule.description || "");
         setIcon(editingModule.icon);
         setScope(editingModule.scope || 'company');
+        setTrack((editingModule.track as TrainingTrack) || 'plataforma');
         setSelectedModules(editingModule.related_modules || []);
       } else {
         setTitle("");
         setDescription("");
         setIcon("book");
         setScope(canCreateGlobal ? 'global' : 'company');
+        setTrack('plataforma');
         setSelectedModules([]);
       }
     }
@@ -90,7 +103,7 @@ export function CreateModuleDialog({
     
     setLoading(true);
     try {
-      await onSubmit({ title, description, icon, related_modules: selectedModules, scope });
+      await onSubmit({ title, description, icon, related_modules: selectedModules, scope, track });
       onOpenChange(false);
     } finally {
       setLoading(false);
