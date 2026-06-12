@@ -992,6 +992,9 @@
     });
 
     tagsButton?.addEventListener('click', () => openTagsPanel());
+    document.getElementById('aniversariantesButton')?.addEventListener('click', () => {
+      window.parent?.postMessage({ type: 'contatos-open-aniversariantes' }, '*');
+    });
     importButton?.addEventListener('click', openImportPanel);
     newContactButton?.addEventListener('click', openNewContactPanel);
     addTagButton?.addEventListener('click', () => {
