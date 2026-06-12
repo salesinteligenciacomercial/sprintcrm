@@ -57,7 +57,7 @@ const navigation: NavEntry[] = [
       { name: "Funil de Vendas", href: "/kanban", icon: LayoutDashboard, menuKey: "funil", clinicaLabel: "Jornada do Paciente" },
       { name: "Bate-Papo", href: "/conversas", icon: MessageSquare, menuKey: "conversas", showConversasBadge: true, clinicaLabel: "Atendimento" },
       { name: "Agenda", href: "/agenda", icon: Calendar, menuKey: "agenda", showAgendaBadge: true },
-      { name: "Tarefas", href: "/tarefas", icon: Calendar, menuKey: "tarefas", showTarefasBadge: true },
+      { name: "Gestão de Tarefas", href: "/tarefas", icon: Calendar, menuKey: "tarefas", showTarefasBadge: true },
       { name: "Fluxos e Automação", href: "/ia", icon: Bot, menuKey: "automacao" },
     ],
     icon: LayoutDashboard,
