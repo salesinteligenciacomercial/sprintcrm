@@ -1241,11 +1241,29 @@ function showResults(){
   dorTexto = document.getElementById("dorInput").value.trim();
   showScreen("loading");
   setTimeout(() => {
-    computeResults();
-    showScreen("result");
-    setTimeout(animateResults, 100);
+    // Calcula scores por pilar
+    const pillarScores = {};
+    PILARES.forEach(p => pillarScores[p.key] = 0);
+    for(let i=0;i<PERGUNTAS.length;i++){
+      const a = answers[i];
+      if(a) pillarScores[a.pilar] += a.score;
+    }
+    const total = Math.round(Object.values(pillarScores).reduce((a,b)=>a+b,0) * 10) / 10;
+    const payload = {
+      scoreTotal: total,
+      dor: dorTexto,
+      pilares: PILARES.map(p => ({
+        key: p.key,
+        label: p.label,
+        score: Math.round(pillarScores[p.key] * 10) / 10,
+      })),
+      data: new Date().toISOString(),
+    };
+    try { localStorage.setItem("grow_diagnostico_resultado", JSON.stringify(payload)); } catch(e){}
+    window.location.href = "/resultado-diagnostico.html";
   }, 1400);
 }
+
 
 function computeResults(){
   // Pillar scores (only the 20 core questions count toward the 0-50 score)

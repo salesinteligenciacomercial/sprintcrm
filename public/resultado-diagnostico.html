@@ -952,11 +952,24 @@ function render(data){
 }
 
 /* ============================================================
-   ENTRYPOINT
-   Em produção, troque DADOS_EXEMPLO por dados reais recebidos
-   da página de diagnóstico (ex: via localStorage ou querystring)
+   ENTRYPOINT — carrega dados reais do diagnóstico via localStorage
    ============================================================ */
-render(DADOS_EXEMPLO);
+function loadRealData(){
+  try {
+    const raw = localStorage.getItem("grow_diagnostico_resultado");
+    if(!raw) return null;
+    const real = JSON.parse(raw);
+    const merged = { ...DADOS_EXEMPLO };
+    if(typeof real.scoreTotal === "number") merged.scoreTotal = real.scoreTotal;
+    if(Array.isArray(real.pilares) && real.pilares.length) merged.pilares = real.pilares;
+    if(real.dor && real.dor.trim()) merged.dor = real.dor.trim();
+    if(real.data) merged.data = new Date(real.data);
+    return merged;
+  } catch(e){ return null; }
+}
+
+render(loadRealData() || DADOS_EXEMPLO);
 </script>
 </body>
 </html>
+
