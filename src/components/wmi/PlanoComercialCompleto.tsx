@@ -313,7 +313,7 @@ export function PlanoComercialCompleto({ score }: { score?: WMIScore }) {
                     <RotateCcw className="h-3.5 w-3.5" /> Refazer diagnóstico
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => navigate("/processos")} className="gap-2">
-                    Ir para Processos Comerciais <ArrowRight className="h-3.5 w-3.5" />
+                    Ir para BPO Comercial <ArrowRight className="h-3.5 w-3.5" />
                   </Button>
                 </div>
               </CardContent>
