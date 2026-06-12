@@ -65,15 +65,15 @@ const navigation: NavEntry[] = [
   {
     type: "group",
     key: "grow",
-    label: "BPO Comercial",
+    label: "Gestão de Processos",
     icon: Rocket,
     items: [
       { name: "Metas & Vendas", href: "/metas-vendas", icon: DollarSign, menuKey: "prospeccao", clinicaLabel: "Metas da Clínica" },
       { name: "Rotina Inteligente", href: "/rotina", icon: Brain, menuKey: "prospeccao", clinicaLabel: "Rotina Clínica" },
-      // "BPO Comercial" é exclusivamente comercial — oculto para clínicas
+      // "Gestão de Processos" é exclusivamente comercial — oculto para clínicas
       // Módulo "Máquina de Vendas" removido — substituído pelo Call Center
       { name: "Maturidade Comercial", href: "/maturidade", icon: Activity, menuKey: "maturidade", hideForClinica: true } as any,
-      { name: "BPO Comercial", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true, hideForClinica: true } as any,
+      { name: "Gestão de Processos", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true, hideForClinica: true } as any,
       { name: "Call Center", href: "/discador", icon: PhoneCall, menuKey: "discador" },
       { name: "Business Intelligence (BI)", href: "/financeiro", icon: DollarSign, menuKey: "financeiro", clinicaLabel: "BI Clínico", clinicaHref: "/bi-clinico", clinicaIcon: Stethoscope },
       { name: "Treinamento Comerciais", href: "/treinamento", icon: GraduationCap, menuKey: "treinamento", clinicaLabel: "Treinamentos" },
@@ -268,8 +268,8 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
                   )}
                 </div>
                 {!effectiveCollapsed && (
-                  <span className="flex-1 flex items-center justify-between">
-                    {item.name}
+                  <span className={`flex-1 flex ${item.name === "Gestão de Processos" ? "flex-col items-start gap-0" : "items-center justify-between"}`}>
+                    <span className="leading-tight">{item.name}</span>
                     {isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                     {item.showConversasBadge && conversasUnread > 0 && !isLocked && (
                       <Badge className="ml-2 text-xs bg-green-500 hover:bg-green-600 text-white">
@@ -287,8 +287,8 @@ export function Sidebar({ collapsed = false, onNavigate }: SidebarProps) {
                       </Badge>
                     )}
                     {item.showAIBadge && aiInsightsCount > 0 && !isLocked && (
-                      <Badge className="ml-2 text-xs bg-orange-500 hover:bg-orange-600 text-white gap-1">
-                        <Brain className="h-3 w-3" />
+                      <Badge className={`${item.name === "Gestão de Processos" ? "mt-1" : "ml-2"} text-[10px] bg-orange-500 hover:bg-orange-600 text-white gap-1 px-1.5 h-4`}>
+                        <Brain className="h-2.5 w-2.5" />
                         {aiInsightsCount}
                       </Badge>
                     )}
