@@ -128,7 +128,7 @@ export function useTraining() {
       }
       
       // Combine data
-      const modulesWithLessons = (modulesData || []).map((module: TrainingModule) => {
+      const modulesWithLessons: TrainingModule[] = (modulesData || []).map((module: any) => {
         const moduleLessons = (lessonsData || []).filter(
           (lesson: TrainingLesson) => lesson.module_id === module.id
         ).map((lesson: TrainingLesson) => ({
@@ -140,10 +140,11 @@ export function useTraining() {
         
         return {
           ...module,
+          track: (module.track || 'plataforma') as TrainingTrack,
           lessons: moduleLessons,
           lessonsCount: moduleLessons.length,
           completedCount: moduleLessons.filter((l: TrainingLesson) => l.completed).length
-        };
+        } as TrainingModule;
       });
       
       setModules(modulesWithLessons);
