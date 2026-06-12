@@ -139,6 +139,23 @@ export function CreateModuleDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="track">Trilha de Capacitação *</Label>
+            <Select value={track} onValueChange={(v) => setTrack(v as TrainingTrack)}>
+              <SelectTrigger id="track">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {trackOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {trackOptions.find(o => o.value === track)?.description}
+            </p>
+          </div>
+
           {canCreateGlobal && (
             <div className="space-y-2">
               <Label>Visibilidade do treinamento</Label>
