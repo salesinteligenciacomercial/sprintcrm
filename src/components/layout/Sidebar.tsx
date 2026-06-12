@@ -65,15 +65,15 @@ const navigation: NavEntry[] = [
   {
     type: "group",
     key: "grow",
-    label: "BPO Comercial",
+    label: "Gestão de Processos",
     icon: Rocket,
     items: [
       { name: "Metas & Vendas", href: "/metas-vendas", icon: DollarSign, menuKey: "prospeccao", clinicaLabel: "Metas da Clínica" },
       { name: "Rotina Inteligente", href: "/rotina", icon: Brain, menuKey: "prospeccao", clinicaLabel: "Rotina Clínica" },
-      // "BPO Comercial" é exclusivamente comercial — oculto para clínicas
+      // "Gestão de Processos" é exclusivamente comercial — oculto para clínicas
       // Módulo "Máquina de Vendas" removido — substituído pelo Call Center
       { name: "Maturidade Comercial", href: "/maturidade", icon: Activity, menuKey: "maturidade", hideForClinica: true } as any,
-      { name: "BPO Comercial", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true, hideForClinica: true } as any,
+      { name: "Gestão de Processos", href: "/processos", icon: Target, menuKey: "processos", showAIBadge: true, hideForClinica: true } as any,
       { name: "Call Center", href: "/discador", icon: PhoneCall, menuKey: "discador" },
       { name: "Business Intelligence (BI)", href: "/financeiro", icon: DollarSign, menuKey: "financeiro", clinicaLabel: "BI Clínico", clinicaHref: "/bi-clinico", clinicaIcon: Stethoscope },
       { name: "Treinamento Comerciais", href: "/treinamento", icon: GraduationCap, menuKey: "treinamento", clinicaLabel: "Treinamentos" },
