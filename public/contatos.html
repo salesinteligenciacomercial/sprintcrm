@@ -909,11 +909,86 @@
     }
 
     function openNewContactPanel() {
+      const inputStyle = 'width:100%;padding:10px 12px;border:1px solid hsl(var(--border));border-radius:8px;font-size:14px;font-family:inherit;background:hsl(var(--background));color:hsl(var(--foreground));outline:none;box-sizing:border-box;';
+      const labelStyle = 'display:block;font-size:12px;font-weight:600;margin:0 0 4px;color:hsl(var(--muted-foreground));';
       showModal('Novo contato', `
-        <p>O botão de novo contato agora está funcionando.</p>
-        <p>Aqui você poderá adicionar um lead novo diretamente.</p>
+        <form id="newLeadForm" style="display:flex;flex-direction:column;gap:12px;">
+          <div>
+            <label style="${labelStyle}" for="nlName">Nome *</label>
+            <input style="${inputStyle}" id="nlName" required placeholder="Nome do contato">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="${labelStyle}" for="nlPhone">Telefone</label>
+              <input style="${inputStyle}" id="nlPhone" placeholder="(00) 00000-0000">
+            </div>
+            <div>
+              <label style="${labelStyle}" for="nlEmail">E-mail</label>
+              <input style="${inputStyle}" id="nlEmail" type="email" placeholder="email@exemplo.com">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="${labelStyle}" for="nlSource">Origem</label>
+              <select style="${inputStyle}" id="nlSource">
+                <option value="manual">Manual</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="instagram">Instagram</option>
+                <option value="site">Site</option>
+                <option value="indicacao">Indicação</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+            <div>
+              <label style="${labelStyle}" for="nlValue">Valor (R$)</label>
+              <input style="${inputStyle}" id="nlValue" type="number" min="0" step="0.01" placeholder="0,00">
+            </div>
+          </div>
+          <div>
+            <label style="${labelStyle}" for="nlNotes">Observações</label>
+            <textarea style="${inputStyle}resize:vertical;min-height:60px;" id="nlNotes" placeholder="Anotações sobre o contato"></textarea>
+          </div>
+          <div id="nlError" style="display:none;color:#dc2626;font-size:13px;"></div>
+          <button type="submit" id="nlSubmit" style="padding:10px 16px;border:none;border-radius:8px;background:hsl(var(--primary));color:#fff;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;">Salvar contato</button>
+        </form>
       `);
+      const form = document.getElementById('newLeadForm');
+      form?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('nlName').value.trim();
+        if (!name) return;
+        const btn = document.getElementById('nlSubmit');
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+        const phoneRaw = document.getElementById('nlPhone').value.trim();
+        try {
+          window.parent.postMessage({
+            type: 'contatos-create-lead',
+            lead: {
+              name,
+              phone: phoneRaw || null,
+              email: document.getElementById('nlEmail').value.trim() || null,
+              source: document.getElementById('nlSource').value,
+              value: parseFloat(document.getElementById('nlValue').value) || null,
+              notes: document.getElementById('nlNotes').value.trim() || null,
+            },
+          }, '*');
+        } catch {}
+      });
     }
+
+    window.addEventListener('message', (ev) => {
+      const m = ev.data;
+      if (!m || m.type !== 'contatos-lead-created') return;
+      const btn = document.getElementById('nlSubmit');
+      const errEl = document.getElementById('nlError');
+      if (m.ok) {
+        closeModalFn();
+      } else {
+        if (errEl) { errEl.style.display = 'block'; errEl.textContent = m.error || 'Erro ao salvar contato.'; }
+        if (btn) { btn.disabled = false; btn.textContent = 'Salvar contato'; }
+      }
+    });
 
     tagsButton?.addEventListener('click', () => openTagsPanel());
     importButton?.addEventListener('click', openImportPanel);
