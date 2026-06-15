@@ -2403,7 +2403,9 @@ function deleteCustomPage(id, ev) {
   _saveDocs(docs);
   _renderCustomPages();
   if (__currentDocId === id) setDoc('playbook-vendas');
+  _sbDeletePage(id);
 }
+
 
 function _renderCustomPages() {
   const list = _loadCustom();
