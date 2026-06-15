@@ -2457,7 +2457,13 @@ window.addEventListener('DOMContentLoaded', () => {
   _bindEditableHandlers();
   const last = localStorage.getItem(DOC_CURRENT_KEY);
   if (last && last !== 'playbook-vendas') setDoc(last);
+  // Pull latest pages from backend and re-render (hybrid sync)
+  _sbPullPages().then(() => {
+    const cur = localStorage.getItem(DOC_CURRENT_KEY);
+    if (cur && _loadDocs()[cur]) setDoc(cur);
+  }).catch(() => {});
 });
+
 
 function toggleCheck(el) {
   const cb = el.querySelector('input[type=checkbox]');
