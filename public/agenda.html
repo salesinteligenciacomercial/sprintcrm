@@ -938,9 +938,36 @@
           populateSelect('f_prof', d.profissionais, 'Nenhum profissional cadastrado');
           if(Array.isArray(d.leads)) CRM_LEADS = d.leads;
         }
+        if(d.type === 'agenda:create-agenda-result'){
+          const t = document.getElementById('toast');
+          if(t){ t.textContent = d.ok ? 'Agenda criada com sucesso' : ('Erro ao criar agenda: ' + (d.error||'')); t.style.display='block'; setTimeout(()=>{t.style.display='none';}, 2800); }
+          if(d.ok){
+            document.getElementById('novaAgendaModal').style.display = 'none';
+            ['na_nome'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+          }
+        }
       });
       // Avisa o parent que está pronto
       try { window.parent.postMessage({ type: 'agenda:ready' }, '*'); } catch(_) {}
+
+      // ---------- Nova Agenda ----------
+      function openNovaAgenda(){ const m=document.getElementById('novaAgendaModal'); if(m){ m.style.display='flex'; setTimeout(()=>document.getElementById('na_nome')?.focus(), 50);} }
+      function closeNovaAgenda(){ const m=document.getElementById('novaAgendaModal'); if(m) m.style.display='none'; }
+      document.getElementById('btnNovaAgenda')?.addEventListener('click', openNovaAgenda);
+      document.getElementById('naClose')?.addEventListener('click', closeNovaAgenda);
+      document.getElementById('naCancel')?.addEventListener('click', closeNovaAgenda);
+      document.getElementById('naSave')?.addEventListener('click', () => {
+        const nome = (document.getElementById('na_nome').value||'').trim();
+        if(!nome){ alert('Informe o nome da agenda'); return; }
+        const payload = {
+          type: 'agenda:create-agenda',
+          nome,
+          tipo: document.getElementById('na_tipo').value || 'colaborador',
+          tempo_medio_servico: parseInt(document.getElementById('na_duracao').value||'30',10),
+          capacidade_simultanea: parseInt(document.getElementById('na_capacidade').value||'1',10),
+        };
+        try { window.parent.postMessage(payload, '*'); } catch(_){}
+      });
 
       // ---------- Autocomplete de contatos do CRM ----------
       function normalize(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
