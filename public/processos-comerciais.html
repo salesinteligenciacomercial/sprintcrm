@@ -2126,7 +2126,9 @@ function _captureCurrentDoc() {
     html:  editor.innerHTML,
   };
   _saveDocs(docs);
+  _sbDebouncedSaveCurrent();
 }
+
 
 function setDoc(id) {
   // Save current page before switching
