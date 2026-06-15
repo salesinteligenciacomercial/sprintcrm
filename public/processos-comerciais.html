@@ -2004,6 +2004,112 @@ function _loadCustom() {
 }
 function _saveCustom(list) { localStorage.setItem(DOC_CUSTOM_KEY, JSON.stringify(list)); }
 
+// ===== Supabase sync layer (hybrid: localStorage + process_pages) =====
+const SB_URL = 'https://dteppsfseusqixuppglh.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0ZXBwc2ZzZXVzcWl4dXBwZ2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4MzY0OTgsImV4cCI6MjA3NjQxMjQ5OH0.eEz5cyfwi5chae1U9S0Yt1FBwglyuVnm_Fzg9HVrV_Q';
+let __sbCompanyId = null;
+let __sbSaveTimers = {};
+
+function _sbToken() {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        const p = JSON.parse(raw);
+        const tok = p?.access_token || p?.currentSession?.access_token;
+        if (tok) return tok;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function _sbFetch(path, opts = {}) {
+  const tok = _sbToken();
+  if (!tok) return null;
+  const headers = {
+    'apikey': SB_ANON,
+    'Authorization': 'Bearer ' + tok,
+    'Content-Type': 'application/json',
+    ...(opts.headers || {})
+  };
+  if (opts.method === 'POST' || opts.method === 'PATCH') {
+    headers['Prefer'] = 'return=representation';
+  }
+  try {
+    const r = await fetch(SB_URL + '/rest/v1' + path, { ...opts, headers });
+    if (!r.ok) { console.warn('[procPages]', r.status, await r.text().catch(() => '')); return null; }
+    const ct = r.headers.get('content-type') || '';
+    return ct.includes('application/json') ? await r.json() : null;
+  } catch (e) { console.warn('[procPages] fetch err', e); return null; }
+}
+
+async function _sbCompany() {
+  if (__sbCompanyId) return __sbCompanyId;
+  const tok = _sbToken();
+  if (!tok) return null;
+  try {
+    const payload = JSON.parse(atob(tok.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const uid = payload.sub;
+    const rows = await _sbFetch(`/profiles?select=company_id&id=eq.${uid}`);
+    if (rows && rows[0] && rows[0].company_id) { __sbCompanyId = rows[0].company_id; return __sbCompanyId; }
+  } catch (e) {}
+  return null;
+}
+
+function _isUuid(s) { return typeof s === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s); }
+
+async function _sbPullPages() {
+  const cid = await _sbCompany();
+  if (!cid) return;
+  const rows = await _sbFetch(`/process_pages?company_id=eq.${cid}&page_type=eq.custom&order=position.asc`);
+  if (!rows) return;
+  const list = rows.map(r => ({ id: r.id, title: r.title || 'Sem título', icon: r.icon || '📄' }));
+  _saveCustom(list);
+  const docs = _loadDocs();
+  rows.forEach(r => {
+    const html = r.properties && r.properties.html;
+    if (html) docs[r.id] = { title: r.title || 'Sem título', icon: r.icon || '📄', html };
+  });
+  _saveDocs(docs);
+  _renderCustomPages();
+}
+
+async function _sbCreatePage(title, icon, html) {
+  const cid = await _sbCompany();
+  if (!cid) return null;
+  const res = await _sbFetch('/process_pages', {
+    method: 'POST',
+    body: JSON.stringify({ company_id: cid, title, icon, page_type: 'custom', properties: { html } })
+  });
+  return (res && res[0] && res[0].id) ? res[0].id : null;
+}
+
+async function _sbUpdatePage(id, patch) {
+  if (!_isUuid(id)) return;
+  await _sbFetch(`/process_pages?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+}
+
+async function _sbDeletePage(id) {
+  if (!_isUuid(id)) return;
+  await _sbFetch(`/process_pages?id=eq.${id}`, { method: 'DELETE' });
+}
+
+function _sbDebouncedSaveCurrent() {
+  const id = __currentDocId;
+  if (!_isUuid(id)) return; // built-in or local-only
+  clearTimeout(__sbSaveTimers[id]);
+  __sbSaveTimers[id] = setTimeout(() => {
+    const docs = _loadDocs();
+    const d = docs[id];
+    if (!d) return;
+    _sbUpdatePage(id, { title: d.title || 'Sem título', icon: d.icon || '📄', properties: { html: d.html || '' } });
+  }, 1200);
+}
+
+
 function _getEditorEl()  { return document.querySelector('#view-workspace .block-editor'); }
 function _getTitleEl()   { return document.querySelector('#view-workspace .page-title'); }
 function _getIconEl()    { return document.querySelector('#view-workspace .page-icon'); }
