@@ -2336,11 +2336,6 @@ async function _npCreate() {
     if (!title) title = 'Nova página';
     const icon = (document.getElementById('np-icon').value || '📄').trim() || '📄';
 
-    const id = 'custom-' + Date.now();
-    const list = _loadCustom();
-    list.push({ id, title, icon });
-    _saveCustom(list);
-
     const handle = '<div class="block-handle">⠿</div>';
     let html = `<div class="block">${handle}<div class="block-content block-h1" contenteditable="true">${_npEscape(title)}</div></div>`;
     if (text) {
@@ -2352,12 +2347,21 @@ async function _npCreate() {
       html += `<div class="block">${handle}<div class="block-content block-p" contenteditable="true">Comece a escrever... Pressione <strong>/</strong> para inserir blocos.</div></div>`;
     }
 
+    // 1) Save to Supabase first (so we get a real UUID). Fallback to local id if offline/unauth.
+    let id = await _sbCreatePage(title, icon, html);
+    if (!id) id = 'custom-' + Date.now();
+
+    const list = _loadCustom();
+    list.push({ id, title, icon });
+    _saveCustom(list);
+
     const docs = _loadDocs();
     docs[id] = { title, icon, html };
     _saveDocs(docs);
 
     _renderCustomPages();
     closeNewPageModal();
+
     setDoc(id);
   } catch (e) {
     console.error(e);
