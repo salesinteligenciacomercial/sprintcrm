@@ -583,6 +583,7 @@ function Conversas() {
   const [cleanHistoryDialogOpen, setCleanHistoryDialogOpen] = useState(false);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
+  const [shareContactOpen, setShareContactOpen] = useState(false);
   const [valorVendaDialogOpen, setValorVendaDialogOpen] = useState(false);
   const [valorVendaInput, setValorVendaInput] = useState("");
   const [salvandoValor, setSalvandoValor] = useState(false);
