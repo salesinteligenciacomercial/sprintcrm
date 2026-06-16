@@ -9855,20 +9855,6 @@ function Conversas() {
 
                   <div className="flex items-end gap-1.5 sm:gap-2 flex-nowrap relative">
 
-                    <MediaUpload onFileSelected={handleSendMedia} />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-primary flex-shrink-0"
-                      title="Compartilhar contato do CRM"
-                      onClick={() => setShareContactOpen(true)}
-                    >
-                      <Users className="h-5 w-5" />
-                    </Button>
-
-
                     <Button
                       variant="outline"
                       size="icon"
@@ -9878,6 +9864,7 @@ function Conversas() {
                     >
                       {showMobileExtras ? <ChevronDown className="h-5 w-5" /> : <ChevronUp className="h-5 w-5" />}
                     </Button>
+
 
                     <Textarea ref={messageTextareaRef} placeholder="Escreva sua mensagem..." value={messageInput} onChange={e => {
                   setMessageInput(e.target.value);
