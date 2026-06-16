@@ -29,6 +29,7 @@ import { CoachIAFloatingButton } from "@/components/conversas/CoachIAFloatingBut
 import { ConversationListItem } from "@/components/conversas/ConversationListItem";
 import { MessageItem } from "@/components/conversas/MessageItem";
 import { ForwardMessageDialog } from "@/components/conversas/ForwardMessageDialog";
+import { ShareCrmContactDialog } from "@/components/conversas/ShareCrmContactDialog";
 import { AudioRecorder } from "@/components/conversas/AudioRecorder";
 import { MediaUpload } from "@/components/conversas/MediaUpload";
 import { NovaConversaDialog } from "@/components/conversas/NovaConversaDialog";
