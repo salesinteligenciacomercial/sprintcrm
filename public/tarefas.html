@@ -1713,7 +1713,7 @@ function renderKanban() {
         if (cor) callApi('editar_coluna', { column_id: col.id, cor }).then(loadAll);
       } else if (op === '3') {
         if (confirm('Excluir coluna? Tarefas serão movidas para outra coluna.'))
-          callApi('excluir_coluna', { column_id: col.id }).then(loadAll);
+          callApi('deletar_coluna', { column_id: col.id }).then(loadAll);
       }
     };
   });
@@ -1764,7 +1764,7 @@ function buildCardEl(t) {
   div.querySelector('[data-act="del"]').onclick = (e) => {
     e.stopPropagation();
     if (!confirm('Deletar esta tarefa?')) return;
-    callApi('excluir_tarefa', { task_id: t.id }).then(loadAll);
+    callApi('deletar_tarefa', { task_id: t.id }).then(loadAll);
   };
   return div;
 }
@@ -2183,7 +2183,7 @@ window.createCol = async function () {
 window.deleteCard = async function (cardId) {
   const taskId = cardId.replace(/^card-/, '');
   if (!confirm('Deletar esta tarefa?')) return;
-  await callApi('excluir_tarefa', { task_id: taskId });
+  await callApi('deletar_tarefa', { task_id: taskId });
   loadAll();
 };
 
@@ -2223,7 +2223,7 @@ window.bulkDelete = async function () {
   if (!window.selectedCards || !window.selectedCards.size) return;
   if (!confirm(`Deletar ${window.selectedCards.size} tarefa(s)?`)) return;
   for (const id of window.selectedCards) {
-    try { await callApi('excluir_tarefa', { task_id: id }); } catch {}
+    try { await callApi('deletar_tarefa', { task_id: id }); } catch {}
   }
   window.selectedCards.clear();
   loadAll();
