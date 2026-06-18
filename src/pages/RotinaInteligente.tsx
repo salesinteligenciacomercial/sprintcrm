@@ -394,8 +394,70 @@ export default function RotinaInteligente() {
         </div>
       </div>
 
-      {/* Filters + Action */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* View Mode Selector */}
+      {(() => {
+        const VIEWS = [
+          { key: "diaria",  label: "Diária",  emoji: "📅" },
+          { key: "semanal", label: "Semanal", emoji: "🗓️" },
+          { key: "mensal",  label: "Mensal",  emoji: "📆" },
+        ] as const;
+        return (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2 p-1 bg-slate-900/60 border border-slate-700/60 rounded-xl">
+              {VIEWS.map(v => {
+                const active = viewMode === v.key;
+                return (
+                  <button
+                    key={v.key}
+                    onClick={() => setViewMode(v.key)}
+                    className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                      active ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{v.emoji}</span> Visão {v.label}
+                  </button>
+                );
+              })}
+            </div>
+            {viewMode !== "diaria" && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRefDate(d => {
+                    const n = new Date(d);
+                    if (viewMode === "semanal") n.setDate(n.getDate() - 7); else n.setMonth(n.getMonth() - 1);
+                    return n;
+                  })}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                >‹ Anterior</button>
+                <span className="text-xs font-bold text-slate-300 capitalize px-2">
+                  {viewMode === "semanal"
+                    ? (() => {
+                        const start = new Date(refDate); start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+                        const end = new Date(start); end.setDate(end.getDate() + 6);
+                        return `${start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} – ${end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
+                      })()
+                    : refDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  onClick={() => setRefDate(d => {
+                    const n = new Date(d);
+                    if (viewMode === "semanal") n.setDate(n.getDate() + 7); else n.setMonth(n.getMonth() + 1);
+                    return n;
+                  })}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                >Próximo ›</button>
+                <button
+                  onClick={() => setRefDate(new Date())}
+                  className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold"
+                >Hoje</button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Filters + Action (Diária) */}
+      {viewMode === "diaria" && (
         <div className="flex flex-wrap gap-2">
           {([
             { key: "todas",       label: "Todas",       count: tasks.length,         cls: "bg-slate-700 text-white" },
