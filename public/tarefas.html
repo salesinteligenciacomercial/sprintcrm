@@ -1638,7 +1638,51 @@ async function loadAll() {
   if (!currentBoardId && boards[0]) currentBoardId = boards[0].id;
   renderBoards();
   renderKanban();
+  renderStats();
   populateModalSelects();
+}
+
+function renderStats() {
+  const list = tasks || [];
+  const isDone = (t) => {
+    const s = (t.status || '').toLowerCase();
+    if (s === 'concluido' || s === 'concluído' || s === 'done' || s === 'completed') return true;
+    const col = columns.find(c => c.id === t.column_id);
+    const cn = (col?.nome || '').toLowerCase();
+    return cn.includes('ganho') || cn.includes('conclu') || cn.includes('done');
+  };
+  const isReview = (t) => {
+    const col = columns.find(c => c.id === t.column_id);
+    const cn = (col?.nome || '').toLowerCase();
+    return cn.includes('revis') || cn.includes('review');
+  };
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endToday = new Date(startToday.getTime() + 86400000);
+  const weekAgo = new Date(now.getTime() - 7 * 86400000);
+
+  const total = list.length;
+  const done = list.filter(isDone).length;
+  const overdue = list.filter(t => !isDone(t) && t.due_date && new Date(t.due_date) < now).length;
+  const dueToday = list.filter(t => t.due_date && new Date(t.due_date) >= startToday && new Date(t.due_date) < endToday).length;
+  const review = list.filter(isReview).length;
+  const high = list.filter(t => !isDone(t) && ['alta', 'urgente'].includes((t.priority || '').toLowerCase())).length;
+  const newWeek = list.filter(t => t.created_at && new Date(t.created_at) >= weekAgo).length;
+  const taxa = total ? Math.round((done / total) * 1000) / 10 : 0;
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('statTotal', total);
+  const tt = document.getElementById('statTotalTrend');
+  if (tt) tt.innerHTML = `<i class="ti ti-trending-up" style="font-size:11px"></i>+${newWeek} esta semana`;
+  set('statDone', done);
+  const dt = document.getElementById('statDoneTrend');
+  if (dt) dt.innerHTML = `<i class="ti ti-trending-up" style="font-size:11px"></i>${taxa}% taxa`;
+  set('overdueCount', overdue);
+  set('statDueToday', dueToday);
+  set('statReview', review);
+  const bar = document.getElementById('statReviewBar');
+  if (bar) bar.style.width = (total ? Math.round((review / total) * 100) : 0) + '%';
+  set('statHigh', high);
 }
 
 function subscribeRealtime() {
