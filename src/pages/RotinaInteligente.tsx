@@ -195,6 +195,8 @@ export default function RotinaInteligente() {
   const [newTask, setNewTask] = useState({ title: "", description: "", time: "09:00", category: "prospeccao" as RotineTask["category"], priority: "media" as RotineTask["priority"] });
   const [statusFilter, setStatusFilter] = useState<"todas" | "pendentes" | "atrasadas" | "concluidas">("todas");
   const [categoryFilter, setCategoryFilter] = useState<"todas" | RotineTask["category"]>("todas");
+  const [viewMode, setViewMode] = useState<"diaria" | "semanal" | "mensal">("diaria");
+  const [refDate, setRefDate] = useState<Date>(new Date());
 
   // Persist
   useEffect(() => { localStorage.setItem(STORAGE_TASKS_KEY, JSON.stringify(tasksByProfile)); }, [tasksByProfile]);
@@ -392,149 +394,346 @@ export default function RotinaInteligente() {
         </div>
       </div>
 
-      {/* Filters + Action */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {([
-            { key: "todas",       label: "Todas",       count: tasks.length,         cls: "bg-slate-700 text-white" },
-            { key: "pendentes",   label: "Pendentes",   count: pendingTasks.length,  cls: "bg-amber-500 text-white" },
-            { key: "atrasadas",   label: "Atrasadas",   count: overdueTasks.length,  cls: "bg-rose-500 text-white" },
-            { key: "concluidas",  label: "Concluídas",  count: doneTasks.length,     cls: "bg-emerald-500 text-white" },
-          ] as const).map(f => {
-            const active = statusFilter === f.key;
-            return (
-              <button
-                key={f.key}
-                onClick={() => setStatusFilter(f.key)}
-                className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${
-                  active ? `${f.cls} border-transparent shadow-lg` : "bg-slate-900/60 text-slate-300 border-slate-700 hover:bg-slate-800"
-                }`}
-              >
-                {f.label}
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? "bg-white/25" : "bg-slate-700"}`}>{f.count}</span>
-              </button>
-            );
-          })}
-          <select
-            className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value as any)}
-          >
-            <option value="todas">Todas categorias</option>
-            {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-        </div>
-        <button
-          onClick={() => { if (showAddForm) { resetForm(); } else { setEditingId(null); setShowAddForm(true); } }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20"
-        >
-          <span className="text-lg leading-none">+</span> Nova Atividade em {current.label}
-        </button>
-      </div>
-
-      {/* Add/Edit Form */}
-      {showAddForm && (
-        <div className="mb-6 bg-slate-800/60 rounded-2xl p-4 border border-emerald-500/30">
-          <h3 className="text-sm font-bold text-emerald-300 mb-3 uppercase tracking-widest">
-            {editingId ? "✎ Editar Atividade" : "+ Nova Atividade"} — {current.label}
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-              placeholder="Título da atividade..."
-              value={newTask.title}
-              onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
-              onKeyDown={e => e.key === "Enter" && !e.shiftKey && saveTask()}
-            />
-            <textarea
-              className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none min-h-[80px]"
-              placeholder="Descrição da atividade (opcional)... ex.: objetivo, instruções, links, checklist"
-              value={newTask.description}
-              onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
-              rows={3}
-            />
-            <input
-              type="time"
-              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-              value={newTask.time}
-              onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
-            />
-            <select
-              className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-              value={newTask.category}
-              onChange={e => setNewTask(p => ({ ...p, category: e.target.value as RotineTask["category"] }))}
-            >
-              {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select>
-            <select
-              className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
-              value={newTask.priority}
-              onChange={e => setNewTask(p => ({ ...p, priority: e.target.value as RotineTask["priority"] }))}
-            >
-              <option value="alta">🔴 Alta Prioridade</option>
-              <option value="media">🟡 Média Prioridade</option>
-              <option value="baixa">⚪ Baixa Prioridade</option>
-            </select>
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button onClick={saveTask} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl">
-              {editingId ? "Salvar Alterações" : "Adicionar"}
-            </button>
-            {editingId && (
-              <button
-                onClick={() => { deleteTask(editingId); resetForm(); }}
-                className="px-4 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-sm font-bold py-2.5 rounded-xl border border-rose-500/40"
-              >Excluir</button>
-            )}
-            <button onClick={resetForm} className="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2.5 rounded-xl">Cancelar</button>
-          </div>
-        </div>
-      )}
-
-      {/* Task Columns */}
+      {/* View Mode Selector */}
       {(() => {
-        const byCategory = (t: RotineTask) => categoryFilter === "todas" || t.category === categoryFilter;
-        const cols = [
-          { key: "atrasadas",  title: "Atrasadas",  emoji: "⚠",  ring: "border-rose-500/40 from-rose-950/40",     badge: "bg-rose-500/20 text-rose-300",       list: overdueTasks.filter(byCategory) },
-          { key: "pendentes",  title: "Pendentes",  emoji: "⏱",  ring: "border-amber-500/40 from-amber-950/40",   badge: "bg-amber-500/20 text-amber-300",     list: pendingTasks.filter(byCategory) },
-          { key: "concluidas", title: "Concluídas", emoji: "✓",  ring: "border-emerald-500/40 from-emerald-950/40", badge: "bg-emerald-500/20 text-emerald-300", list: doneTasks.filter(byCategory) },
-        ];
-        const visibleCols = statusFilter === "todas" ? cols : cols.filter(c => c.key === statusFilter);
-        const hasAny = visibleCols.some(c => c.list.length > 0);
-        if (!hasAny) {
-          return (
-            <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 text-center py-12 text-slate-500">
-              <div className="text-4xl mb-2">📋</div>
-              <p className="text-sm font-medium">Nenhuma atividade nesta visualização.</p>
-              <p className="text-xs text-slate-600 mt-1">Ajuste o filtro ou clique em "Nova Atividade".</p>
-            </div>
-          );
-        }
+        const VIEWS = [
+          { key: "diaria",  label: "Diária",  emoji: "📅" },
+          { key: "semanal", label: "Semanal", emoji: "🗓️" },
+          { key: "mensal",  label: "Mensal",  emoji: "📆" },
+        ] as const;
         return (
-          <div className={`grid gap-4 ${visibleCols.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"}`}>
-            {visibleCols.map(col => (
-              <div key={col.key} className={`bg-gradient-to-b ${col.ring} to-slate-900/40 rounded-2xl border overflow-hidden flex flex-col`}>
-                <div className="px-4 py-3 flex items-center justify-between border-b border-slate-700/40">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">{col.emoji}</span>
-                    <span className="text-sm font-bold text-white">{col.title}</span>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>{col.list.length}</span>
-                </div>
-                <div className="p-3 flex flex-col gap-2 min-h-[120px]">
-                  {col.list.length === 0 ? (
-                    <div className="text-center text-xs text-slate-600 py-6">Nenhuma atividade</div>
-                  ) : (
-                    col.list.slice().sort((a, b) => a.time.localeCompare(b.time)).map(task => (
-                      <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} onEdit={startEdit} />
-                    ))
-                  )}
-                </div>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex gap-2 p-1 bg-slate-900/60 border border-slate-700/60 rounded-xl">
+              {VIEWS.map(v => {
+                const active = viewMode === v.key;
+                return (
+                  <button
+                    key={v.key}
+                    onClick={() => setViewMode(v.key)}
+                    className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                      active ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-300 hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{v.emoji}</span> Visão {v.label}
+                  </button>
+                );
+              })}
+            </div>
+            {viewMode !== "diaria" && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setRefDate(d => {
+                    const n = new Date(d);
+                    if (viewMode === "semanal") n.setDate(n.getDate() - 7); else n.setMonth(n.getMonth() - 1);
+                    return n;
+                  })}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                >‹ Anterior</button>
+                <span className="text-xs font-bold text-slate-300 capitalize px-2">
+                  {viewMode === "semanal"
+                    ? (() => {
+                        const start = new Date(refDate); start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+                        const end = new Date(start); end.setDate(end.getDate() + 6);
+                        return `${start.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} – ${end.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
+                      })()
+                    : refDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                </span>
+                <button
+                  onClick={() => setRefDate(d => {
+                    const n = new Date(d);
+                    if (viewMode === "semanal") n.setDate(n.getDate() + 7); else n.setMonth(n.getMonth() + 1);
+                    return n;
+                  })}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                >Próximo ›</button>
+                <button
+                  onClick={() => setRefDate(new Date())}
+                  className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold"
+                >Hoje</button>
               </div>
-            ))}
+            )}
           </div>
         );
       })()}
+
+      {/* Diária view */}
+      {viewMode === "diaria" && (
+        <>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              {([
+                { key: "todas",       label: "Todas",       count: tasks.length,         cls: "bg-slate-700 text-white" },
+                { key: "pendentes",   label: "Pendentes",   count: pendingTasks.length,  cls: "bg-amber-500 text-white" },
+                { key: "atrasadas",   label: "Atrasadas",   count: overdueTasks.length,  cls: "bg-rose-500 text-white" },
+                { key: "concluidas",  label: "Concluídas",  count: doneTasks.length,     cls: "bg-emerald-500 text-white" },
+              ] as const).map(f => {
+                const active = statusFilter === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setStatusFilter(f.key)}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all flex items-center gap-2 ${
+                      active ? `${f.cls} border-transparent shadow-lg` : "bg-slate-900/60 text-slate-300 border-slate-700 hover:bg-slate-800"
+                    }`}
+                  >
+                    {f.label}
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${active ? "bg-white/25" : "bg-slate-700"}`}>{f.count}</span>
+                  </button>
+                );
+              })}
+              <select
+                className="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value as any)}
+              >
+                <option value="todas">Todas categorias</option>
+                {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </div>
+            <button
+              onClick={() => { if (showAddForm) { resetForm(); } else { setEditingId(null); setShowAddForm(true); } }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-emerald-600/20"
+            >
+              <span className="text-lg leading-none">+</span> Nova Atividade em {current.label}
+            </button>
+          </div>
+
+          {showAddForm && (
+            <div className="mb-6 bg-slate-800/60 rounded-2xl p-4 border border-emerald-500/30">
+              <h3 className="text-sm font-bold text-emerald-300 mb-3 uppercase tracking-widest">
+                {editingId ? "✎ Editar Atividade" : "+ Nova Atividade"} — {current.label}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                  placeholder="Título da atividade..."
+                  value={newTask.title}
+                  onChange={e => setNewTask(p => ({ ...p, title: e.target.value }))}
+                  onKeyDown={e => e.key === "Enter" && !e.shiftKey && saveTask()}
+                />
+                <textarea
+                  className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 resize-none min-h-[80px]"
+                  placeholder="Descrição da atividade (opcional)... ex.: objetivo, instruções, links, checklist"
+                  value={newTask.description}
+                  onChange={e => setNewTask(p => ({ ...p, description: e.target.value }))}
+                  rows={3}
+                />
+                <input
+                  type="time"
+                  className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  value={newTask.time}
+                  onChange={e => setNewTask(p => ({ ...p, time: e.target.value }))}
+                />
+                <select
+                  className="bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  value={newTask.category}
+                  onChange={e => setNewTask(p => ({ ...p, category: e.target.value as RotineTask["category"] }))}
+                >
+                  {Object.entries(CATEGORY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                </select>
+                <select
+                  className="col-span-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500"
+                  value={newTask.priority}
+                  onChange={e => setNewTask(p => ({ ...p, priority: e.target.value as RotineTask["priority"] }))}
+                >
+                  <option value="alta">🔴 Alta Prioridade</option>
+                  <option value="media">🟡 Média Prioridade</option>
+                  <option value="baixa">⚪ Baixa Prioridade</option>
+                </select>
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button onClick={saveTask} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold py-2.5 rounded-xl">
+                  {editingId ? "Salvar Alterações" : "Adicionar"}
+                </button>
+                {editingId && (
+                  <button
+                    onClick={() => { deleteTask(editingId); resetForm(); }}
+                    className="px-4 bg-rose-600/20 hover:bg-rose-600/40 text-rose-300 text-sm font-bold py-2.5 rounded-xl border border-rose-500/40"
+                  >Excluir</button>
+                )}
+                <button onClick={resetForm} className="px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-bold py-2.5 rounded-xl">Cancelar</button>
+              </div>
+            </div>
+          )}
+
+          {(() => {
+            const byCategory = (t: RotineTask) => categoryFilter === "todas" || t.category === categoryFilter;
+            const cols = [
+              { key: "atrasadas",  title: "Atrasadas",  emoji: "⚠",  ring: "border-rose-500/40 from-rose-950/40",     badge: "bg-rose-500/20 text-rose-300",       list: overdueTasks.filter(byCategory) },
+              { key: "pendentes",  title: "Pendentes",  emoji: "⏱",  ring: "border-amber-500/40 from-amber-950/40",   badge: "bg-amber-500/20 text-amber-300",     list: pendingTasks.filter(byCategory) },
+              { key: "concluidas", title: "Concluídas", emoji: "✓",  ring: "border-emerald-500/40 from-emerald-950/40", badge: "bg-emerald-500/20 text-emerald-300", list: doneTasks.filter(byCategory) },
+            ];
+            const visibleCols = statusFilter === "todas" ? cols : cols.filter(c => c.key === statusFilter);
+            const hasAny = visibleCols.some(c => c.list.length > 0);
+            if (!hasAny) {
+              return (
+                <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 text-center py-12 text-slate-500">
+                  <div className="text-4xl mb-2">📋</div>
+                  <p className="text-sm font-medium">Nenhuma atividade nesta visualização.</p>
+                  <p className="text-xs text-slate-600 mt-1">Ajuste o filtro ou clique em "Nova Atividade".</p>
+                </div>
+              );
+            }
+            return (
+              <div className={`grid gap-4 ${visibleCols.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"}`}>
+                {visibleCols.map(col => (
+                  <div key={col.key} className={`bg-gradient-to-b ${col.ring} to-slate-900/40 rounded-2xl border overflow-hidden flex flex-col`}>
+                    <div className="px-4 py-3 flex items-center justify-between border-b border-slate-700/40">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{col.emoji}</span>
+                        <span className="text-sm font-bold text-white">{col.title}</span>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>{col.list.length}</span>
+                    </div>
+                    <div className="p-3 flex flex-col gap-2 min-h-[120px]">
+                      {col.list.length === 0 ? (
+                        <div className="text-center text-xs text-slate-600 py-6">Nenhuma atividade</div>
+                      ) : (
+                        col.list.slice().sort((a, b) => a.time.localeCompare(b.time)).map(task => (
+                          <TaskItem key={task.id} task={task} onToggle={toggleTask} onDelete={deleteTask} onEdit={startEdit} />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </>
+      )}
+
+      {/* Semanal view */}
+      {viewMode === "semanal" && (() => {
+        const start = new Date(refDate); start.setHours(0,0,0,0);
+        start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // Monday
+        const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(start); d.setDate(start.getDate() + i); return d; });
+        const today = new Date(); today.setHours(0,0,0,0);
+        const WD = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+        const sortedTasks = tasks.slice().sort((a,b) => a.time.localeCompare(b.time));
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
+            {days.map((d, idx) => {
+              const isToday = d.getTime() === today.getTime();
+              const isPast = d.getTime() < today.getTime();
+              const isWeekend = idx >= 5;
+              return (
+                <div key={idx} className={`rounded-2xl border overflow-hidden flex flex-col ${
+                  isToday ? "border-emerald-500/60 bg-emerald-950/30 ring-2 ring-emerald-500/30" :
+                  isWeekend ? "border-slate-800 bg-slate-900/30" : "border-slate-700/50 bg-slate-900/40"
+                }`}>
+                  <div className="px-3 py-2 border-b border-slate-700/40 flex items-center justify-between">
+                    <div>
+                      <div className={`text-[10px] uppercase font-bold tracking-wider ${isToday ? "text-emerald-300" : "text-slate-400"}`}>{WD[idx]}</div>
+                      <div className="text-sm font-black text-white">{d.getDate().toString().padStart(2,"0")}/{(d.getMonth()+1).toString().padStart(2,"0")}</div>
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isToday ? "bg-emerald-500/30 text-emerald-200" : "bg-slate-800 text-slate-400"}`}>
+                      {tasks.length}
+                    </span>
+                  </div>
+                  <div className="p-2 flex flex-col gap-1 max-h-[420px] overflow-y-auto">
+                    {sortedTasks.length === 0 ? (
+                      <div className="text-center text-[11px] text-slate-600 py-6">Sem rotina</div>
+                    ) : sortedTasks.map(t => {
+                      const cat = CATEGORY_CONFIG[t.category];
+                      const showDone = isToday && t.done;
+                      return (
+                        <div key={t.id} className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border text-[11px] ${
+                          showDone ? "bg-emerald-500/10 border-emerald-500/30 opacity-60" : `${cat.bg} ${cat.border}`
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${cat.dot} flex-shrink-0`} />
+                          <span className="font-mono text-slate-400 w-9 flex-shrink-0">{t.time}</span>
+                          <span className={`flex-1 truncate ${showDone ? "line-through text-slate-500" : "text-slate-100"}`}>{t.title}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {isPast && !isToday && (
+                    <div className="px-3 py-1.5 bg-slate-900/60 text-[10px] text-slate-500 text-center border-t border-slate-800">Arquivado</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      {/* Mensal view */}
+      {viewMode === "mensal" && (() => {
+        const year = refDate.getFullYear();
+        const month = refDate.getMonth();
+        const first = new Date(year, month, 1);
+        const startOffset = (first.getDay() + 6) % 7; // Monday = 0
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const cells: (Date | null)[] = [];
+        for (let i = 0; i < startOffset; i++) cells.push(null);
+        for (let d = 1; d <= daysInMonth; d++) cells.push(new Date(year, month, d));
+        while (cells.length % 7 !== 0) cells.push(null);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const WD = ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"];
+        const totalPerDay = tasks.length;
+        const monthTotal = totalPerDay * daysInMonth;
+        return (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-300">Atividades / Dia</div>
+                <div className="text-2xl font-black text-white">{totalPerDay}</div>
+              </div>
+              <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-sky-300">Dias no Mês</div>
+                <div className="text-2xl font-black text-white">{daysInMonth}</div>
+              </div>
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-violet-300">Volume Mensal</div>
+                <div className="text-2xl font-black text-white">{monthTotal}</div>
+              </div>
+            </div>
+            <div className="bg-slate-900/40 border border-slate-700/50 rounded-2xl overflow-hidden">
+              <div className="grid grid-cols-7 border-b border-slate-700/50 bg-slate-900/60">
+                {WD.map(w => (
+                  <div key={w} className="text-[10px] uppercase tracking-wider font-bold text-slate-400 text-center py-2">{w}</div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7">
+                {cells.map((d, i) => {
+                  if (!d) return <div key={i} className="border-b border-r border-slate-800/60 min-h-[88px] bg-slate-950/40" />;
+                  const isToday = d.getTime() === today.getTime();
+                  const dow = (d.getDay() + 6) % 7;
+                  const isWeekend = dow >= 5;
+                  return (
+                    <div key={i} className={`border-b border-r border-slate-800/60 min-h-[88px] p-2 flex flex-col gap-1 ${
+                      isToday ? "bg-emerald-950/40 ring-1 ring-emerald-500/40 ring-inset" : isWeekend ? "bg-slate-900/20" : "bg-slate-900/40"
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-xs font-bold ${isToday ? "text-emerald-300" : "text-slate-300"}`}>{d.getDate()}</span>
+                        {totalPerDay > 0 && (
+                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">{totalPerDay}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-0.5">
+                        {tasks.slice(0, 8).map(t => (
+                          <span key={t.id} title={`${t.time} ${t.title}`} className={`w-1.5 h-1.5 rounded-full ${CATEGORY_CONFIG[t.category].dot}`} />
+                        ))}
+                        {tasks.length > 8 && <span className="text-[9px] text-slate-500">+{tasks.length - 8}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
+              <span className="font-bold uppercase tracking-wider text-slate-500">Legenda:</span>
+              {Object.entries(CATEGORY_CONFIG).map(([k, v]) => (
+                <span key={k} className="inline-flex items-center gap-1.5">
+                  <span className={`w-2 h-2 rounded-full ${v.dot}`} /> {v.label}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+
 
 
       {/* Assign Dialog */}
