@@ -349,7 +349,7 @@ export function CoachIAFloatingButton({
       const { data: { user } } = await supabase.auth.getUser();
       const inicio = new Date(whenIso);
       const fim = new Date(inicio.getTime() + 60 * 60 * 1000);
-      const { error } = await supabase.from("compromissos").insert({
+      const { error } = await (supabase as any).from("compromissos").insert({
         titulo, observacoes: report?.mensagem_sugerida?.slice(0, 500) || null,
         data_hora_inicio: inicio.toISOString(), data_hora_fim: fim.toISOString(),
         duracao: 60, status: "agendado",
