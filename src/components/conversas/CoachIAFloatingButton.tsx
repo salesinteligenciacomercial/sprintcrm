@@ -116,6 +116,14 @@ export function CoachIAFloatingButton({
 
   const canRun = !!companyId && (!!leadId || !!contactPhone);
 
+  // 🔄 Auto-análise em background ao trocar de lead (para disparar notificações)
+  useEffect(() => {
+    if (!canRun) return;
+    const t = setTimeout(() => { if (!loading && !report) runCoach(); }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId, contactPhone, companyId]);
+
   const runCoach = async () => {
     if (!canRun) { toast.error("Sem dados suficientes para analisar"); return; }
     setLoading(true); setError(null);
@@ -159,6 +167,50 @@ export function CoachIAFloatingButton({
   };
 
   const handleOpen = () => { setOpen(true); if (!report && !loading) runCoach(); };
+
+  // 🔔 Notificação automática quando Coach IA detecta objeção/dificuldade/ação
+  const notifiedRef = useMemo(() => ({ key: "" }), []);
+  useEffect(() => {
+    if (!report) return;
+    const objecoes = report.objecoes_detectadas || [];
+    const erros = report.erros_e_perdas || [];
+    const passos = report.proximos_passos || [];
+    const sigKey = JSON.stringify({ o: objecoes, e: erros, p: passos.slice(0, 2), r: report.risco_de_perda });
+    if (notifiedRef.key === sigKey) return;
+    notifiedRef.key = sigKey;
+
+    let titulo = "";
+    let icone = "🎯";
+    let descricao = "Script ideal + cadência de follow-up prontos.";
+    if (objecoes.length > 0) {
+      titulo = `Coach IA detectou objeção: ${objecoes[0]}`;
+      icone = "🤖";
+    } else if (erros.length > 0) {
+      titulo = `Coach IA detectou dificuldade: ${erros[0]}`;
+      icone = "⚠️";
+    } else if ((report.risco_de_perda ?? 0) >= 50) {
+      titulo = `Coach IA: alto risco de perda (${report.risco_de_perda}%)`;
+      icone = "🔥";
+      descricao = "Ação imediata recomendada.";
+    } else if (passos.length > 0) {
+      titulo = `Coach IA: ${passos.length} ações recomendadas`;
+      icone = "✨";
+      descricao = passos[0];
+    } else {
+      return;
+    }
+
+    toast(titulo, {
+      icon: icone,
+      description: descricao,
+      duration: 8000,
+      action: {
+        label: "Ver",
+        onClick: () => { setOpen(true); setTab(objecoes.length || erros.length ? "now" : "cadencia"); },
+      },
+      className: "border-violet-500/40 bg-gradient-to-br from-violet-950/90 to-purple-950/90",
+    });
+  }, [report, notifiedRef]);
 
   const temp = report ? tempTag[report.temperatura] : null;
   const stageLbl = report ? report.estagio_percebido.replace(/_/g, " ") : "";
