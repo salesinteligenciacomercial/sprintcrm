@@ -30,7 +30,10 @@ interface CoachReport {
   risco_de_perda: number;
 }
 
-type TabKey = "now" | "cadencia" | "naofechou" | "analise" | "kb";
+type TabKey = "now" | "cadencia" | "naofechou" | "acoes" | "analise" | "kb";
+interface FunilRow { id: string; nome: string }
+interface EtapaRow { id: string; nome: string; funil_id: string; posicao: number | null }
+interface UserRow { id: string; full_name: string | null; email: string | null }
 
 interface KBItem { id: string; title: string; excerpt: string; tags: string[] }
 
