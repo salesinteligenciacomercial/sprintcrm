@@ -235,16 +235,185 @@ export function CoachIAFloatingButton({
     }));
   }, [report]);
 
-  const execAction = (id: string, label: string) => {
+  // ─────────── DADOS DO CRM (funis, etapas, tags, usuários) ───────────
+  const [funis, setFunis] = useState<FunilRow[]>([]);
+  const [etapas, setEtapas] = useState<EtapaRow[]>([]);
+  const [companyTags, setCompanyTags] = useState<string[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [crmLoading, setCrmLoading] = useState(false);
+
+  // form state
+  const [selFunilId, setSelFunilId] = useState<string>("");
+  const [selEtapaId, setSelEtapaId] = useState<string>("");
+  const [selOwnerId, setSelOwnerId] = useState<string>("");
+  const [newTagInput, setNewTagInput] = useState<string>("");
+  const [taskTitle, setTaskTitle] = useState<string>("");
+  const [taskDueDays, setTaskDueDays] = useState<number>(1);
+  const [apptTitle, setApptTitle] = useState<string>("");
+  const [apptWhen, setApptWhen] = useState<string>(""); // datetime-local
+
+  const loadCrmData = useCallback(async () => {
+    if (!companyId) return;
+    setCrmLoading(true);
+    try {
+      const [f, e, t, u, l] = await Promise.all([
+        supabase.from("funis").select("id, nome").eq("company_id", companyId).order("nome"),
+        supabase.from("etapas").select("id, nome, funil_id, posicao").eq("company_id", companyId).order("posicao"),
+        supabase.from("company_tags").select("tag_name").eq("company_id", companyId).order("tag_name"),
+        supabase.from("profiles").select("id, full_name, email").eq("company_id", companyId).order("full_name"),
+        leadId ? supabase.from("leads").select("funil_id, etapa_id, owner_id").eq("id", leadId).maybeSingle() : Promise.resolve({ data: null } as any),
+      ]);
+      setFunis((f.data || []) as FunilRow[]);
+      setEtapas((e.data || []) as EtapaRow[]);
+      setCompanyTags(((t.data || []) as any[]).map(x => x.tag_name).filter(Boolean));
+      setUsers((u.data || []) as UserRow[]);
+      const ld: any = (l as any)?.data;
+      if (ld) {
+        setSelFunilId(ld.funil_id || "");
+        setSelEtapaId(ld.etapa_id || "");
+        setSelOwnerId(ld.owner_id || "");
+      }
+    } catch (err: any) {
+      console.error("[Coach] loadCrmData", err);
+    } finally { setCrmLoading(false); }
+  }, [companyId, leadId]);
+
+  useEffect(() => { if (open) loadCrmData(); }, [open, loadCrmData]);
+
+  const requireLead = () => {
+    if (!leadId) { toast.error("Nenhum lead vinculado a este contato"); return false; }
+    return true;
+  };
+
+  // ─────────── AÇÕES REAIS NO CRM ───────────
+  const addTagToLead = async (tag: string) => {
+    if (!requireLead() || !companyId || !tag) return;
+    try {
+      // garante existência em company_tags
+      await supabase.from("company_tags").upsert({ company_id: companyId, tag_name: tag }, { onConflict: "company_id,tag_name" });
+      const { data: cur } = await supabase.from("leads").select("tags").eq("id", leadId!).maybeSingle();
+      const tags = Array.from(new Set([...((cur as any)?.tags || []), tag]));
+      const { error } = await supabase.from("leads").update({ tags }).eq("id", leadId!);
+      if (error) throw error;
+      await supabase.from("lead_tag_history").insert({ lead_id: leadId, company_id: companyId, tag_name: tag, action: "added" });
+      setCompanyTags(prev => prev.includes(tag) ? prev : [...prev, tag].sort());
+      toast.success(`Tag "${tag}" adicionada ao lead`);
+    } catch (e: any) { toast.error("Erro ao adicionar tag: " + (e?.message || "")); }
+  };
+
+  const moveLeadToStage = async (etapaId: string, funilId?: string) => {
+    if (!requireLead() || !etapaId) return;
+    try {
+      const payload: any = { etapa_id: etapaId };
+      if (funilId) payload.funil_id = funilId;
+      const { error } = await supabase.from("leads").update(payload).eq("id", leadId!);
+      if (error) throw error;
+      const et = etapas.find(x => x.id === etapaId);
+      toast.success(`Lead movido para "${et?.nome || "nova etapa"}"`);
+    } catch (e: any) { toast.error("Erro ao mover etapa: " + (e?.message || "")); }
+  };
+
+  const assignOwner = async (userId: string) => {
+    if (!requireLead() || !userId) return;
+    try {
+      const { error } = await supabase.from("leads").update({ owner_id: userId }).eq("id", leadId!);
+      if (error) throw error;
+      const u = users.find(x => x.id === userId);
+      toast.success(`Responsável atribuído: ${u?.full_name || u?.email || "usuário"}`);
+    } catch (e: any) { toast.error("Erro ao atribuir responsável: " + (e?.message || "")); }
+  };
+
+  const createTask = async (title: string, dueDays: number, assignee?: string) => {
+    if (!companyId || !title) { toast.error("Título obrigatório"); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const due = new Date(); due.setDate(due.getDate() + (dueDays || 0));
+      const { error } = await supabase.from("tasks").insert({
+        title, description: report?.mensagem_sugerida?.slice(0, 500) || null,
+        status: "todo", priority: "media",
+        due_date: due.toISOString(),
+        lead_id: leadId || null, company_id: companyId,
+        owner_id: user?.id || null, assigned_to: assignee || user?.id || null,
+      });
+      if (error) throw error;
+      toast.success(`Tarefa criada: "${title}" (vence em ${dueDays}d)`);
+    } catch (e: any) { toast.error("Erro ao criar tarefa: " + (e?.message || "")); }
+  };
+
+  const createCompromisso = async (titulo: string, whenIso: string) => {
+    if (!companyId || !titulo || !whenIso) { toast.error("Título e data obrigatórios"); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const inicio = new Date(whenIso);
+      const fim = new Date(inicio.getTime() + 60 * 60 * 1000);
+      const { error } = await supabase.from("compromissos").insert({
+        titulo, observacoes: report?.mensagem_sugerida?.slice(0, 500) || null,
+        data_hora_inicio: inicio.toISOString(), data_hora_fim: fim.toISOString(),
+        duracao: 60, status: "agendado",
+        lead_id: leadId || null, company_id: companyId,
+        owner_id: user?.id || null, usuario_responsavel_id: selOwnerId || user?.id || null,
+        telefone: contactPhone || null, paciente: leadName || contactName || null,
+      });
+      if (error) throw error;
+      toast.success(`Compromisso agendado: ${inicio.toLocaleString("pt-BR")}`);
+    } catch (e: any) { toast.error("Erro ao agendar compromisso: " + (e?.message || "")); }
+  };
+
+  // ─────────── ações rápidas "não fechou" (mapeadas para CRM) ───────────
+  const execAction = async (id: string, label: string) => {
     if (doneActions.includes(id)) return;
-    setDoneActions(prev => [...prev, id]);
-    toast.success(`"${label}" registrado`, { description: "Coach IA atualizou o CRM." });
+    try {
+      switch (id) {
+        case "tag-followup":
+          await addTagToLead("Follow-up");
+          break;
+        case "tag-objecao": {
+          const obj = report?.objecoes_detectadas?.[0] || "Objeção";
+          await addTagToLead(`Objeção: ${obj}`.slice(0, 60));
+          break;
+        }
+        case "mover-funil": {
+          // tenta achar etapa "Negociação" do funil atual; senão usa a primeira do mesmo funil
+          const targetName = /negocia|propost/i;
+          const candidata = etapas.find(e => targetName.test(e.nome) && (!selFunilId || e.funil_id === selFunilId))
+            || etapas.find(e => targetName.test(e.nome));
+          if (!candidata) { toast.error("Nenhuma etapa de Negociação encontrada nos seus funis"); return; }
+          await moveLeadToStage(candidata.id, candidata.funil_id);
+          break;
+        }
+        case "follow-d1":
+          await createTask(`Follow-up D+1: ${leadName || contactName || "lead"}`, 1);
+          break;
+        case "follow-d3":
+          await createTask(`Follow-up D+3: ${leadName || contactName || "lead"}`, 3);
+          break;
+        case "ligacao-socio": {
+          const when = new Date(); when.setDate(when.getDate() + 1); when.setHours(10, 0, 0, 0);
+          await createCompromisso(`Ligação com decisor — ${leadName || contactName || "lead"}`, when.toISOString());
+          break;
+        }
+        case "script-reativacao":
+          await createTask(`Enviar reativação D+7: ${leadName || contactName || "lead"}`, 7);
+          break;
+        default:
+          toast.success(`"${label}" registrado`);
+      }
+      setDoneActions(prev => [...prev, id]);
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao executar ação");
+    }
   };
-  const execAllNaoFechou = () => {
+
+  const execAllNaoFechou = async () => {
     const all = ["tag-followup","tag-objecao","mover-funil","follow-d1","follow-d3","ligacao-socio","script-reativacao"];
-    setDoneActions(all);
-    toast.success("Executando todas as ações...", { description: "Coach IA está atualizando o CRM e criando follow-ups." });
+    toast("Executando todas as ações no CRM...", { description: "Atualizando lead, criando tarefas e compromisso." });
+    for (const id of all) {
+      // eslint-disable-next-line no-await-in-loop
+      await execAction(id, id);
+    }
   };
+
+  const etapasDoFunil = useMemo(() => etapas.filter(e => !selFunilId || e.funil_id === selFunilId), [etapas, selFunilId]);
 
   return (
     <>
