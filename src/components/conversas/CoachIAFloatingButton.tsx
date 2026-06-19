@@ -721,6 +721,120 @@ export function CoachIAFloatingButton({
               </>
             )}
 
+            {/* AÇÕES CRM — formulário real */}
+            {tab === "acoes" && (
+              <>
+                <Section label="Ações no CRM">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {crmLoading ? "Carregando dados do CRM..." : `${funis.length} funis · ${etapas.length} etapas · ${companyTags.length} tags · ${users.length} usuários`}
+                  </p>
+                </Section>
+
+                {/* Mover etapa */}
+                <Section label="📍 Mover lead no funil">
+                  <div className="grid grid-cols-2 gap-1.5 mb-1.5">
+                    <select value={selFunilId} onChange={(e) => { setSelFunilId(e.target.value); setSelEtapaId(""); }} className="h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground">
+                      <option value="">Funil...</option>
+                      {funis.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                    </select>
+                    <select value={selEtapaId} onChange={(e) => setSelEtapaId(e.target.value)} className="h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground">
+                      <option value="">Etapa...</option>
+                      {etapasDoFunil.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
+                    </select>
+                  </div>
+                  <button onClick={() => moveLeadToStage(selEtapaId, selFunilId)} disabled={!selEtapaId}
+                    className="w-full py-1.5 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-[11px] font-medium text-white flex items-center justify-center gap-1">
+                    <BarChart3 className="h-3 w-3" /> Mover lead
+                  </button>
+                </Section>
+                <Divider />
+
+                {/* Responsável */}
+                <Section label="👤 Atribuir responsável">
+                  <div className="flex gap-1.5">
+                    <select value={selOwnerId} onChange={(e) => setSelOwnerId(e.target.value)} className="flex-1 h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground">
+                      <option value="">Selecione usuário...</option>
+                      {users.map(u => <option key={u.id} value={u.id}>{u.full_name || u.email || u.id.slice(0,8)}</option>)}
+                    </select>
+                    <button onClick={() => assignOwner(selOwnerId)} disabled={!selOwnerId}
+                      className="px-2.5 h-8 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-[11px] font-medium text-white inline-flex items-center gap-1">
+                      <UserPlus className="h-3 w-3" />
+                    </button>
+                  </div>
+                </Section>
+                <Divider />
+
+                {/* Tags */}
+                <Section label="🏷 Tags">
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {companyTags.slice(0, 12).map(t => (
+                      <button key={t} onClick={() => addTagToLead(t)}
+                        className="px-2 py-0.5 rounded-full text-[10px] border border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20">
+                        + {t}
+                      </button>
+                    ))}
+                    {report?.objecoes_detectadas?.slice(0, 3).map((o, i) => (
+                      <button key={"obj"+i} onClick={() => addTagToLead(`Objeção: ${o}`.slice(0, 60))}
+                        className="px-2 py-0.5 rounded-full text-[10px] border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20">
+                        + Objeção: {o.slice(0,20)}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <input value={newTagInput} onChange={(e) => setNewTagInput(e.target.value)} placeholder="Nova tag..."
+                      className="flex-1 h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground placeholder:text-muted-foreground" />
+                    <button onClick={() => { if (newTagInput.trim()) { addTagToLead(newTagInput.trim()); setNewTagInput(""); } }}
+                      className="px-2.5 h-8 rounded-md bg-violet-600 hover:bg-violet-500 text-[11px] font-medium text-white inline-flex items-center gap-1">
+                      <TagIcon className="h-3 w-3" />
+                    </button>
+                  </div>
+                </Section>
+                <Divider />
+
+                {/* Tarefa */}
+                <Section label="✅ Criar tarefa">
+                  <input value={taskTitle} onChange={(e) => setTaskTitle(e.target.value)}
+                    placeholder={`Ex: Ligar para ${leadName || contactName || "lead"}`}
+                    className="w-full h-8 mb-1.5 rounded-md bg-muted border border-border text-xs px-2 text-foreground" />
+                  <div className="flex gap-1.5">
+                    <select value={taskDueDays} onChange={(e) => setTaskDueDays(Number(e.target.value))}
+                      className="h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground">
+                      {[0,1,2,3,5,7,14].map(d => <option key={d} value={d}>{d === 0 ? "Hoje" : `D+${d}`}</option>)}
+                    </select>
+                    <button onClick={() => { createTask(taskTitle.trim(), taskDueDays, selOwnerId || undefined); setTaskTitle(""); }}
+                      disabled={!taskTitle.trim()}
+                      className="flex-1 h-8 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-[11px] font-medium text-white inline-flex items-center justify-center gap-1">
+                      <ListChecks className="h-3 w-3" /> Criar tarefa
+                    </button>
+                  </div>
+                </Section>
+                <Divider />
+
+                {/* Compromisso */}
+                <Section label="📅 Agendar compromisso">
+                  <input value={apptTitle} onChange={(e) => setApptTitle(e.target.value)}
+                    placeholder="Ex: Reunião de proposta"
+                    className="w-full h-8 mb-1.5 rounded-md bg-muted border border-border text-xs px-2 text-foreground" />
+                  <div className="flex gap-1.5">
+                    <input type="datetime-local" value={apptWhen} onChange={(e) => setApptWhen(e.target.value)}
+                      className="flex-1 h-8 rounded-md bg-muted border border-border text-xs px-2 text-foreground" />
+                    <button onClick={() => { createCompromisso(apptTitle.trim(), apptWhen); setApptTitle(""); setApptWhen(""); }}
+                      disabled={!apptTitle.trim() || !apptWhen}
+                      className="px-2.5 h-8 rounded-md bg-violet-600 hover:bg-violet-500 disabled:opacity-40 text-[11px] font-medium text-white inline-flex items-center gap-1">
+                      <CalendarCheck className="h-3 w-3" />
+                    </button>
+                  </div>
+                </Section>
+
+                <Divider />
+                <button onClick={loadCrmData}
+                  className="w-full py-2 rounded-lg border border-border bg-muted/40 hover:bg-muted text-xs font-medium text-foreground flex items-center justify-center gap-2">
+                  <RefreshCw className="h-3.5 w-3.5" /> Recarregar dados do CRM
+                </button>
+              </>
+            )}
+
+
             {/* BASE DE CONHECIMENTO */}
             {tab === "kb" && (
               <>
