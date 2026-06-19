@@ -485,6 +485,7 @@ export function CoachIAFloatingButton({
               { k: "now", label: "Agora" },
               { k: "cadencia", label: "Cadência" },
               { k: "naofechou", label: "Não Fechou" },
+              { k: "acoes", label: "⚡ Ações CRM" },
               { k: "analise", label: "Análise" },
               { k: "kb", label: "📚 Base" },
             ] as { k: TabKey; label: string }[]).map((t) => (
