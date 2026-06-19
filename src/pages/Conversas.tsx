@@ -580,6 +580,8 @@ function Conversas() {
   const [roteirosDialogOpen, setRoteirosDialogOpen] = useState(false);
   const [agendaModalOpen, setAgendaModalOpen] = useState(false);
   const [tarefaModalOpen, setTarefaModalOpen] = useState(false);
+  const [scheduledMsgOpen, setScheduledMsgOpen] = useState(false);
+  const [remindersDialogOpen, setRemindersDialogOpen] = useState(false);
   const [cleanHistoryDialogOpen, setCleanHistoryDialogOpen] = useState(false);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
   const [attachmentsCount, setAttachmentsCount] = useState(0);
@@ -9961,6 +9963,63 @@ function Conversas() {
                       >
                         <FileText className="h-5 w-5" />
                       </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary border-border flex-shrink-0"
+                        title="Agendar Mensagem"
+                        onClick={() => { setScheduledMsgOpen(true); setShowMobileExtras(false); }}
+                      >
+                        <Clock className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary border-border flex-shrink-0"
+                        title="Gerenciar Lembretes"
+                        onClick={() => { setRemindersDialogOpen(true); setShowMobileExtras(false); }}
+                      >
+                        <Bell className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary border-border flex-shrink-0"
+                        title="Compromissos"
+                        onClick={() => { setReunioesDialogOpen(true); setShowMobileExtras(false); }}
+                      >
+                        <Calendar className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary border-border flex-shrink-0"
+                        title="Tarefas"
+                        onClick={() => { setTarefaModalOpen(true); setShowMobileExtras(false); }}
+                      >
+                        <CheckSquare className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="text-muted-foreground hover:text-primary border-border flex-shrink-0"
+                        title="Banco de Dado do Contato"
+                        onClick={() => {
+                          if (leadVinculado?.id) {
+                            setAttachmentsOpen(true);
+                            setShowMobileExtras(false);
+                          } else {
+                            toast.info('Salve o lead primeiro para acessar o banco de dados');
+                          }
+                        }}
+                      >
+                        <Paperclip className="h-5 w-5" />
+                      </Button>
                       {userCompanyId && selectedConv && (
                         <ConversaTemplateSender
                           open={templateDialogOpen}
@@ -11032,7 +11091,8 @@ function Conversas() {
                         </Dialog>
 
                         {/* Schedule Message */}
-                        <Dialog>
+                        <Dialog open={scheduledMsgOpen} onOpenChange={setScheduledMsgOpen}>
+
                           <DialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2 relative" title="Agendar Mensagem">
                               <Clock className="h-4 w-4" />
@@ -11135,7 +11195,8 @@ function Conversas() {
                         </Dialog>
 
                         {/* Schedule Reminder */}
-                        <Dialog>
+                        <Dialog open={remindersDialogOpen} onOpenChange={setRemindersDialogOpen}>
+
                           <DialogTrigger asChild>
                             <Button variant="outline" className="w-full justify-start gap-2" title="Gerenciar Lembretes">
                               <Bell className="h-4 w-4" />
