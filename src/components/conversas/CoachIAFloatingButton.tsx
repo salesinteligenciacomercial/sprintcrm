@@ -116,6 +116,14 @@ export function CoachIAFloatingButton({
 
   const canRun = !!companyId && (!!leadId || !!contactPhone);
 
+  // 🔄 Auto-análise em background ao trocar de lead (para disparar notificações)
+  useEffect(() => {
+    if (!canRun) return;
+    const t = setTimeout(() => { if (!loading && !report) runCoach(); }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leadId, contactPhone, companyId]);
+
   const runCoach = async () => {
     if (!canRun) { toast.error("Sem dados suficientes para analisar"); return; }
     setLoading(true); setError(null);
