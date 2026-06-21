@@ -163,7 +163,7 @@ export const NvoipAccountPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="w-full space-y-4">
       {loading ? (
         <Card>
           <CardContent className="flex justify-center py-16">

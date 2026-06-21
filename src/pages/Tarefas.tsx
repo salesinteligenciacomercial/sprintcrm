@@ -1,5 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ConversaPopup } from "@/components/leads/ConversaPopup";
+
+interface WhatsAppPopupState {
+  open: boolean;
+  leadId: string;
+  leadName: string;
+  leadPhone?: string;
+}
 
 /**
  * Módulo Tarefas — Opção B
@@ -8,6 +16,11 @@ import { supabase } from "@/integrations/supabase/client";
  */
 const Tarefas = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [whatsappPopup, setWhatsappPopup] = useState<WhatsAppPopupState>({
+    open: false,
+    leadId: "",
+    leadName: "Contato",
+  });
 
   useEffect(() => {
     const sendSession = async () => {
@@ -32,11 +45,13 @@ const Tarefas = () => {
     const onMsg = (ev: MessageEvent) => {
       if (ev.data?.type === "tarefas-ready") sendSession();
       if (ev.data?.type === "tarefas-open-whatsapp") {
-        const { phone, leadId } = ev.data;
-        const params = new URLSearchParams();
-        if (phone) params.set("phone", String(phone));
-        if (leadId) params.set("lead", String(leadId));
-        window.location.href = `/conversas?${params.toString()}`;
+        const { phone, leadId, leadName } = ev.data;
+        setWhatsappPopup({
+          open: true,
+          leadId: leadId ? String(leadId) : "",
+          leadName: leadName ? String(leadName) : "Contato",
+          leadPhone: phone ? String(phone) : undefined,
+        });
       }
     };
     window.addEventListener("message", onMsg);
@@ -61,6 +76,13 @@ const Tarefas = () => {
           border: 0,
           background: "#0b0e14",
         }}
+      />
+      <ConversaPopup
+        open={whatsappPopup.open}
+        onOpenChange={(open) => setWhatsappPopup((prev) => ({ ...prev, open }))}
+        leadId={whatsappPopup.leadId}
+        leadName={whatsappPopup.leadName}
+        leadPhone={whatsappPopup.leadPhone}
       />
     </div>
   );
