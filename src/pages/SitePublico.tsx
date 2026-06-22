@@ -152,11 +152,18 @@ export default function SitePublico() {
   }
 
   return (
-    <SiteRenderer
-      config={config as any}
-      companyId={companyId}
-      companyName={companyName}
-      slug={slug || ''}
-    />
+    <>
+      {previewMode && (
+        <div className="sticky top-0 z-50 bg-yellow-500 text-black text-center text-sm py-2 px-3 font-medium shadow">
+          ⚠️ Modo Preview — este site ainda não foi publicado. Apenas você pode visualizá-lo.
+        </div>
+      )}
+      <SiteRenderer
+        config={config as any}
+        companyId={companyId}
+        companyName={companyName}
+        slug={slug || ''}
+      />
+    </>
   );
 }
