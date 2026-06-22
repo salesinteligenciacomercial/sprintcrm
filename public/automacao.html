@@ -1372,7 +1372,6 @@ document.addEventListener('click', function (e) {
     { match: ['ver site ao vivo', 'ver ao vivo', 'abrir'], action: { type: 'toast', message: 'Pré-visualização em breve' } },
     { match: ['gerar com ia', 'salvar', 'preview'], action: { type: 'toast', message: 'Ação em breve' } },
     { match: ['enviar arquivo', 'adicionar produto', 'adicionar faq', 'adicionar exemplo', 'adicionar primeiro exemplo'], action: { type: 'overlay', module: 'base' } },
-    { match: ['copiar link'], action: { type: 'copy-link' } },
   ];
   for (const m of map) {
     if (m.match.some(t => label === t || label.endsWith(t) || label.includes(t))) {
