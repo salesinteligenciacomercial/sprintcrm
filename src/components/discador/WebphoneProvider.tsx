@@ -6,6 +6,7 @@ import { IncomingCallPopup } from './IncomingCallPopup';
 type Ctx = ReturnType<typeof useWebphoneSIP> & {
   mode: 'webphone' | 'callback' | 'microsip' | null;
   configured: boolean;
+  sipNumber: string;
   reload: () => Promise<void>;
 };
 
@@ -21,6 +22,7 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const webphone = useWebphoneSIP();
   const [mode, setMode] = useState<Ctx['mode']>(null);
   const [configured, setConfigured] = useState(false);
+  const [sipNumber, setSipNumber] = useState('');
   const lastRegisterKey = useRef<string>('');
 
   const load = async () => {
@@ -29,6 +31,7 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!u.user) {
         setMode(null);
         setConfigured(false);
+        setSipNumber('');
         return;
       }
       const { data: ur } = await supabase
@@ -39,6 +42,7 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!ur?.company_id) {
         setMode(null);
         setConfigured(false);
+        setSipNumber('');
         return;
       }
       const { data: cfg } = await supabase
@@ -54,6 +58,7 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const hasWebphoneCredentials = Boolean(sipPassword && numberSip);
       const m = hasWebphoneCredentials ? 'webphone' : ((cfg as any)?.telephony_mode || 'webphone');
       setMode(m);
+      setSipNumber(numberSip || '');
 
       if (m === 'webphone' && hasWebphoneCredentials) {
         setConfigured(true);
@@ -70,6 +75,7 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       } else {
         setConfigured(false);
+        if (!numberSip) setSipNumber('');
         if (lastRegisterKey.current) {
           webphone.unregister();
           lastRegisterKey.current = '';
@@ -87,13 +93,14 @@ export const WebphoneProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (event === 'SIGNED_OUT') {
         webphone.unregister();
         lastRegisterKey.current = '';
+        setSipNumber('');
       }
     });
     return () => { sub.data.subscription.unsubscribe(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value: Ctx = { ...webphone, mode, configured, reload: load };
+  const value: Ctx = { ...webphone, mode, configured, sipNumber, reload: load };
 
   return (
     <WebphoneCtx.Provider value={value}>

@@ -449,6 +449,10 @@ code { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
         <svg style="width:12px;height:12px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h.01M17 7h.01M7 17h.01M17 17h.01M12 2a5 5 0 015 5 5 5 0 01-5 5 5 5 0 01-5-5 5 5 0 015-5z"/></svg>
         Todas as tags
       </div>
+      <button class="btn btn-outline" onclick="openWebphoneDialer()">
+        <svg style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.36 11.36 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1 11.36 11.36 0 00.57 3.58 1 1 0 01-.24 1.01l-2.21 2.2z"/></svg>
+        Discador
+      </button>
       <button class="btn btn-green">
         <svg style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
         Importar Lista
@@ -1494,6 +1498,10 @@ try { window.parent.postMessage({ type: 'call-center-ready' }, '*'); } catch {}
 
 function openNvoipCredentials() {
   try { window.parent.postMessage({ type: 'call-center-open-nvoip' }, '*'); } catch {}
+}
+
+function openWebphoneDialer() {
+  try { window.parent.postMessage({ type: 'call-center-open-dialer' }, '*'); } catch {}
 }
 
 function updateBadges() {

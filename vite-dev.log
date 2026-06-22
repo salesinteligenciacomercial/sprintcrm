@@ -47,3 +47,11 @@
 [2m18:57:25[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
 [2m18:57:54[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
 [2m18:58:10[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
+[2m20:39:41[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2msrc/hooks/useAIProcessing.ts[22m
+[2m20:40:53[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/components/discador/WebphoneProvider.tsx, /src/index.css[22m
+[2m20:40:56[22m [36m[1m[vite][22m[39m [33mhmr invalidate [39m[2m/src/components/discador/WebphoneProvider.tsx[22m Could not Fast Refresh ("useWebphone" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react-swc#consistent-components-exports
+[2m20:40:56[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/App.tsx, /src/index.css, /src/components/discador/FloatingDialerButton.tsx, /src/components/discador/IncomingCallPopup.tsx, /src/pages/CallCenterPreview.tsx[22m
+[2m20:41:16[22m [36m[1m[vite][22m[39m [32mpage reload [39m[2mpublic/call-center.html[22m
+[2m20:42:02[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
+[2m20:42:16[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
+[2m20:42:48[22m [36m[1m[vite][22m[39m [32mhmr update [39m[2m/src/pages/CallCenterPreview.tsx, /src/index.css[22m
