@@ -64,19 +64,22 @@ export default function SitePublico() {
   const [companyName, setCompanyName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       if (!slug) { setNotFound(true); setLoading(false); return; }
+      const isPreview = new URLSearchParams(window.location.search).get('preview') === '1';
       const { data, error } = await (supabase as any).rpc('get_capture_page', { _identifier: slug });
       if (error || !data || data.length === 0) {
         setNotFound(true); setLoading(false); return;
       }
       const row = data[0];
       const cfg = (row.capture_page_config || {}) as FullConfig;
-      if (!cfg.site_published) {
+      if (!cfg.site_published && !isPreview) {
         setNotFound(true); setLoading(false); return;
       }
+      setPreviewMode(isPreview && !cfg.site_published);
       setConfig(cfg);
       setCompanyId(row.id);
       setCompanyName(row.name);
