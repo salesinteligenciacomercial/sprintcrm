@@ -1163,12 +1163,12 @@ Att, Rafael</textarea>
 
         <div style="background:var(--green-d);border:1px solid rgba(16,217,122,.2);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px">
           <i class="ti ti-world-check" style="color:var(--green);font-size:18px"></i>
-          <div style="flex:1">
-            <div style="font-size:11.5px;font-weight:600;color:var(--green)">Site publicado e online</div>
-            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">seusite.com.br/site/consultoria</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11.5px;font-weight:600;color:var(--green)" id="site-status-label">Site institucional</div>
+            <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="site-url-label">Carregando URL…</div>
           </div>
-          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-copy"></i>Copiar link</button>
-          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px"><i class="ti ti-external-link"></i>Abrir</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="growosCopyLink()"><i class="ti ti-copy"></i>Copiar link</button>
+          <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="growosOpenSite()"><i class="ti ti-external-link"></i>Abrir</button>
         </div>
       </div>
 
