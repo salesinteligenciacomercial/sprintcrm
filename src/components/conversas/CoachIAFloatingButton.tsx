@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Sparkles, X, Loader2, Copy, Check, RefreshCw, Send, Shuffle,
   Zap, Tag as TagIcon, BarChart3, CalendarCheck, Phone, BookOpen,
   Search, Plus, ChevronRight, Play, CheckCircle2, Clock, UserPlus, ListChecks,
+  TrendingUp, AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
