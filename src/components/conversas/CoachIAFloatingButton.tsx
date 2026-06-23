@@ -677,10 +677,10 @@ export function CoachIAFloatingButton({
                 )}
                 <Divider />
                 <button
-                  onClick={() => toast.success("Executando todas as ações...", { description: "Coach IA está atualizando o CRM, criando follow-ups e avançando o funil." })}
+                  onClick={() => { setTab("naofechou"); execAllNaoFechou(); }}
                   className="w-full py-2 rounded-lg bg-gradient-to-r from-violet-600 to-indigo-600 hover:opacity-90 text-xs font-semibold text-white flex items-center justify-center gap-2"
                 >
-                  <Zap className="h-3.5 w-3.5" /> Executar todas as ações automaticamente
+                  <Zap className="h-3.5 w-3.5" /> Executar todas as ações no CRM
                 </button>
                 <button
                   onClick={() => runCoach()}
