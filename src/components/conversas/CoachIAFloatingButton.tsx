@@ -28,7 +28,15 @@ interface CoachReport {
   objecoes_detectadas?: string[];
   proximos_passos: string[];
   mensagem_sugerida: string;
+  scripts_alternativos?: string[];
   risco_de_perda: number;
+  score_engajamento?: number;
+  score_intencao?: number;
+  score_fit?: number;
+  sinal_nao_fechou?: boolean;
+  acoes_nao_fechou?: { id: string; titulo: string; descricao?: string; prioridade?: string }[];
+  cadencia?: { passo: number; titulo: string; descricao: string; quando: string; tipo?: string }[];
+  kb_usadas?: string[];
 }
 
 type TabKey = "now" | "cadencia" | "naofechou" | "acoes" | "analise" | "kb";
