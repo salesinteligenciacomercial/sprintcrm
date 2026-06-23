@@ -320,17 +320,41 @@ export function CoachIAFloatingButton({
     risco >= 30 ? "bg-amber-500/15 text-amber-400 border-amber-500/40" :
                   "bg-emerald-500/15 text-emerald-400 border-emerald-500/40";
 
-  // Cadência derivada dos próximos passos do report
+  // Cadência: usa a estruturada do report quando disponível, senão deriva dos próximos passos
   const cadenceSteps = useMemo(() => {
+    if (report?.cadencia && report.cadencia.length > 0) {
+      return report.cadencia.slice(0, 6).map((c, i) => ({
+        step: c.passo ?? i + 1,
+        title: (c.titulo || `Passo ${i + 1}`).slice(0, 60),
+        desc: c.descricao || "",
+        when: c.quando || (i === 0 ? "Agora" : `D+${i}`),
+        tipo: c.tipo || "mensagem",
+      }));
+    }
     const base = report?.proximos_passos?.slice(0, 6) || [];
-    const labels = ["Hoje","D+1","D+2","D+3","D+5","D+7"];
+    const labels = ["Hoje", "D+1", "D+2", "D+3", "D+5", "D+7"];
     return base.map((desc, i) => ({
       step: i + 1,
-      title: desc.split(/[—:.\-]/)[0].slice(0, 60) || `Passo ${i+1}`,
+      title: desc.split(/[—:.\-]/)[0].slice(0, 60) || `Passo ${i + 1}`,
       desc,
-      when: i === 0 ? "Agora" : labels[i] || `D+${i+1}`,
+      when: i === 0 ? "Agora" : labels[i] || `D+${i + 1}`,
+      tipo: "mensagem" as const,
     }));
   }, [report]);
+
+  // KB usadas pela IA (matching por id retornado ou substring no script)
+  const kbUsedIds = useMemo(() => {
+    const ids = new Set<string>(report?.kb_usadas || []);
+    if (report?.mensagem_sugerida) {
+      const lower = report.mensagem_sugerida.toLowerCase();
+      kb.forEach((k) => {
+        const head = k.excerpt.slice(0, 25).toLowerCase();
+        if (head && lower.includes(head)) ids.add(k.id);
+      });
+    }
+    return ids;
+  }, [report, kb]);
+
 
   // ─────────── DADOS DO CRM (funis, etapas, tags, usuários) ───────────
   const [funis, setFunis] = useState<FunilRow[]>([]);
