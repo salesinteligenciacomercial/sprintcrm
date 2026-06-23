@@ -562,7 +562,11 @@ export function CoachIAFloatingButton({
               </div>
               <div>
                 <div className="text-sm font-semibold text-foreground">Coach IA</div>
-                <div className="text-[10px] text-muted-foreground">Análise em tempo real</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  {autoReplyingRef.current ? <><Loader2 className="h-2.5 w-2.5 animate-spin" /> IA respondendo...</> :
+                    loading ? <><Loader2 className="h-2.5 w-2.5 animate-spin" /> Reanalisando...</> :
+                    <><TrendingUp className="h-2.5 w-2.5" /> Análise em tempo real</>}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
