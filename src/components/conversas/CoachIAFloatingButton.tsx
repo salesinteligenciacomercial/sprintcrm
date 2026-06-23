@@ -1004,6 +1004,9 @@ export function CoachIAFloatingButton({
                     >
                       <div className="text-xs font-semibold text-foreground mb-0.5 flex items-center gap-1.5">
                         <BookOpen className="h-3 w-3 text-violet-400" /> {k.title}
+                        {kbUsedIds.has(k.id) && (
+                          <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Usado pela IA ✓</span>
+                        )}
                       </div>
                       <div className="text-[11px] text-muted-foreground leading-relaxed">{k.excerpt}</div>
                       {k.tags.length > 0 && (
